@@ -100,14 +100,17 @@ Anda adalah AI Penilai Proyek (Project Grader Agent) yang jeli, netral, dan obje
 
     const userPrompt = `Berikut adalah hasil git diff dari commit terbaru mahasiswa:\n\n${diff}`;
 
-    // 3. Call Gemini API
+    // 3. Call Gemini API with Retry Logic
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
     const requestBody = {
+        system_instruction: {
+            parts: [{ text: systemPrompt }]
+        },
         contents: [
             {
                 role: "user",
-                parts: [{ text: systemPrompt + "\n\n" + userPrompt }]
+                parts: [{ text: userPrompt }]
             }
         ],
         generationConfig: {
@@ -118,28 +121,41 @@ Anda adalah AI Penilai Proyek (Project Grader Agent) yang jeli, netral, dan obje
         }
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+    let attempt = 1;
+    while (true) {
+        try {
+            console.log(`Attempt ${attempt}: Calling Gemini API...`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
 
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-            const markdownResult = data.candidates[0].content.parts[0].text;
-            fs.writeFileSync('.github/penilaian-sementara.md', markdownResult);
-            console.log('Penilaian berhasil disimpan ke .github/penilaian-sementara.md');
-        } else {
-            console.error('Error: Unexpected API response format', JSON.stringify(data, null, 2));
-            process.exit(1);
+            const data = await response.json();
+            
+            if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                const markdownResult = data.candidates[0].content.parts[0].text;
+                fs.writeFileSync('.github/penilaian-sementara.md', markdownResult);
+                console.log('Penilaian berhasil disimpan ke .github/penilaian-sementara.md');
+                break; // Success!
+            } else {
+                console.error(`Attempt ${attempt} failed. Response Status: ${response.status}`);
+                console.error('Error Details:', JSON.stringify(data, null, 2));
+                
+                // Exponential backoff: (2^attempt * 1000ms) + random jitter
+                const waitTime = Math.min(Math.pow(2, attempt) * 1000 + Math.random() * 1000, 30000); 
+                console.log(`Retrying in ${Math.round(waitTime/1000)} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                attempt++;
+            }
+        } catch (error) {
+            console.error(`Attempt ${attempt} encountered an exception:`, error.message);
+            const waitTime = Math.min(Math.pow(2, attempt) * 1000 + Math.random() * 1000, 30000);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            attempt++;
         }
-    } catch (error) {
-        console.error('Error calling Gemini API:', error);
-        process.exit(1);
     }
 }
 
