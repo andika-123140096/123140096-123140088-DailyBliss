@@ -4,7 +4,7 @@ const path = require('path');
 
 async function run() {
     const apiKey = process.env.GEMINI_API_KEY;
-    const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
+    const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview';
     
     if (!apiKey) {
         console.error('Error: GEMINI_API_KEY is not set');
@@ -98,8 +98,9 @@ Gunakan format berikut secara eksak:
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
         generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 8192,
+            thinkingConfig: {
+                thinkingLevel: "high"
+            },
         }
     };
 
