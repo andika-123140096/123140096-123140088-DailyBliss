@@ -97,15 +97,15 @@ jobs:
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
             
-            # Stash changes to penilaian file
-            git stash push .github/penilaian-sementara.md
+            # Move file to temporary location to avoid git checkout issues
+            mv .github/penilaian-sementara.md ../penilaian-sementara.md
             
             # Switch to development branch (create if not exists)
             git fetch origin development || true
-            git checkout development || git checkout -b development
+            git checkout development || git checkout -b development origin/development || git checkout -b development
             
-            # Apply changes back
-            git stash pop
+            # Restore the file
+            mv ../penilaian-sementara.md .github/penilaian-sementara.md
             
             git add .github/penilaian-sementara.md
             git commit -m "docs: update AI grading results [skip ci]" || echo "No changes to commit"
