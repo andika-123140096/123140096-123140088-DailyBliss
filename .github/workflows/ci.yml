@@ -85,10 +85,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Restore Context Window
-        run: |
-          git checkout origin/development -- .github/context-window.md || echo "Context window not found on development branch."
-
       - name: Run AI Grader
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -103,7 +99,6 @@ jobs:
             
             # Move files to temporary location to avoid git checkout issues
             mv .github/penilaian-sementara.md ../penilaian-sementara.md
-            [ -f .github/context-window.md ] && mv .github/context-window.md ../context-window.md
             
             # Switch to development branch (create if not exists)
             git fetch origin development || true
@@ -111,10 +106,9 @@ jobs:
             
             # Restore the files
             mv ../penilaian-sementara.md .github/penilaian-sementara.md
-            [ -f ../context-window.md ] && mv ../context-window.md .github/context-window.md
             
-            git add .github/penilaian-sementara.md .github/context-window.md
-            git commit -m "docs: update AI grading results and context window [skip ci]" || echo "No changes to commit"
+            git add .github/penilaian-sementara.md
+            git commit -m "docs: update AI grading results [skip ci]" || echo "No changes to commit"
             git push origin development
           else
             echo "No grading file generated."

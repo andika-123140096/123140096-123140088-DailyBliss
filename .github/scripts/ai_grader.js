@@ -11,29 +11,18 @@ async function run() {
         process.exit(1);
     }
 
-    const contextPath = '.github/context-window.md';
-    const isFirstRun = !fs.existsSync(contextPath);
-    let contextContent = '';
-
-    // 1. Get Git Diff & Context
-    let diff = '';
+    // 1. Generate Codebase Context using Repomix
+    console.log('Generating codebase context using repomix...');
     try {
-        if (isFirstRun) {
-            console.log('Context window not found. Performing full evaluation from initial commit...');
-            // Compare from the specified initial commit to HEAD
-            diff = execSync('git diff 5192bfad97b533f6b1aa368162a5b09e2729e329 HEAD').toString();
-        } else {
-            console.log('Context window found. Performing incremental evaluation...');
-            contextContent = fs.readFileSync(contextPath, 'utf8');
-            diff = execSync('git diff HEAD~1 HEAD').toString();
-        }
+        // Run repomix to get a XML representation of the codebase
+        // We ignore binary files and resources to keep the context size manageable
+        execSync('npx repomix@latest --style xml --output repomix-output.xml --ignore "**/composeResources/**,**/gradle/**,**/*.png,**/*.jpg,**/*.jpeg,**/*.gif,**/*.svg"', { stdio: 'inherit' });
     } catch (e) {
-        console.warn('Warning: Could not get git diff. Falling back to empty diff.', e.message);
+        console.error('Error: Failed to run repomix', e.message);
+        process.exit(1);
     }
 
-    if (!diff || diff.trim() === '') {
-        console.log('No significant changes detected in git diff.');
-    }
+    const codebaseContext = fs.readFileSync('repomix-output.xml', 'utf8');
 
     const todayDate = new Date();
     const sprintSchedule = [
@@ -56,10 +45,9 @@ async function run() {
 Anda adalah AI Penilai Proyek (Project Grader Agent) yang jeli, netral, dan objektif. Tugas Anda adalah mengevaluasi proyek Pengembangan Aplikasi Mobile (Kotlin Multiplatform & Compose) mahasiswa ITERA.
 
 # Aturan Evaluasi
-1. Analisis Kode: Periksa implementasi berdasarkan input git diff. Pastikan mematuhi Clean Architecture (data, domain, presentation) dan MVVM.
+1. Analisis Kode: Periksa implementasi berdasarkan codebase yang diberikan dalam format XML. Pastikan mematuhi Clean Architecture (data, domain, presentation) dan MVVM.
 2. Batasan Waktu: Hari ini adalah tanggal ${today}. Anda HANYA boleh memberikan penilaian untuk Sprint yang sudah aktif (${activeSprintIds}). JANGAN menilai sprint masa depan.
-3. Manajemen Memori: Anda diberikan "Context Window" yang berisi status proyek sebelumnya. Gunakan ini untuk memahami arsitektur, dependensi, dan progres fitur secara mendalam.
-4. Output Terpisah: Anda WAJIB memisahkan output penilaian dan output update context menggunakan penanda (markers) yang ditentukan.
+3. Output Penilaian: Berikan penilaian yang mendalam, jujur, dan membantu mahasiswa untuk memperbaiki kode mereka.
 
 # Rubrik Penilaian Aktif (Hingga ${today})
 ${rubricText}
@@ -70,46 +58,38 @@ Gunakan format berikut secara eksak:
 ---START_GRADING---
 # 📊 HASIL EVALUASI PROYEK AKHIR - GENAP 2025/2026
 
-[Berikan ringkasan eksekutif tentang status proyek saat ini.]
+[Berikan ringkasan eksekutif tentang status proyek saat ini secara keseluruhan.]
 
 ## 🔍 Ringkasan Analisis
 * **Kelebihan:** ...
-* **Temuan:** ...
+* **Temuan Utama:** ...
 
-## 📈 Rincian Penilaian (Sprint 1 - ${activeSprints[activeSprints.length - 1]?.id || '?'})
-[Gunakan tabel atau list yang jelas untuk setiap sprint yang aktif saja]
+[HANYA TAMPILKAN SPRINT YANG SUDAH AKTIF BERDASARKAN TANGGAL HARI INI]
 
-## 🛠️ Rekomendasi Perbaikan
-1. ...
----END_GRADING---
+## 📅 Sprint 1: Planning & Setup
+| Kriteria | Skor (0-100) | Catatan |
+| :--- | :---: | :--- |
+| Repository Setup (20%) | | |
+| Project Structure (25%) | | |
+| CI/CD (20%) | | |
+| Documentation (25%) | | |
+| Collaboration (10%) | | |
+| **Total Estimasi** | **Score/100** | |
 
----START_CONTEXT---
-# 🧠 PROJECT CONTEXT WINDOW (DO NOT EDIT MANUALLY)
-Anda WAJIB mengisi bagian ini dengan analisis teknis MENDALAM dari codebase. Jangan gunakan kalimat umum.
+### 📝 Penjelasan Sprint 1
+[Berikan penjelasan mendalam mengapa skor tersebut diberikan dan apa yang bisa ditingkatkan.]
 
-## 📁 Struktur Folder & Navigasi
-- [Jelaskan struktur package saat ini. Sebutkan rute navigasi (Routes) dan screen yang terdaftar di AppNavHost.kt]
-
-## 🛠️ Fitur Terimplementasi
-- [Daftar fitur detail. Contoh: "CRUD Moment dengan SQLDelight", "Streaming AI Assistant dengan GeminiService", "Theme switching dengan DataStore"]
+[ULANGI FORMAT DI ATAS UNTUK SPRINT 2, 3, DST. JIKA SUDAH AKTIF]
 
 ## 🏗️ Arsitektur & State Management
-- [Analisis layering (Data/Domain/Presentation). Sebutkan ViewModel yang aktif dan bagaimana StateFlow/SharedFlow digunakan untuk UI State]
+- [Analisis singkat layering dan penggunaan ViewModel/StateFlow]
 
-## 📦 Tech Stack & Libraries
-- [Daftar versi library penting jika ada, atau minimal list library yang digunakan: Koin, Ktor, SQLDelight, Coil, dll]
-
-## 🧪 Status Testing & CI/CD
-- [Sebutkan file test yang ada: MomentRepositoryTest, JournalViewModelTest, dll. Status coverage jika terdeteksi]
-
-## 📝 Catatan Teknis & Isu Saat Ini
-- [Daftar bug yang ditemukan, TODOs penting, atau area yang melanggar Clean Architecture]
----END_CONTEXT---
+## 🛠️ Rekomendasi Perbaikan Umum
+1. ...
+---END_GRADING---
     `;
 
-    const userPrompt = isFirstRun 
-        ? `Berikut adalah git diff lengkap dari awal proyek:\n\n${diff}`
-        : `Berikut adalah Context Window saat ini:\n\n${contextContent}\n\nDan berikut adalah git diff terbaru:\n\n${diff}`;
+    const userPrompt = `Berikut adalah seluruh codebase proyek dalam format XML:\n\n${codebaseContext}`;
 
     // 3. Call Gemini API
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -140,16 +120,11 @@ Anda WAJIB mengisi bagian ini dengan analisis teknis MENDALAM dari codebase. Jan
                 
                 // 4. Parse Output
                 const gradingMatch = fullText.match(/---START_GRADING---([\s\S]*?)---END_GRADING---/);
-                const contextMatch = fullText.match(/---START_CONTEXT---([\s\S]*?)---END_CONTEXT---/);
 
-                if (gradingMatch && contextMatch) {
+                if (gradingMatch) {
                     const gradingResult = gradingMatch[1].trim();
-                    const contextResult = contextMatch[1].trim();
-
                     fs.writeFileSync('.github/penilaian-sementara.md', gradingResult);
-                    fs.writeFileSync(contextPath, contextResult);
-                    
-                    console.log('Berhasil: Penilaian dan Context Window telah diperbarui.');
+                    console.log('Berhasil: Penilaian telah diperbarui.');
                     break;
                 } else {
                     console.error('Error: AI tidak memberikan format markers yang benar.');
@@ -165,6 +140,11 @@ Anda WAJIB mengisi bagian ini dengan analisis teknis MENDALAM dari codebase. Jan
         const waitTime = Math.pow(2, attempt) * 1000;
         await new Promise(r => setTimeout(r, waitTime));
         attempt++;
+    }
+
+    // Cleanup
+    if (fs.existsSync('repomix-output.xml')) {
+        fs.unlinkSync('repomix-output.xml');
     }
 }
 
