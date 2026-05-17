@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
 async function run() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -10,19 +11,28 @@ async function run() {
         process.exit(1);
     }
 
-    // 1. Get Git Diff
+    const contextPath = '.github/context-window.md';
+    const isFirstRun = !fs.existsSync(contextPath);
+    let contextContent = '';
+
+    // 1. Get Git Diff & Context
     let diff = '';
     try {
-        // Try to get diff between current and previous commit
-        diff = execSync('git diff HEAD~1 HEAD').toString();
+        if (isFirstRun) {
+            console.log('Context window not found. Performing full evaluation from initial commit...');
+            // Compare from the specified initial commit to HEAD
+            diff = execSync('git diff 5192bfad97b533f6b1aa368162a5b09e2729e329 HEAD').toString();
+        } else {
+            console.log('Context window found. Performing incremental evaluation...');
+            contextContent = fs.readFileSync(contextPath, 'utf8');
+            diff = execSync('git diff HEAD~1 HEAD').toString();
+        }
     } catch (e) {
-        console.warn('Warning: Could not get git diff via HEAD~1. Falling back to empty diff.');
+        console.warn('Warning: Could not get git diff. Falling back to empty diff.', e.message);
     }
 
     if (!diff || diff.trim() === '') {
         console.log('No significant changes detected in git diff.');
-        // We still run the AI to let it know there's no changes if necessary, 
-        // but usually we can skip or provide a default message.
     }
 
     const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -30,132 +40,109 @@ async function run() {
     // 2. Prepare Prompt
     const systemPrompt = `
 # Role dan Tujuan
-Anda adalah AI Penilai Proyek (Project Grader Agent) yang jeli, netral, dan objektif. Tugas Anda adalah mengevaluasi proyek Pengembangan Aplikasi Mobile (Kotlin Multiplatform & Compose) mahasiswa ITERA berdasarkan input git diff. 
+Anda adalah AI Penilai Proyek (Project Grader Agent) yang jeli, netral, dan objektif. Tugas Anda adalah mengevaluasi proyek Pengembangan Aplikasi Mobile (Kotlin Multiplatform & Compose) mahasiswa ITERA.
 
 # Aturan Evaluasi
-1. Analisis Git Diff: Periksa baris yang ditambahkan (+) dan dihapus (-). Pastikan implementasi mematuhi Clean Architecture (data, domain, presentation) dan MVVM. Potong nilai jika ada code smell (misal: logika bisnis di UI, hardcode API key).
-2. Fokus Per Sprint: Evaluasi HANYA berdasarkan rubrik Sprint yang sedang dinilai pada saat itu (Hari ini: ${today}). 
-3. Tanpa Basa-basi: Jangan tambahkan teks pengantar atau penutup. Output Anda HANYA berupa format Markdown yang akan langsung ditulis ke .github/penilaian-sementara.md.
+1. Analisis Kode: Periksa implementasi berdasarkan input git diff. Pastikan mematuhi Clean Architecture (data, domain, presentation) dan MVVM.
+2. Evaluasi Multi-Sprint: Berikan penilaian untuk SEMUA Sprint (1-6) yang kriterianya terpenuhi dalam kode. Jangan batasi hanya pada satu sprint.
+3. Manajemen Memori: Anda diberikan "Context Window" (jika ada) yang berisi status proyek sebelumnya. Gunakan ini untuk mempertahankan pemahaman arsitektur meskipun diff yang diberikan kecil.
+4. Output Terpisah: Anda WAJIB memisahkan output penilaian dan output update context menggunakan penanda (markers) yang ditentukan.
 
-# Rubrik Penilaian Per Sprint
+# Rubrik Penilaian Per Sprint (Sprint 1 - 6)
 
-**Periode 10 - 16 Mei 2026**
-* **Sprint 1 (Planning & Setup)**: 
-    * Repository Setup (20%): Penamaan dan kolaborator.
-    * Project Structure (25%): Struktur Clean Architecture.
-    * CI/CD Pipeline (20%): GitHub Actions berjalan.
-    * Documentation (25%): README lengkap & Project plan.
-    * Collaboration (10%): Kontribusi commit.
-* **Sprint 2 (Core Features)**: 
-    * UI Screens (25%): Minimal 3 layar fungsional.
-    * Navigation (20%): Navigasi beroperasi dengan arguments passing.
-    * Data Layer (25%): Repository pattern, local storage.
-    * CRUD (20%): Create, Read, Update, Delete beroperasi.
-    * Code Quality (10%): Kode bersih, CI passing.
+* **Sprint 1 (Planning & Setup)**: Repository Setup (20%), Project Structure (25%), CI/CD (20%), Documentation (25%), Collaboration (10%).
+* **Sprint 2 (Core Features)**: UI Screens (25%), Navigation (20%), Data Layer (25%), CRUD (20%), Code Quality (10%).
+* **Sprint 3 (Advanced Features)**: Search/Filter (25%), API/Enhanced Local (25%), Offline Support (20%), Additional Screen (15%), Bonus (15%).
+* **Sprint 4 (Polish & Testing)**: Bug Fixes (25%), UI Polish (25%), Unit Tests (25%), UI Tests (15%), Coverage (10%).
+* **Sprint 5 & 6 (Final Prep & UAS)**: App Functionality (30%), Demo & Presentation (25%), Code Quality (20%), Technical Depth (15%), Q&A (10%).
 
-**Periode 24 - 30 Mei 2026**
-* **Sprint 3 (Advanced Features)**: 
-    * Search/Filter (25%): Fungsionalitas pencarian beroperasi.
-    * API/Enhanced Local (25%): Integrasi API atau fitur lokal tingkat lanjut.
-    * Offline Support (20%): Aplikasi dapat digunakan tanpa internet.
-    * Additional Screen (15%): Layar Settings/Profile fungsional.
-    * Bonus Features (15%): Mengimplementasikan minimal 1 fitur tambahan.
-* **Sprint 4 (Polish & Testing)**: 
-    * Bug Fixes (25%): Tidak ada crash.
-    * UI Polish (25%): UI konsisten.
-    * Unit Tests (25%): 10+ Unit tests.
-    * UI Tests (15%): 3+ UI tests (alur kritis).
-    * Coverage (10%): >50% code coverage.
+# Instruksi Format Output (WAJIB)
+Gunakan format berikut secara eksak:
 
-**Periode 31 Mei - 6 Juni 2026**
-* **Sprint 5 & 6 (Final Prep & UAS Demo Day)**: 
-    * App Functionality (30%): Fungsionalitas penuh, UX rapi.
-    * Demo & Presentation (25%): Penjelasan jelas, alur demo lancar.
-    * Code Quality (20%): Clean architecture, pola pemrograman tepat.
-    * Technical Depth (15%): Pemecahan masalah teknis.
-    * Q&A Response (10%): Pemahaman kode.
-
-# Format Output (Wajib)
-
+---START_GRADING---
 # 📊 HASIL EVALUASI PROYEK AKHIR - GENAP 2025/2026
 
-**Sprint yang Dinilai:** [Sebutkan Sprint Ke-Berapa]
-**Status:** [LULUS / PERLU REVISI]
-**Skor Total:** [XX]/100
+[Tampilkan rincian penilaian untuk setiap Sprint 1-6. Jika belum ada progres pada sprint tertentu, berikan skor 0 dengan catatan yang sesuai.]
 
-## 🔍 Ringkasan Analisis Git Diff
-* **Kelebihan:** [Poin positif berdasarkan baris kode yang ditambahkan]
-* **Temuan / Pelanggaran:** [Sebutkan nama file atau baris kode yang melanggar arsitektur/best practice, jika ada]
+## 🔍 Ringkasan Analisis
+* **Kelebihan:** ...
+* **Temuan:** ...
 
-## 📈 Rincian Penilaian
-| Kriteria | Bobot | Skor | Analisis Evaluator (Berdasarkan Diff) |
-| :--- | :---: | :---: | :--- |
-| [Kriteria 1] | XX% | X/100 | [Penjelasan spesifik melihat perubahan kode] |
-| [Kriteria 2] | XX% | X/100 | [Penjelasan spesifik melihat perubahan kode] |
-| [Kriteria ...] | XX% | X/100 | [Penjelasan spesifik melihat perubahan kode] |
+## 📈 Rincian Penilaian (Sprint 1 - 6)
+[Gunakan tabel atau list yang jelas untuk setiap sprint]
 
 ## 🛠️ Rekomendasi Perbaikan
-1. [Saran perbaikan teknis untuk commit selanjutnya]
+1. ...
+---END_GRADING---
+
+---START_CONTEXT---
+# 🧠 PROJECT CONTEXT WINDOW (DO NOT EDIT MANUALLY)
+Simpan ringkasan teknis proyek di sini:
+- Struktur Folder: [Deteksi apakah KMP/Compose Multiplatform sudah benar]
+- Fitur Terimplementasi: ...
+- Arsitektur: [Data/Domain/Presentation/MVVM]
+- Tech Stack: ...
+---END_CONTEXT---
     `;
 
-    const userPrompt = `Berikut adalah hasil git diff dari commit terbaru mahasiswa:\n\n${diff}`;
+    const userPrompt = isFirstRun 
+        ? `Berikut adalah git diff lengkap dari awal proyek:\n\n${diff}`
+        : `Berikut adalah Context Window saat ini:\n\n${contextContent}\n\nDan berikut adalah git diff terbaru:\n\n${diff}`;
 
-    // 3. Call Gemini API with Retry Logic
+    // 3. Call Gemini API
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
     const requestBody = {
-        system_instruction: {
-            parts: [{ text: systemPrompt }]
-        },
-        contents: [
-            {
-                role: "user",
-                parts: [{ text: userPrompt }]
-            }
-        ],
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
         generationConfig: {
-            temperature: 0.2,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 4096,
+            temperature: 0.1,
+            maxOutputTokens: 8192,
         }
     };
 
     let attempt = 1;
-    while (true) {
+    while (attempt <= 3) {
         try {
             console.log(`Attempt ${attempt}: Calling Gemini API...`);
             const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
             
-            if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                const markdownResult = data.candidates[0].content.parts[0].text;
-                fs.writeFileSync('.github/penilaian-sementara.md', markdownResult);
-                console.log('Penilaian berhasil disimpan ke .github/penilaian-sementara.md');
-                break; // Success!
-            } else {
-                console.error(`Attempt ${attempt} failed. Response Status: ${response.status}`);
-                console.error('Error Details:', JSON.stringify(data, null, 2));
+            if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const fullText = data.candidates[0].content.parts[0].text;
                 
-                // Exponential backoff: (2^attempt * 1000ms) + random jitter
-                const waitTime = Math.min(Math.pow(2, attempt) * 1000 + Math.random() * 1000, 30000); 
-                console.log(`Retrying in ${Math.round(waitTime/1000)} seconds...`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-                attempt++;
+                // 4. Parse Output
+                const gradingMatch = fullText.match(/---START_GRADING---([\s\S]*?)---END_GRADING---/);
+                const contextMatch = fullText.match(/---START_CONTEXT---([\s\S]*?)---END_CONTEXT---/);
+
+                if (gradingMatch && contextMatch) {
+                    const gradingResult = gradingMatch[1].trim();
+                    const contextResult = contextMatch[1].trim();
+
+                    fs.writeFileSync('.github/penilaian-sementara.md', gradingResult);
+                    fs.writeFileSync(contextPath, contextResult);
+                    
+                    console.log('Berhasil: Penilaian dan Context Window telah diperbarui.');
+                    break;
+                } else {
+                    console.error('Error: AI tidak memberikan format markers yang benar.');
+                    console.log('Full AI Response for debugging:', fullText);
+                }
+            } else {
+                console.error(`Attempt ${attempt} failed. Status: ${response.status}`, JSON.stringify(data, null, 2));
             }
         } catch (error) {
-            console.error(`Attempt ${attempt} encountered an exception:`, error.message);
-            const waitTime = Math.min(Math.pow(2, attempt) * 1000 + Math.random() * 1000, 30000);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            attempt++;
+            console.error(`Attempt ${attempt} error:`, error.message);
         }
+        
+        const waitTime = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, waitTime));
+        attempt++;
     }
 }
 
