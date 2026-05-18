@@ -72,8 +72,6 @@ jobs:
   ai-grading:
     name: AI Project Grader
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -91,25 +89,12 @@ jobs:
           GEMINI_MODEL_NAME: ${{ secrets.GEMINI_MODEL_NAME }}
         run: node .github/scripts/ai_grader.js
 
-      - name: Commit and Push to development branch
+      - name: Display AI Grading Results
         run: |
           if [ -f .github/penilaian-sementara.md ]; then
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            
-            # Move files to temporary location to avoid git checkout issues
-            mv .github/penilaian-sementara.md ../penilaian-sementara.md
-            
-            # Switch to development branch (create if not exists)
-            git fetch origin development || true
-            git checkout development || git checkout -b development origin/development || git checkout -b development
-            
-            # Restore the files
-            mv ../penilaian-sementara.md .github/penilaian-sementara.md
-            
-            git add .github/penilaian-sementara.md
-            git commit -m "docs: update AI grading results [skip ci]" || echo "No changes to commit"
-            git push origin development
+            echo "--- AI GRADING RESULTS ---"
+            cat .github/penilaian-sementara.md
+            echo "--- END OF RESULTS ---"
           else
             echo "No grading file generated."
           fi
