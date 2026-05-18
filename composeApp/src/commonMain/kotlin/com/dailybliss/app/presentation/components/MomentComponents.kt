@@ -26,6 +26,68 @@ import coil3.compose.AsyncImage
 import com.dailybliss.app.domain.model.Moment
 
 @Composable
+fun MomentCard(
+    moment: Moment,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!moment.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = moment.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = moment.title.ifBlank { "Momen Tanpa Judul" },
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Text(
+                    text = moment.preview,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
+                Text(
+                    text = emoji,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun PremiumBlissCard(
     moment: Moment,
     onClick: () -> Unit,

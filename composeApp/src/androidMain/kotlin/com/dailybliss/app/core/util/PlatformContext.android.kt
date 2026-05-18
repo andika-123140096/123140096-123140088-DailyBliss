@@ -1,9 +1,11 @@
 package com.dailybliss.app.core.util
 
+import android.content.Context
+
 /**
  * Android implementation of PlatformContext
  * 
- * Kita menggunakan typealias ke android.content.Context agar
- * PlatformContext di Android adalah Context yang sebenarnya.
+ * Membungkus android.content.Context agar
+ * PlatformContext dapat digunakan di shared code.
  */
-actual typealias PlatformContext = android.content.Context
+actual class PlatformContext(val androidContext: Context)

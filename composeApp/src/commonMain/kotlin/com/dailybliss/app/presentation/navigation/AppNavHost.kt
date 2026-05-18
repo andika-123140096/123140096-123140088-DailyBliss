@@ -135,6 +135,7 @@ fun AppNavHost(
             composable<Route.Home> {
                 HomeScreen(
                     onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
+                    onNavigateToDetail = { id -> actions.navigateToMomentDetail(id) },
                     onNavigateToSettings = { actions.navigateToSettings() }
                 )
             }

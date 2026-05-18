@@ -8,6 +8,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,7 +29,7 @@ import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateMomentScreen(
     onNavigateBack: () -> Unit,
@@ -75,7 +79,28 @@ fun CreateMomentScreen(
     
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (!uiState.isLoading) {
+                FloatingActionButton(
+                    onClick = { viewModel.toggleVoiceRecording() },
+                    containerColor = if (uiState.voiceState.isSpeaking) 
+                        MaterialTheme.colorScheme.errorContainer 
+                    else 
+                        MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = if (uiState.voiceState.isSpeaking) 
+                        MaterialTheme.colorScheme.error 
+                    else 
+                        MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        if (uiState.voiceState.isSpeaking) Icons.Default.MicOff else Icons.Default.Mic,
+                        contentDescription = "Voice Input"
+                    )
+                }
+            }
+        }
     ) { paddingValues ->
         if (uiState.isLoading) {
             LoadingIndicator()
@@ -102,8 +127,16 @@ fun CreateMomentScreen(
                     
                     Spacer(modifier = Modifier.weight(1f))
                     
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp).padding(end = 16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+
                     TextButton(
                         onClick = { viewModel.saveMoment() },
+                        enabled = !uiState.isSaving,
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
@@ -124,30 +157,80 @@ fun CreateMomentScreen(
                     contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     item {
-                        BasicTextField(
-                            value = uiState.title,
-                            onValueChange = viewModel::onTitleChange,
-                            textStyle = MaterialTheme.typography.headlineMedium.copy(
-                                color = MaterialTheme.colorScheme.onBackground,
-                                fontWeight = FontWeight.Bold
-                            ),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { innerTextField ->
-                                if (uiState.title.isEmpty()) {
-                                    Text(
-                                        text = "Judul Cerita",
-                                        style = MaterialTheme.typography.headlineMedium.copy(
-                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                            fontWeight = FontWeight.Bold
+                        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                            BasicTextField(
+                                value = uiState.title,
+                                onValueChange = viewModel::onTitleChange,
+                                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                decorationBox = { innerTextField ->
+                                    if (uiState.title.isEmpty()) {
+                                        Text(
+                                            text = "Judul Cerita",
+                                            style = MaterialTheme.typography.headlineMedium.copy(
+                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         )
+                                    }
+                                    innerTextField()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp)
+                            )
+
+                            // Mood & Tags Display
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                uiState.mood?.let { mood ->
+                                    SuggestionChip(
+                                        onClick = {},
+                                        label = { Text(mood) },
+                                        shape = RoundedCornerShape(12.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                innerTextField()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 24.dp)
-                        )
+
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    uiState.tags.forEach { tag ->
+                                        AssistChip(
+                                            onClick = {},
+                                            label = { Text("#$tag") },
+                                            colors = AssistChipDefaults.assistChipColors(
+                                                labelColor = MaterialTheme.colorScheme.secondary
+                                            ),
+                                            border = null,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (uiState.voiceState.isSpeaking) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Text(
+                                    text = if (uiState.voiceState.spokenText.isBlank()) "Mendengarkan..." else uiState.voiceState.spokenText,
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+                                )
+                            }
+                        }
                     }
 
                     itemsIndexed(uiState.contentBlocks) { index, block ->
@@ -157,6 +240,9 @@ fun CreateMomentScreen(
                                     TextBlockItem(
                                         text = block.text,
                                         onTextChange = { viewModel.onBlockChange(index, block.copy(text = it)) },
+                                        onCursorPositionChange = { cursorPosition ->
+                                            viewModel.updateCursorPosition(index, cursorPosition)
+                                        },
                                         onRemove = { viewModel.removeBlock(index) },
                                         onEnterPressed = { viewModel.addTextBlock(afterIndex = index) },
                                         onAttachMedia = { 

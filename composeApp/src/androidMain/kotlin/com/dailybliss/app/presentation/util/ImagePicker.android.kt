@@ -50,7 +50,7 @@ actual class FileStorage actual constructor(
     actual suspend fun saveImage(bytes: ByteArray): String? = withContext(Dispatchers.IO) {
         try {
             val fileName = "moment_${UUID.randomUUID()}.jpg"
-            val file = File(context.filesDir, fileName)
+            val file = File(context.androidContext.filesDir, fileName)
             file.writeBytes(bytes)
             file.absolutePath
         } catch (e: Exception) {

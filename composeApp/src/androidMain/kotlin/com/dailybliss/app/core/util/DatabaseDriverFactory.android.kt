@@ -17,7 +17,7 @@ actual class DatabaseDriverFactory actual constructor(
     actual fun createDriver(): SqlDriver {
         return AndroidSqliteDriver(
             schema = BlissDatabase.Schema,
-            context = context,
+            context = context.androidContext,
             name = "dailybliss_final.db"
         )
     }

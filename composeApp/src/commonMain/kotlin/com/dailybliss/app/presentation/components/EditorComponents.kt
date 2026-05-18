@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -28,6 +30,7 @@ import coil3.compose.AsyncImage
 fun TextBlockItem(
     text: String,
     onTextChange: (String) -> Unit,
+    onCursorPositionChange: (Int) -> Unit = {},
     onRemove: () -> Unit,
     onEnterPressed: () -> Unit,
     onAttachMedia: () -> Unit,
@@ -35,6 +38,19 @@ fun TextBlockItem(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
+
+    // Sync external text changes (like Voice-to-Text) into the local TextFieldValue
+    LaunchedEffect(text) {
+        if (text != textFieldValue.text) {
+            val offset = text.length - textFieldValue.text.length
+            val newCursor = (textFieldValue.selection.start + offset).coerceIn(0, text.length)
+            textFieldValue = textFieldValue.copy(
+                text = text,
+                selection = TextRange(newCursor)
+            )
+        }
+    }
 
     Row(
         modifier = modifier
@@ -53,7 +69,7 @@ fun TextBlockItem(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        Icons.Default.Image, // Replaced + with Image icon
+                        Icons.Default.Image,
                         contentDescription = "Attach Image",
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                         modifier = Modifier.size(18.dp)
@@ -65,19 +81,30 @@ fun TextBlockItem(
         Spacer(modifier = Modifier.width(8.dp))
 
         BasicTextField(
-            value = text,
+            value = textFieldValue,
             onValueChange = {
-                if (it.endsWith("\n")) {
+                if (it.text.endsWith("\n") && it.text.length > textFieldValue.text.length) {
+                    // Prevent newline from being added if we handle Enter to create a new block
+                    val cleaned = it.text.removeSuffix("\n")
+                    textFieldValue = it.copy(text = cleaned)
+                    onTextChange(cleaned)
                     onEnterPressed()
                 } else {
-                    onTextChange(it)
+                    textFieldValue = it
+                    onTextChange(it.text)
+                    onCursorPositionChange(it.selection.start)
                 }
             },
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 2.dp) // Align text baseline better with top icons
+                .padding(top = 2.dp)
                 .focusRequester(focusRequester)
-                .onFocusChanged { isFocused = it.isFocused }
+                .onFocusChanged { 
+                    isFocused = it.isFocused 
+                    if (it.isFocused) {
+                        onCursorPositionChange(textFieldValue.selection.start)
+                    }
+                }
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown && 
                         keyEvent.key == Key.Backspace && 

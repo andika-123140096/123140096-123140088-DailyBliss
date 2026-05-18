@@ -10,6 +10,8 @@ fun MomentEntity.toDomain(): Moment {
         title = title,
         content = content,
         imageUrl = media_url,
+        mood = mood,
+        tags = tags?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
         isPinned = is_pinned == 1L,
         createdAt = Instant.fromEpochMilliseconds(created_at),
         updatedAt = Instant.fromEpochMilliseconds(updated_at)
@@ -20,6 +22,8 @@ data class MomentEntityValues(
     val title: String,
     val content: String,
     val mediaUrl: String?,
+    val mood: String?,
+    val tags: String?,
     val isPinned: Long,
     val createdAt: Long,
     val updatedAt: Long
@@ -30,6 +34,8 @@ fun Moment.toEntityValues(): MomentEntityValues {
         title = title,
         content = content,
         mediaUrl = imageUrl,
+        mood = mood,
+        tags = if (tags.isEmpty()) null else tags.joinToString(","),
         isPinned = if (isPinned) 1L else 0L,
         createdAt = createdAt.toEpochMilliseconds(),
         updatedAt = updatedAt.toEpochMilliseconds()

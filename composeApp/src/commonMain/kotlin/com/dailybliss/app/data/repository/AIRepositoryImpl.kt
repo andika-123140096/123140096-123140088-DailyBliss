@@ -8,15 +8,20 @@ import com.dailybliss.app.data.remote.dto.GeminiContent
 import com.dailybliss.app.data.remote.dto.GeminiInlineData
 import com.dailybliss.app.data.remote.dto.GeminiPart
 import com.dailybliss.app.domain.repository.AIRepository
+import com.dailybliss.app.domain.repository.MoodResult
 import com.dailybliss.app.presentation.screens.ai.ChatMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 class AIRepositoryImpl(
     private val geminiService: GeminiService,
     private val userPreferences: UserPreferences
 ) : AIRepository {
     
+    private val json = Json { ignoreUnknownKeys = true }
+
     override suspend fun streamChat(messages: List<ChatMessage>): Flow<String> {
         val geminiContents = mapToGeminiContents(messages)
         return geminiService.streamContent(
@@ -32,6 +37,66 @@ class AIRepositoryImpl(
             systemInstruction = getDynamicSystemPrompt()
         ).getOrThrow()
     }
+
+    override suspend fun analyzeMood(content: String): MoodResult? {
+        val result = geminiService.generateContent(
+            prompt = content,
+            systemPrompt = SystemPrompts.MOOD_ANALYSIS_PROMPT
+        ).getOrNull()
+        
+        return result?.let {
+            try {
+                // Remove Markdown code blocks if present
+                val jsonStr = it.replace("```json", "").replace("```", "").trim()
+                json.decodeFromString<MoodResponse>(jsonStr).let { response ->
+                    MoodResult(response.mood, response.emoji)
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    override suspend fun generateTags(content: String): List<String> {
+        val result = geminiService.generateContent(
+            prompt = content,
+            systemPrompt = SystemPrompts.TAG_GENERATION_PROMPT
+        ).getOrNull()
+        
+        return result?.let {
+            try {
+                val jsonStr = it.replace("```json", "").replace("```", "").trim()
+                json.decodeFromString<TagsResponse>(jsonStr).tags
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } ?: emptyList()
+    }
+
+    override suspend fun generateDailyPrompt(): String? {
+        val result = geminiService.generateContent(
+            prompt = "Berikan aku satu pertanyaan hari ini.",
+            systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION
+        ).getOrNull()
+        
+        return result?.let {
+            try {
+                val jsonStr = it.replace("```json", "").replace("```", "").trim()
+                json.decodeFromString<PromptResponse>(jsonStr).prompt
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    @Serializable
+    private data class MoodResponse(val mood: String, val emoji: String)
+    
+    @Serializable
+    private data class TagsResponse(val tags: List<String>)
+    
+    @Serializable
+    private data class PromptResponse(val prompt: String)
 
     private suspend fun getDynamicSystemPrompt(): String {
     val nickname = userPreferences.nickname.first()

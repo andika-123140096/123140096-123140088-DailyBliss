@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailybliss.app.core.util.VoiceToTextParser
 import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.model.MomentContent
@@ -12,13 +13,13 @@ import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 
 class MomentDetailViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val saveMomentUseCase: SaveMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
+    private val voiceToTextParser: VoiceToTextParser,
     private val fileStorage: FileStorage
 ) : ViewModel() {
 
@@ -30,6 +31,79 @@ class MomentDetailViewModel(
 
     private var currentMomentId: Long? = null
     private val json = Json { ignoreUnknownKeys = true }
+    
+    private var lastFocusedBlockIndex: Int? = null
+    private var lastCursorPosition: Int = 0
+
+    init {
+        observeVoiceState()
+    }
+
+    private fun observeVoiceState() {
+        viewModelScope.launch {
+            voiceToTextParser.state.collect { voiceState ->
+                val currentState = _uiState.value
+                if (currentState is MomentDetailUiState.Success) {
+                    _uiState.update { currentState.copy(voiceState = voiceState) }
+                }
+            }
+        }
+        
+        viewModelScope.launch {
+            voiceToTextParser.finalResult.collect { text ->
+                if (text.isNotBlank()) {
+                    insertTextAtCursor(text)
+                }
+            }
+        }
+    }
+
+    fun updateCursorPosition(blockIndex: Int, cursorPosition: Int) {
+        lastFocusedBlockIndex = blockIndex
+        lastCursorPosition = cursorPosition
+    }
+
+    private fun insertTextAtCursor(text: String) {
+        val currentState = _uiState.value
+        if (currentState is MomentDetailUiState.Success) {
+            val newBlocks = currentState.contentBlocks.toMutableList()
+            val targetIndex = lastFocusedBlockIndex ?: newBlocks.indexOfLast { it is ContentBlock.Text }
+            
+            if (targetIndex != -1 && newBlocks[targetIndex] is ContentBlock.Text) {
+                val lastBlock = newBlocks[targetIndex] as ContentBlock.Text
+                val originalText = lastBlock.text
+                
+                val safeCursor = lastCursorPosition.coerceIn(0, originalText.length)
+                val textToInsert = if (safeCursor > 0 && originalText[safeCursor - 1] != ' ') " $text" else text
+                
+                val newText = buildString {
+                    append(originalText.substring(0, safeCursor))
+                    append(textToInsert)
+                    append(originalText.substring(safeCursor))
+                }
+                
+                newBlocks[targetIndex] = lastBlock.copy(text = newText)
+                lastCursorPosition = safeCursor + textToInsert.length
+            } else {
+                newBlocks.add(ContentBlock.Text(text))
+                lastFocusedBlockIndex = newBlocks.lastIndex
+                lastCursorPosition = text.length
+            }
+            _uiState.value = currentState.copy(contentBlocks = newBlocks)
+            saveChangesInternal()
+        }
+    }
+
+    fun toggleVoiceRecording() {
+        val currentState = _uiState.value
+        if (currentState is MomentDetailUiState.Success) {
+            if (currentState.voiceState.isSpeaking) {
+                voiceToTextParser.stopListening()
+            } else {
+                voiceToTextParser.startListening()
+            }
+        }
+    }
 
     fun loadMoment(id: Long) {
         if (currentMomentId == id) return
@@ -178,7 +252,8 @@ sealed interface MomentDetailUiState {
         val moment: Moment,
         val title: String,
         val contentBlocks: List<ContentBlock>,
-        val requestedFocusIndex: Int? = null
+        val requestedFocusIndex: Int? = null,
+        val voiceState: com.dailybliss.app.core.util.VoiceToTextParserState = com.dailybliss.app.core.util.VoiceToTextParserState()
     ) : MomentDetailUiState
     data object NotFound : MomentDetailUiState
 }

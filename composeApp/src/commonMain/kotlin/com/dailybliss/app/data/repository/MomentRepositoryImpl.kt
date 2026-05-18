@@ -38,6 +38,8 @@ class MomentRepositoryImpl(
             title = values.title,
             content = values.content,
             media_url = values.mediaUrl,
+            mood = values.mood,
+            tags = values.tags,
             is_pinned = values.isPinned,
             created_at = values.createdAt,
             updated_at = values.updatedAt
@@ -51,6 +53,8 @@ class MomentRepositoryImpl(
             title = values.title,
             content = values.content,
             media_url = values.mediaUrl,
+            mood = values.mood,
+            tags = values.tags,
             is_pinned = values.isPinned,
             updated_at = Clock.System.now().toEpochMilliseconds(),
             id = moment.id
@@ -64,5 +68,8 @@ class MomentRepositoryImpl(
     override suspend fun deleteMoments(ids: List<Long>) = withContext(Dispatchers.Default) {
         queries.deleteMomentsByIds(ids)
     }
+
+    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> =
+        queries.getMomentsFromSameDay(dayMonth).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
 }
 

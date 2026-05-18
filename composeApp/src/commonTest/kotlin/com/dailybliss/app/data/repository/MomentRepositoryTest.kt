@@ -15,6 +15,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
 /**
  * Unit Tests untuk MomentRepository
  * 
@@ -185,6 +188,8 @@ class MomentRepositoryTest {
             title = title,
             content = content,
             imageUrl = null,
+            mood = null,
+            tags = emptyList(),
             isPinned = false,
             createdAt = Clock.System.now(),
             updatedAt = Clock.System.now()
@@ -241,5 +246,15 @@ class FakeMomentRepository : MomentRepository {
     
     override suspend fun deleteMoments(ids: List<Long>) {
         moments.update { list -> list.filter { it.id !in ids } }
+    }
+
+    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> {
+        return moments.map { list ->
+            list.filter { 
+                val dt = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault())
+                val dm = "${dt.monthNumber.toString().padStart(2, '0')}-${dt.dayOfMonth.toString().padStart(2, '0')}"
+                dm == dayMonth
+            }
+        }
     }
 }

@@ -32,6 +32,9 @@ class UserPreferences(
         val NICKNAME = stringPreferencesKey("nickname")
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
         val COLOR_THEME = stringPreferencesKey("color_theme")
+        val AI_GREETING_CACHE = stringPreferencesKey("ai_greeting_cache")
+        val AI_DAILY_PROMPT_CACHE = stringPreferencesKey("ai_daily_prompt_cache")
+        val AI_CACHE_TIMESTAMP = stringPreferencesKey("ai_cache_timestamp")
     }
     
     // ==================== USER PROFILE ====================
@@ -49,6 +52,7 @@ class UserPreferences(
     suspend fun setNickname(name: String) {
         dataStore.edit { prefs ->
             prefs[Keys.NICKNAME] = name
+            prefs.remove(Keys.AI_CACHE_TIMESTAMP) // Invalidate cache
         }
     }
 
@@ -65,7 +69,48 @@ class UserPreferences(
     suspend fun setAiLanguageStyle(style: String) {
         dataStore.edit { prefs ->
             prefs[Keys.AI_LANGUAGE_STYLE] = style
+            prefs.remove(Keys.AI_CACHE_TIMESTAMP) // Invalidate cache
         }
+    }
+
+    // ==================== AI CACHE ====================
+
+    /**
+     * Observe AI Greeting Cache
+     */
+    val aiGreetingCache: Flow<String?> = dataStore.data.map { it[Keys.AI_GREETING_CACHE] }
+
+    /**
+     * Set AI Greeting Cache
+     */
+    suspend fun setAiGreetingCache(greeting: String) {
+        dataStore.edit { it[Keys.AI_GREETING_CACHE] = greeting }
+    }
+
+    /**
+     * Observe AI Daily Prompt Cache
+     */
+    val aiDailyPromptCache: Flow<String?> = dataStore.data.map { it[Keys.AI_DAILY_PROMPT_CACHE] }
+
+    /**
+     * Set AI Daily Prompt Cache
+     */
+    suspend fun setAiDailyPromptCache(prompt: String) {
+        dataStore.edit { it[Keys.AI_DAILY_PROMPT_CACHE] = prompt }
+    }
+
+    /**
+     * Observe AI Cache Timestamp
+     */
+    val aiCacheTimestamp: Flow<Long> = dataStore.data.map { 
+        it[Keys.AI_CACHE_TIMESTAMP]?.toLongOrNull() ?: 0L 
+    }
+
+    /**
+     * Update AI Cache Timestamp
+     */
+    suspend fun updateAiCacheTimestamp(timestamp: Long) {
+        dataStore.edit { it[Keys.AI_CACHE_TIMESTAMP] = timestamp.toString() }
     }
 
     // ==================== THEME ====================

@@ -14,6 +14,7 @@ import com.dailybliss.app.domain.repository.MomentRepository
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
+import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
 import com.dailybliss.app.domain.usecase.SearchMomentsUseCase
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
@@ -21,7 +22,11 @@ import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -29,6 +34,13 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+
+// ==================== CORE MODULE ====================
+
+val coreModule = module {
+    single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    singleOf(::BackgroundAIProcessor)
+}
 
 // ==================== NETWORK MODULE ====================
 
@@ -68,6 +80,7 @@ val useCaseModule = module {
     singleOf(::SaveMomentUseCase)
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
+    singleOf(::GetMomentsFromSameDayUseCase)
 }
 
 // ==================== VIEWMODEL MODULE ====================
@@ -84,6 +97,7 @@ val viewModelModule = module {
 // ==================== SHARED MODULES ====================
 
 val sharedModules = listOf(
+    coreModule,
     networkModule,
     databaseModule,
     preferencesModule,

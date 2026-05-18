@@ -136,6 +136,8 @@ class JournalViewModelTest {
             title = title,
             content = "Test content",
             imageUrl = null,
+            mood = null,
+            tags = emptyList(),
             isPinned = false,
             createdAt = Clock.System.now(),
             updatedAt = Clock.System.now()

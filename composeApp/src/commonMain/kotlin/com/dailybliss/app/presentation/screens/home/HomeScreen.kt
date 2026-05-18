@@ -1,6 +1,8 @@
 package com.dailybliss.app.presentation.screens.home
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,13 +21,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.presentation.components.LoadingIndicator
+import com.dailybliss.app.presentation.components.MomentCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToCreateMoment: () -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
@@ -71,61 +74,119 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
-            when (val state = uiState) {
-                is HomeUiState.Loading -> LoadingIndicator()
-                is HomeUiState.Success -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 32.dp, vertical = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "“",
-                            style = MaterialTheme.typography.displayLarge.copy(
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                fontSize = 80.sp,
-                                fontFamily = MaterialTheme.typography.headlineLarge.fontFamily
-                            )
+            // Greeting Section
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "“",
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            fontSize = 60.sp
                         )
-                        
+                    )
+                    
+                    Text(
+                        text = uiState.greeting,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontStyle = FontStyle.Italic,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 32.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+
+            // Daily Prompt Card
+            uiState.dailyPrompt?.let { prompt ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = state.greeting,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Medium,
-                                fontStyle = FontStyle.Italic,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 38.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onBackground
+                            "Inspirasi Hari Ini",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Apa yang membuatmu tersenyum hari ini?",
+                            prompt,
                             style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.secondary,
-                                textAlign = TextAlign.Center
+                                fontWeight = FontWeight.SemiBold,
+                                lineHeight = 24.sp
                             )
                         )
                     }
                 }
-                is HomeUiState.Error -> {
-                    Text(
-                        text = "Error: ${state.message}",
-                        modifier = Modifier.padding(24.dp),
-                        color = MaterialTheme.colorScheme.error
-                    )
+            }
+
+            // Memory Lane Section
+            if (uiState.memoryLaneMoments.isNotEmpty()) {
+                SectionHeader("Memory Lane ✨", modifier = Modifier.padding(top = 16.dp))
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(uiState.memoryLaneMoments) { moment ->
+                        MomentCard(
+                            moment = moment,
+                            onClick = { onNavigateToDetail(moment.id) },
+                            modifier = Modifier.width(280.dp)
+                        )
+                    }
                 }
             }
+
+            // Pinned Moments Section
+            if (uiState.pinnedMoments.isNotEmpty()) {
+                SectionHeader("Sering Dikunjungi 📌", modifier = Modifier.padding(top = 16.dp))
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    uiState.pinnedMoments.forEach { moment ->
+                        MomentCard(
+                            moment = moment,
+                            onClick = { onNavigateToDetail(moment.id) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
+}
+
+@Composable
+fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        ),
+        modifier = modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        color = MaterialTheme.colorScheme.onSurface
+    )
 }

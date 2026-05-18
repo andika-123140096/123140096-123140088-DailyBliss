@@ -11,6 +11,6 @@ import com.dailybliss.app.core.util.PlatformContext
 actual class DataStoreFactory actual constructor(
     private val context: PlatformContext
 ) {
-    actual fun producePath(): String = context.filesDir.absolutePath
+    actual fun producePath(): String = context.androidContext.filesDir.absolutePath
 }
 
