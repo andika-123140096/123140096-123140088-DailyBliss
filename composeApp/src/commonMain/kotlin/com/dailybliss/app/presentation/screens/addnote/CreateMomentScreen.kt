@@ -8,17 +8,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +21,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.presentation.components.*
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -37,7 +31,6 @@ fun CreateMomentScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     var activeBlockIndex by remember { mutableStateOf<Int?>(null) }
     
@@ -79,28 +72,7 @@ fun CreateMomentScreen(
     
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            if (!uiState.isLoading) {
-                FloatingActionButton(
-                    onClick = { viewModel.toggleVoiceRecording() },
-                    containerColor = if (uiState.voiceState.isSpeaking) 
-                        MaterialTheme.colorScheme.errorContainer 
-                    else 
-                        MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (uiState.voiceState.isSpeaking) 
-                        MaterialTheme.colorScheme.error 
-                    else 
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(
-                        if (uiState.voiceState.isSpeaking) Icons.Default.MicOff else Icons.Default.Mic,
-                        contentDescription = "Voice Input"
-                    )
-                }
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         if (uiState.isLoading) {
             LoadingIndicator()
@@ -216,23 +188,6 @@ fun CreateMomentScreen(
                         }
                     }
 
-                    if (uiState.voiceState.isSpeaking) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                )
-                            ) {
-                                Text(
-                                    text = if (uiState.voiceState.spokenText.isBlank()) "Mendengarkan..." else uiState.voiceState.spokenText,
-                                    modifier = Modifier.padding(16.dp),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-                                )
-                            }
-                        }
-                    }
-
                     itemsIndexed(uiState.contentBlocks) { index, block ->
                         Box(modifier = Modifier.padding(horizontal = 12.dp)) {
                             when (block) {
@@ -240,9 +195,6 @@ fun CreateMomentScreen(
                                     TextBlockItem(
                                         text = block.text,
                                         onTextChange = { viewModel.onBlockChange(index, block.copy(text = it)) },
-                                        onCursorPositionChange = { cursorPosition ->
-                                            viewModel.updateCursorPosition(index, cursorPosition)
-                                        },
                                         onRemove = { viewModel.removeBlock(index) },
                                         onEnterPressed = { viewModel.addTextBlock(afterIndex = index) },
                                         onAttachMedia = { 

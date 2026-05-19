@@ -1,16 +1,12 @@
 package com.dailybliss.app.presentation.screens.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +22,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.presentation.components.*
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +33,6 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     var activeBlockIndex by remember { mutableStateOf<Int?>(null) }
     
@@ -97,29 +90,7 @@ fun MomentDetailScreen(
     }
     
     Scaffold(
-        containerColor = Color.White,
-        floatingActionButton = {
-            val state = uiState
-            if (state is MomentDetailUiState.Success) {
-                FloatingActionButton(
-                    onClick = { viewModel.toggleVoiceRecording() },
-                    containerColor = if (state.voiceState.isSpeaking) 
-                        MaterialTheme.colorScheme.errorContainer 
-                    else 
-                        MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (state.voiceState.isSpeaking) 
-                        MaterialTheme.colorScheme.error 
-                    else 
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(
-                        if (state.voiceState.isSpeaking) Icons.Default.MicOff else Icons.Default.Mic,
-                        contentDescription = "Voice Input"
-                    )
-                }
-            }
-        }
+        containerColor = Color.White
     ) { paddingValues ->
         when (val state = uiState) {
             is MomentDetailUiState.Loading -> LoadingIndicator()
@@ -175,23 +146,6 @@ fun MomentDetailScreen(
                         }
                     }
 
-                    if (state.voiceState.isSpeaking) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                )
-                            ) {
-                                Text(
-                                    text = if (state.voiceState.spokenText.isBlank()) "Mendengarkan..." else state.voiceState.spokenText,
-                                    modifier = Modifier.padding(16.dp),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-                                )
-                            }
-                        }
-                    }
-
                     itemsIndexed(state.contentBlocks) { index, block ->
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             when (block) {
@@ -199,9 +153,6 @@ fun MomentDetailScreen(
                                     TextBlockItem(
                                         text = block.text,
                                         onTextChange = { viewModel.onBlockChange(index, block.copy(text = it)) },
-                                        onCursorPositionChange = { cursorPosition ->
-                                            viewModel.updateCursorPosition(index, cursorPosition)
-                                        },
                                         onRemove = { viewModel.removeBlock(index) },
                                         onEnterPressed = { viewModel.addTextBlock(index) },
                                         onAttachMedia = { 

@@ -2,7 +2,6 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.core.util.VoiceToTextParser
 import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.model.MomentContent
@@ -19,7 +18,6 @@ class MomentDetailViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val saveMomentUseCase: SaveMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
-    private val voiceToTextParser: VoiceToTextParser,
     private val fileStorage: FileStorage
 ) : ViewModel() {
 
@@ -32,79 +30,6 @@ class MomentDetailViewModel(
     private var currentMomentId: Long? = null
     private val json = Json { ignoreUnknownKeys = true }
     
-    private var lastFocusedBlockIndex: Int? = null
-    private var lastCursorPosition: Int = 0
-
-    init {
-        observeVoiceState()
-    }
-
-    private fun observeVoiceState() {
-        viewModelScope.launch {
-            voiceToTextParser.state.collect { voiceState ->
-                val currentState = _uiState.value
-                if (currentState is MomentDetailUiState.Success) {
-                    _uiState.update { currentState.copy(voiceState = voiceState) }
-                }
-            }
-        }
-        
-        viewModelScope.launch {
-            voiceToTextParser.finalResult.collect { text ->
-                if (text.isNotBlank()) {
-                    insertTextAtCursor(text)
-                }
-            }
-        }
-    }
-
-    fun updateCursorPosition(blockIndex: Int, cursorPosition: Int) {
-        lastFocusedBlockIndex = blockIndex
-        lastCursorPosition = cursorPosition
-    }
-
-    private fun insertTextAtCursor(text: String) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            val newBlocks = currentState.contentBlocks.toMutableList()
-            val targetIndex = lastFocusedBlockIndex ?: newBlocks.indexOfLast { it is ContentBlock.Text }
-            
-            if (targetIndex != -1 && newBlocks[targetIndex] is ContentBlock.Text) {
-                val lastBlock = newBlocks[targetIndex] as ContentBlock.Text
-                val originalText = lastBlock.text
-                
-                val safeCursor = lastCursorPosition.coerceIn(0, originalText.length)
-                val textToInsert = if (safeCursor > 0 && originalText[safeCursor - 1] != ' ') " $text" else text
-                
-                val newText = buildString {
-                    append(originalText.substring(0, safeCursor))
-                    append(textToInsert)
-                    append(originalText.substring(safeCursor))
-                }
-                
-                newBlocks[targetIndex] = lastBlock.copy(text = newText)
-                lastCursorPosition = safeCursor + textToInsert.length
-            } else {
-                newBlocks.add(ContentBlock.Text(text))
-                lastFocusedBlockIndex = newBlocks.lastIndex
-                lastCursorPosition = text.length
-            }
-            _uiState.value = currentState.copy(contentBlocks = newBlocks)
-            saveChangesInternal()
-        }
-    }
-
-    fun toggleVoiceRecording() {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            if (currentState.voiceState.isSpeaking) {
-                voiceToTextParser.stopListening()
-            } else {
-                voiceToTextParser.startListening()
-            }
-        }
-    }
-
     fun loadMoment(id: Long) {
         if (currentMomentId == id) return
         currentMomentId = id
@@ -254,6 +179,88 @@ sealed interface MomentDetailUiState {
         val contentBlocks: List<ContentBlock>,
         val requestedFocusIndex: Int? = null,
         val voiceState: com.dailybliss.app.core.util.VoiceToTextParserState = com.dailybliss.app.core.util.VoiceToTextParserState()
+    ) : MomentDetailUiState
+    data object NotFound : MomentDetailUiState
+}
+
+sealed interface MomentDetailEvent {
+    data object MomentDeleted : MomentDetailEvent
+    data object MomentSaved : MomentDetailEvent
+    data class Error(val message: String) : MomentDetailEvent
+}
+Blocks = newBlocks,
+                        requestedFocusIndex = null
+                    )
+                    saveChangesInternal()
+                }
+            }
+        }
+    }
+
+    fun clearFocusRequest() {
+        val currentState = _uiState.value
+        if (currentState is MomentDetailUiState.Success) {
+            _uiState.value = currentState.copy(requestedFocusIndex = null)
+        }
+    }
+
+    fun removeBlock(index: Int) {
+        val currentState = _uiState.value
+        if (currentState is MomentDetailUiState.Success) {
+            if (currentState.contentBlocks.size > 1) {
+                val newBlocks = currentState.contentBlocks.toMutableList()
+                newBlocks.removeAt(index)
+                val focusBackIndex = if (index > 0) index - 1 else 0
+                _uiState.value = currentState.copy(
+                    contentBlocks = newBlocks,
+                    requestedFocusIndex = focusBackIndex
+                )
+                saveChangesInternal()
+            }
+        }
+    }
+
+    private fun saveChangesInternal() {
+        val state = _uiState.value
+        if (state is MomentDetailUiState.Success) {
+            viewModelScope.launch {
+                val serializedContent = json.encodeToString(MomentContent.serializer(), MomentContent(state.contentBlocks))
+                val mainImageUrl = state.contentBlocks.filterIsInstance<ContentBlock.Image>().firstOrNull()?.url
+                
+                val updatedMoment = state.moment.copy(
+                    title = state.title.trim(),
+                    content = serializedContent,
+                    imageUrl = mainImageUrl ?: state.moment.imageUrl,
+                    updatedAt = Clock.System.now()
+                )
+                saveMomentUseCase(updatedMoment)
+            }
+        }
+    }
+
+    fun saveChanges() {
+        saveChangesInternal()
+        viewModelScope.launch {
+            _events.emit(MomentDetailEvent.MomentSaved)
+        }
+    }
+
+    fun deleteMoment() {
+        val id = currentMomentId ?: return
+        viewModelScope.launch {
+            deleteMomentUseCase(id)
+            _events.emit(MomentDetailEvent.MomentDeleted)
+        }
+    }
+}
+
+sealed interface MomentDetailUiState {
+    data object Loading : MomentDetailUiState
+    data class Success(
+        val moment: Moment,
+        val title: String,
+        val contentBlocks: List<ContentBlock>,
+        val requestedFocusIndex: Int? = null
     ) : MomentDetailUiState
     data object NotFound : MomentDetailUiState
 }

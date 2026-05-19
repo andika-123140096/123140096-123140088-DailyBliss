@@ -30,7 +30,6 @@ import coil3.compose.AsyncImage
 fun TextBlockItem(
     text: String,
     onTextChange: (String) -> Unit,
-    onCursorPositionChange: (Int) -> Unit = {},
     onRemove: () -> Unit,
     onEnterPressed: () -> Unit,
     onAttachMedia: () -> Unit,
@@ -39,18 +38,6 @@ fun TextBlockItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
-
-    // Sync external text changes (like Voice-to-Text) into the local TextFieldValue
-    LaunchedEffect(text) {
-        if (text != textFieldValue.text) {
-            val offset = text.length - textFieldValue.text.length
-            val newCursor = (textFieldValue.selection.start + offset).coerceIn(0, text.length)
-            textFieldValue = textFieldValue.copy(
-                text = text,
-                selection = TextRange(newCursor)
-            )
-        }
-    }
 
     Row(
         modifier = modifier
@@ -92,7 +79,6 @@ fun TextBlockItem(
                 } else {
                     textFieldValue = it
                     onTextChange(it.text)
-                    onCursorPositionChange(it.selection.start)
                 }
             },
             modifier = Modifier
@@ -101,9 +87,6 @@ fun TextBlockItem(
                 .focusRequester(focusRequester)
                 .onFocusChanged { 
                     isFocused = it.isFocused 
-                    if (it.isFocused) {
-                        onCursorPositionChange(textFieldValue.selection.start)
-                    }
                 }
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown && 

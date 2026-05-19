@@ -2,7 +2,6 @@ package com.dailybliss.app.presentation.screens.addnote
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.core.util.VoiceToTextParser
 import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.domain.model.Moment
@@ -22,7 +21,6 @@ class CreateMomentViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val aiRepository: AIRepository,
     private val backgroundAIProcessor: BackgroundAIProcessor,
-    private val voiceToTextParser: VoiceToTextParser,
     private val fileStorage: FileStorage
 ) : ViewModel() {
 
@@ -35,73 +33,6 @@ class CreateMomentViewModel(
     private var currentMomentId: Long? = null
     private val json = Json { ignoreUnknownKeys = true }
     
-    private var lastFocusedBlockIndex: Int? = null
-    private var lastCursorPosition: Int = 0
-
-    init {
-        observeVoiceState()
-    }
-
-    private fun observeVoiceState() {
-        viewModelScope.launch {
-            voiceToTextParser.state.collect { voiceState ->
-                _uiState.update { it.copy(voiceState = voiceState) }
-            }
-        }
-        
-        viewModelScope.launch {
-            voiceToTextParser.finalResult.collect { text ->
-                if (text.isNotBlank()) {
-                    insertTextAtCursor(text)
-                }
-            }
-        }
-    }
-
-    fun updateCursorPosition(blockIndex: Int, cursorPosition: Int) {
-        lastFocusedBlockIndex = blockIndex
-        lastCursorPosition = cursorPosition
-    }
-
-    private fun insertTextAtCursor(text: String) {
-        _uiState.update { state ->
-            val newBlocks = state.contentBlocks.toMutableList()
-            val targetIndex = lastFocusedBlockIndex ?: newBlocks.indexOfLast { it is ContentBlock.Text }
-            
-            if (targetIndex != -1 && newBlocks[targetIndex] is ContentBlock.Text) {
-                val lastBlock = newBlocks[targetIndex] as ContentBlock.Text
-                val originalText = lastBlock.text
-                
-                // Ensure cursor is within bounds
-                val safeCursor = lastCursorPosition.coerceIn(0, originalText.length)
-                
-                val textToInsert = if (safeCursor > 0 && originalText[safeCursor - 1] != ' ') " $text" else text
-                
-                val newText = buildString {
-                    append(originalText.substring(0, safeCursor))
-                    append(textToInsert)
-                    append(originalText.substring(safeCursor))
-                }
-                
-                newBlocks[targetIndex] = lastBlock.copy(text = newText)
-                lastCursorPosition = safeCursor + textToInsert.length
-            } else {
-                newBlocks.add(ContentBlock.Text(text))
-                lastFocusedBlockIndex = newBlocks.lastIndex
-                lastCursorPosition = text.length
-            }
-            state.copy(contentBlocks = newBlocks)
-        }
-    }
-
-    fun toggleVoiceRecording() {
-        if (_uiState.value.voiceState.isSpeaking) {
-            voiceToTextParser.stopListening()
-        } else {
-            voiceToTextParser.startListening()
-        }
-    }
-
     fun loadMoment(id: Long) {
         if (currentMomentId == id) return
         currentMomentId = id
@@ -267,6 +198,73 @@ data class CreateMomentUiState(
     val createdAt: Instant = Clock.System.now(),
     val requestedFocusIndex: Int? = null,
     val voiceState: com.dailybliss.app.core.util.VoiceToTextParserState = com.dailybliss.app.core.util.VoiceToTextParserState()
+)
+
+sealed interface CreateMomentEvent {
+    data object MomentSaved : CreateMomentEvent
+    data class Error(val message: String) : CreateMomentEvent
+}
+{
+                state.copy(
+                    contentBlocks = listOf(ContentBlock.Text("")),
+                    imageUrl = null
+                )
+            }
+        }
+    }
+
+    fun saveMoment() {
+        val state = _uiState.value
+        val allText = state.contentBlocks.filterIsInstance<ContentBlock.Text>().joinToString("\n") { it.text }
+        
+        if (state.title.isBlank() && allText.isBlank()) {
+            _uiState.update { it.copy(titleError = "Tuliskan sesuatu...") }
+            return
+        }
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            
+            val serializedContent = json.encodeToString(MomentContent.serializer(), MomentContent(state.contentBlocks))
+            val mainImageUrl = state.contentBlocks.filterIsInstance<ContentBlock.Image>().firstOrNull()?.url
+            
+            val moment = Moment(
+                id = currentMomentId ?: 0,
+                title = state.title.trim(),
+                content = serializedContent,
+                imageUrl = mainImageUrl,
+                mood = state.mood,
+                tags = state.tags,
+                createdAt = if (currentMomentId == null) Clock.System.now() else state.createdAt,
+                updatedAt = Clock.System.now()
+            )
+            
+            val newId = saveMomentUseCase(moment)
+            if (currentMomentId == null) {
+                currentMomentId = newId
+            }
+            
+            // Trigger background AI processing for tagging and mood analysis
+            backgroundAIProcessor.processMoment(newId)
+            
+            _uiState.update { it.copy(isSaving = false) }
+            _events.emit(CreateMomentEvent.MomentSaved)
+        }
+    }
+}
+
+data class CreateMomentUiState(
+    val title: String = "",
+    val contentBlocks: List<ContentBlock> = listOf(ContentBlock.Text("")),
+    val imageUrl: String? = null,
+    val mood: String? = null,
+    val tags: List<String> = emptyList(),
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val isEditMode: Boolean = false,
+    val titleError: String? = null,
+    val createdAt: Instant = Clock.System.now(),
+    val requestedFocusIndex: Int? = null
 )
 
 sealed interface CreateMomentEvent {
