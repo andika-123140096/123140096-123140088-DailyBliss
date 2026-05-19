@@ -12,10 +12,10 @@
     <string name="nav_settings">Pengaturan</string>
     
     <!-- Home Screen -->
-    <string name="home_title">Momen Bersyukur</string>
-    <string name="home_search_hint">Cari momen...</string>
-    <string name="home_empty_title">Belum Ada Momen</string>
-    <string name="home_empty_message">Tap + untuk mencatat momen bersyukur hari ini</string>
+    <string name="home_title">Moment</string>
+    <string name="home_search_hint">Cari moment...</string>
+    <string name="home_empty_title">Belum Ada Moment</string>
+    <string name="home_empty_message">Tap + untuk mencatat moment hari ini</string>
     <string name="home_not_found_title">Tidak Ditemukan</string>
     <string name="home_not_found_message">Coba ubah kata kunci atau filter</string>
     <string name="home_filter_all">Semua</string>
@@ -47,10 +47,10 @@
     <string name="color_pink">Pink</string>
     
     <!-- Add/Edit Moment Screen -->
-    <string name="add_moment_title">Momen Baru</string>
-    <string name="edit_moment_title">Edit Momen</string>
+    <string name="add_moment_title">Moment Baru</string>
+    <string name="edit_moment_title">Edit Moment</string>
     <string name="moment_title_label">Judul</string>
-    <string name="moment_title_hint">Apa yang membuatmu bersyukur?</string>
+    <string name="moment_title_hint">Ada moment apa hari ini?</string>
     <string name="moment_content_label">Cerita</string>
     <string name="moment_content_hint">Ceritakan lebih detail di sini...</string>
     <string name="moment_category_label">Kategori</string>

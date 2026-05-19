@@ -113,7 +113,6 @@ class AIRepositoryImpl(
         1. 'Santai/Kasual': Gunakan bahasa percakapan sehari-hari yang akrab namun sopan. Boleh gunakan kata seperti 'banget', 'kok', 'sih'. Hindari bahasa yang terlalu alay/lebay. Anggap $nickname adalah teman dekat.
         2. 'Formal/Baku': Gunakan kosakata bahasa Indonesia yang standar (EYD). Gunakan kalimat yang lengkap dan tertata. Tetap hangat, tapi pertahankan profesionalisme. Cocok untuk refleksi serius.
         3. 'Puitis/Puitik': Gunakan diksi yang indah, lembut, dan penuh makna. Gunakan sedikit metafora alam atau perasaan. Fokus pada ketenangan dan keindahan momen kecil.
-        4. 'Motivasi': Gunakan nada yang energetik dan inspiratif. Berikan penekanan pada potensi diri dan afirmasi positif. Fokus pada solusi dan semangat untuk hari esok.
         
         CATATAN PENTING:
         - Jangan berlebihan (jangan 'lebay'). Tetaplah terasa natural seperti manusia, bukan AI yang dipaksakan.

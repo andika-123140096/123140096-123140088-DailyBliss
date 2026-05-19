@@ -266,7 +266,7 @@ fun ChatInput(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     decorationBox = { innerTextField ->
                         if (message.isEmpty()) {
-                            Text("Bagikan syukurmu...", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.bodyLarge)
+                            Text("Bagikan momentmu...", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.bodyLarge)
                         }
                         innerTextField()
                     },

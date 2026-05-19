@@ -39,7 +39,7 @@ class SettingsViewModel(
         }
     }
 
-    val languageStyles = listOf("Santai/Kasual", "Formal/Baku", "Puitis/Puitik", "Motivasi")
+    val languageStyles = listOf("Santai/Kasual", "Formal/Baku", "Puitis/Puitik")
     
     val themes = listOf("Sage Green", "Ocean Blue", "Rose Pink", "Lavender", "Monochrome")
 }

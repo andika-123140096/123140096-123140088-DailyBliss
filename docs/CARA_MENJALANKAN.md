@@ -1,11 +1,11 @@
 # 🚀 Cara Menjalankan DailyBliss
 
-Panduan lengkap untuk menjalankan template aplikasi **DailyBliss** (Kotlin Multiplatform).
+Panduan lengkap untuk menjalankan aplikasi **DailyBliss** (Kotlin Multiplatform).
 
 > **Status target build:**
-> - ✅ **Android** — jalur utama yang didukung penuh oleh template ini.
+> - ✅ **Android** — jalur utama yang didukung penuh.
 > - ⚠️ **iOS** — kode shared (Kotlin) sudah ter-set untuk target iOS (X64/Arm64/SimulatorArm64),
->   tetapi project Xcode (`iosApp/`) **belum disertakan** di template ini.
+>   tetapi project Xcode (`iosApp/`) **belum disertakan** di repository ini.
 >   Lihat bagian *"Menjalankan iOS (lanjutan)"* di bawah jika Anda ingin mencoba target iOS.
 
 ---
@@ -27,14 +27,8 @@ Hardware yang nyaman: RAM minimal 8 GB (16 GB lebih lega), free space ±10 GB.
 ## 2. Clone Repository
 
 ```bash
-git clone https://github.com/informatika-itera/Proyek-Pengembangan-Aplikasi-Mobile.git
-cd Proyek-Pengembangan-Aplikasi-Mobile
-```
-
-Buat branch project kelompok sesuai aturan di [GIT_WORKFLOW.md](./GIT_WORKFLOW.md):
-
-```bash
-git checkout -b project/121140003-121140004-NamaApp
+git clone git@github.com:andika-123140096/123140096-123140088-DailyBliss.git
+cd 123140096-123140088-DailyBliss
 ```
 
 ---
@@ -54,10 +48,6 @@ Lalu edit `local.properties`:
 
 ```properties
 # Lokasi Android SDK (Android Studio biasanya mengisi otomatis saat sync)
-# macOS  :
-# sdk.dir=/Users/<USER>/Library/Android/sdk
-# Linux  :
-# sdk.dir=/home/<USER>/Android/Sdk
 # Windows:
 # sdk.dir=C\:\\Users\\<USER>\\AppData\\Local\\Android\\Sdk
 
@@ -65,8 +55,8 @@ Lalu edit `local.properties`:
 GEMINI_API_KEY=AIzaSy....your_real_key....
 ```
 
-> Tanpa `GEMINI_API_KEY` aplikasi tetap **bisa dibuka**, tetapi fitur AI (ringkas,
-> generate ide, perbaiki tulisan, dll) akan gagal dengan error 401/403.
+> Tanpa `GEMINI_API_KEY` aplikasi tetap **bisa dibuka**, tetapi fitur AI (Blissie chat,
+> mood analysis, tag generation, dll) akan gagal dengan error 401/403.
 
 ---
 
@@ -84,7 +74,7 @@ GEMINI_API_KEY=AIzaSy....your_real_key....
 ## 5. Build & Sync via Android Studio (cara yang dianjurkan)
 
 1. Buka Android Studio.
-2. **File → Open** → pilih folder root project (`Pryk-PAM`).
+2. **File → Open** → pilih folder root project `123140096-123140088-DailyBliss`.
 3. Klik **Trust Project**.
 4. Tunggu Gradle sync selesai. Sync pertama bisa 5–15 menit (download
    Compose Multiplatform, KMP runtime, dependencies).
@@ -97,7 +87,7 @@ Saat sync sukses Anda akan melihat run configuration **composeApp** di toolbar.
 ## 6. Build dari Terminal (alternatif)
 
 Project ini sudah berisi Gradle wrapper. Anda **tidak** perlu menginstall Gradle
-manual — wrapper akan mendownload Gradle 8.9 sendiri.
+manual — wrapper akan mendownload Gradle sendiri.
 
 ```bash
 # Pertama kali (download dependencies + build semua artifact)
@@ -115,11 +105,11 @@ manual — wrapper akan mendownload Gradle 8.9 sendiri.
 Generate file SQLDelight (biasanya otomatis, tapi kalau perlu manual):
 
 ```bash
-./gradlew :composeApp:generateCommonMainNoteDatabaseInterface
+./gradlew :composeApp:generateCommonMainBlissDatabaseInterface
 ```
 
 > Nama task ini berasal dari konfigurasi di `composeApp/build.gradle.kts`:
-> `sqldelight { databases { create("NoteDatabase") { ... } } }`.
+> `sqldelight { databases { create("BlissDatabase") { ... } } }`.
 
 Jalankan unit test (commonTest):
 
@@ -155,7 +145,7 @@ Jalankan unit test (commonTest):
 
 ## 8. Menjalankan iOS (lanjutan, opsional)
 
-Template ini **belum menyertakan** folder `iosApp/` dengan project Xcode yang
+Repository ini **belum menyertakan** folder `iosApp/` dengan project Xcode yang
 siap pakai. Anda punya 2 opsi:
 
 ### Opsi A — Pakai KMP Wizard JetBrains
@@ -164,8 +154,7 @@ siap pakai. Anda punya 2 opsi:
 2. Generate template baru "Compose Multiplatform" (Android + iOS).
 3. Copy folder `iosApp/` hasil wizard ke root project ini.
 4. Edit `iosApp/iosApp/iOSApp.swift` agar memanggil `MainViewControllerKt.MainViewController()`
-   dari module `ComposeApp` (lihat dokumentasi inline di
-   `composeApp/src/iosMain/kotlin/com/example/noteai/MainViewController.kt`).
+   dari module `ComposeApp`.
 
 ### Opsi B — Build framework saja
 
@@ -188,17 +177,14 @@ Hasilnya ada di `composeApp/build/bin/iosSimulatorArm64/debugFramework/`.
 
 Checklist setelah app jalan:
 
-- [ ] Splash → Home Screen tampil dengan FAB **+**.
-- [ ] Tap **+** → bisa membuat catatan baru (judul + konten).
-- [ ] Catatan baru muncul di daftar Home.
-- [ ] Tap catatan → masuk ke detail screen.
-- [ ] Pin / unpin berjalan; catatan ter-pin pindah ke atas.
-- [ ] Search (ikon 🔍) menyaring berdasarkan judul/konten.
-- [ ] Filter kategori (chip "Semua/Umum/Pekerjaan/...") berfungsi.
-- [ ] Sort menu (ikon ⇅) mengubah urutan.
-- [ ] Hapus dari card Home bekerja.
-- [ ] AI Assistant (ikon ✨) terbuka.
-- [ ] Dengan API key valid → aksi **Ringkas** mengembalikan teks (butuh konten ≥ 50 karakter).
+- [ ] Splash → Home Screen tampil dengan salam hangat.
+- [ ] Tap **+** → bisa membuat momen baru (judul + konten + gambar + tag).
+- [ ] Momen baru muncul di daftar Beranda dan Jurnal.
+- [ ] Tap momen → masuk ke detail screen.
+- [ ] AI Assistant (Blissie) bisa diajak mengobrol.
+- [ ] Analisis mood otomatis muncul setelah menyimpan momen.
+- [ ] Tag otomatis muncul setelah menyimpan momen.
+- [ ] Fitur dikte suara (Voice-to-Text) berfungsi di layar Create Moment.
 
 ---
 
@@ -208,11 +194,10 @@ Checklist setelah app jalan:
 | ------------------------------------------------------ | ------------------------------------------------------------------ |
 | `SDK location not found`                               | Edit `local.properties`, isi `sdk.dir=...` atau buka project lewat Android Studio agar diisi otomatis. |
 | `GEMINI_API_KEY` kosong / 401 Unauthorized             | Periksa baris `GEMINI_API_KEY=...` di `local.properties` lalu rebuild. |
-| `Cannot resolve symbol 'NoteDatabase'`                 | Jalankan `./gradlew :composeApp:generateCommonMainNoteDatabaseInterface`, lalu **Build → Rebuild Project**. |
-| Gradle sync lambat sekali pertama kali                 | Normal — dependencies KMP cukup besar (~1 GB). Pastikan internet stabil. |
+| `Cannot resolve symbol 'BlissDatabase'`                 | Jalankan `./gradlew :composeApp:generateCommonMainBlissDatabaseInterface`, lalu **Build → Rebuild Project**. |
+| Gradle sync lambat sekali pertama kali                 | Normal — dependencies KMP cukup besar. Pastikan internet stabil. |
 | `Daemon ... was terminated` saat build                 | Naikkan heap di `gradle.properties`: `org.gradle.jvmargs=-Xmx6g`. |
 | Build error setelah ganti versi                        | `./gradlew clean` lalu rebuild; bila tetap gagal hapus folder `.gradle/` lokal lalu sync ulang. |
-| Error `Plugin com.android.application not found` di Linux/CI | Pastikan punya akses ke repo Google + Maven Central (cek setting proxy/firewall). |
 
 Lebih lengkap di [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md).
 
@@ -221,12 +206,12 @@ Lebih lengkap di [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md).
 ## 11. File Penting
 
 ```
-Pryk-PAM/
+DailyBliss/
 ├── local.properties           ← BUAT FILE INI (tidak ter-commit)
 ├── local.properties.example   ← Template, di-commit
 ├── settings.gradle.kts
 ├── build.gradle.kts
-├── gradlew / gradlew.bat      ← Wrapper, dipanggil sebagai ./gradlew
+├── gradlew / gradlew.bat      ← Wrapper
 ├── gradle/
 │   ├── libs.versions.toml     ← Daftar versi semua dependency
 │   └── wrapper/
@@ -234,24 +219,12 @@ Pryk-PAM/
 │   ├── build.gradle.kts
 │   └── src/
 │       ├── commonMain/        ← Kode shared Kotlin
-│       ├── commonMain/sqldelight/  ← Skema DB (Note.sq)
+│       ├── commonMain/sqldelight/  ← Skema DB (Moment.sq)
 │       ├── commonTest/        ← Unit test
 │       ├── androidMain/       ← Implementasi spesifik Android
 │       └── iosMain/           ← Implementasi spesifik iOS
-└── docs/                      ← Dokumentasi (file ini ada di sini)
+└── docs/                      ← Dokumentasi
 ```
-
----
-
-## 12. Tips Pengembangan
-
-- **Live Edit** Compose: aktif by default, edit `@Composable` lalu lihat
-  hasilnya tanpa restart app (selama struktur tidak berubah drastis).
-- **Logcat**: `View → Tool Windows → Logcat` (filter dengan tag `HTTP:` untuk
-  melihat log Ktor karena kita pakai `enableLogging = true`).
-- **Run unit test cepat** dari IDE: klik kanan file `*Test.kt` → **Run**.
-- **Debug DataStore**: file preferences disimpan di
-  `/data/data/com.example.dailybliss/files/dailybliss.preferences_pb` (Android).
 
 ---
 

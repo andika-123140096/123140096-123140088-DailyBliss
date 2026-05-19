@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml/badge.svg)](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml)
 
-Aplikasi yang membantu seseorang untuk mencatat kejadian yang membuat mereka bersyukur. Dilengkapi dengan fitur reminder dan integrasi dengan AI untuk memberikan motivasi. 
+Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen berharga. Dilengkapi dengan asisten AI yang empatik, analisis suasana hati otomatis, dan dukungan input suara.
 
 **Kelompok DailyBliss:**
 - Andika Dinata (123140096)
@@ -19,21 +19,27 @@ Aplikasi yang membantu seseorang untuk mencatat kejadian yang membuat mereka ber
 > | [🏗️ Struktur Kode](./docs/STRUKTUR_KODE.md) | Penjelasan arsitektur dan struktur folder |
 > | [🔧 Troubleshooting](./docs/TROUBLESHOOTING.md) | Solusi untuk masalah umum |
 
-## ✨ Fitur Aplikasi
+## ✨ Fitur Utama
 
-- 📝 **CRUD Notes** - Tambah, edit, hapus, dan lihat catatan
-- 🔍 **Search & Filter** - Cari dan filter notes berdasarkan kategori
-- 🤖 **AI Assistant** - Summarize, generate ideas, improve writing
-- 🌙 **Dark Mode** - Tema gelap/terang
-- 📱 **Cross-Platform** - Android & iOS dari satu codebase
+- 📝 **Rich Journaling** - Catat momen dengan judul, konten, gambar, dan tag yang terorganisir.
+- 🤖 **AI Assistant (Blissie)** - Ngobrol dengan Blissie, asisten AI yang dirancang untuk menjadi pendengar yang baik dan memberikan refleksi bermakna.
+- 🎭 **AI Mood Analysis** - Secara otomatis mendeteksi suasana hati dari setiap catatan jurnalmu.
+- 🏷️ **AI Smart Tagging** - Menghasilkan tag yang relevan secara otomatis berdasarkan konteks tulisanmu.
+- 💡 **Daily Reflections** - Dapatkan pertanyaan reflektif harian dari AI untuk membantumu mulai menulis.
+- 🎙️ **Voice-to-Text** - Malas mengetik? Gunakan fitur dikte suara untuk mencatat momenmu secara instan.
+- 🖼️ **Image Support** - Tambahkan foto ke momen berhargamu untuk kenangan yang lebih visual.
+- 📱 **Cross-Platform** - Pengalaman yang konsisten di Android & iOS dari satu codebase Kotlin Multiplatform.
+- 🌙 **Modern UI** - Desain bersih dan minimalis menggunakan Material 3 dengan dukungan Dark Mode.
 
 ## 🏗️ Arsitektur & Teknologi
 
 ### Clean Architecture + MVVM
 
+Aplikasi ini mengikuti prinsip **Clean Architecture** untuk memastikan kode tetap terorganisir, mudah diuji, dan skalabel.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                        │
+│                    PRESENTATION LAYER (Compose)              │
 │  ┌───────────────┐        ┌───────────────┐                 │
 │  │    Screen     │◄──────►│   ViewModel   │                 │
 │  │  (Composable) │ State  │  (StateFlow)  │                 │
@@ -41,7 +47,7 @@ Aplikasi yang membantu seseorang untuk mencatat kejadian yang membuat mereka ber
 └───────────────────────────────────┼─────────────────────────┘
                                     │
 ┌───────────────────────────────────┼─────────────────────────┐
-│                      DOMAIN LAYER │                          │
+│                      DOMAIN LAYER (Pure Kotlin)             │
 │                    ┌──────────────▼──────────────┐          │
 │                    │         Use Cases           │          │
 │                    │    (Business Logic)         │          │
@@ -52,189 +58,104 @@ Aplikasi yang membantu seseorang untuk mencatat kejadian yang membuat mereka ber
 └───────────────────────────────────┼─────────────────────────┘
                                     │
 ┌───────────────────────────────────┼─────────────────────────┐
-│                       DATA LAYER  │                          │
+│                       DATA LAYER (Frameworks)                │
 │                    ┌──────────────▼──────────────┐          │
 │                    │   Repository Implementation │          │
 │                    └──────────────┬──────────────┘          │
 │              ┌────────────────────┼────────────────────┐    │
 │              │                    │                    │    │
 │        ┌─────▼─────┐        ┌─────▼─────┐       ┌─────▼────┐│
-│        │  SQLDelight│        │   Ktor   │       │ DataStore││
-│        │  (Local)  │        │ (Remote) │       │  (Prefs) ││
-│        └───────────┘        └──────────┘       └──────────┘│
+│        │ SQLDelight│        │    Ktor   │       │ DataStore││
+│        │  (Local)  │        │  (Remote) │       │  (Prefs) ││
+│        └───────────┘        └───────────┘       └──────────┘│
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **UI** | Compose Multiplatform, Material 3 |
-| **State** | StateFlow, ViewModel |
+| Komponen | Teknologi |
+|----------|-----------|
+| **UI Framework** | Compose Multiplatform (1.7.0) |
+| **Design System** | Material 3 |
+| **Language** | Kotlin (2.0.21) |
+| **DI** | Koin (4.0.0) |
+| **Networking** | Ktor Client (3.0.1) |
+| **Local Database** | SQLDelight (2.0.2) |
+| **Image Loading** | Coil (3.0.4) |
 | **Navigation** | Compose Navigation (Type-safe) |
-| **Networking** | Ktor Client |
-| **Local DB** | SQLDelight |
-| **Preferences** | DataStore |
-| **DI** | Koin |
-| **AI** | Google Gemini API |
-| **Testing** | Kotlin Test, Turbine |
+| **State Management** | StateFlow, ViewModel (KMP Lifecycle) |
+| **AI Integration** | Google Gemini API (1.5 Flash) |
 
 ## 📁 Struktur Project
 
 ```
 composeApp/src/
-├── commonMain/kotlin/com/example/noteai/
-│   ├── core/                      # Core utilities
-│   │   ├── di/                    # Koin modules
-│   │   ├── network/               # Network config, error handling
-│   │   └── util/                  # Extensions, helpers
-│   │
-│   ├── data/                      # Data layer
-│   │   ├── local/
-│   │   │   ├── dao/               # SQLDelight DAOs
-│   │   │   ├── entity/            # Database entities
-│   │   │   └── datastore/         # DataStore preferences
-│   │   ├── remote/
-│   │   │   ├── api/               # API services (Ktor)
-│   │   │   └── dto/               # Data Transfer Objects
-│   │   └── repository/            # Repository implementations
-│   │
-│   ├── domain/                    # Domain layer (pure Kotlin)
-│   │   ├── model/                 # Domain models
-│   │   ├── repository/            # Repository interfaces
-│   │   └── usecase/               # Business logic
-│   │
-│   └── presentation/              # Presentation layer
-│       ├── navigation/            # Navigation setup
+├── commonMain/kotlin/com/dailybliss/app/
+│   ├── core/                      # Core utilities (DI, Network, Util)
+│   ├── data/                      # Data layer (Local, Remote, Repo Impl)
+│   │   ├── local/                 # SQLDelight DAOs & DataStore
+│   │   ├── remote/                # Gemini Service & API DTOs
+│   │   └── repository/            # Repository Implementations
+│   ├── domain/                    # Domain layer (Models, Interfaces, Use Cases)
+│   │   ├── model/                 # Moment & Content models
+│   │   ├── repository/            # Repository Interfaces
+│   │   └── usecase/               # Business logic / Use Cases
+│   └── presentation/              # Presentation layer (UI & ViewModel)
+│       ├── navigation/            # Type-safe Navigation
 │       ├── screens/               # Screen composables + ViewModels
-│       │   ├── home/
-│       │   ├── addnote/
-│       │   ├── detail/
-│       │   └── ai/
 │       ├── components/            # Reusable UI components
-│       └── theme/                 # Material theme
+│       └── theme/                 # Material 3 Theme
 │
-├── commonMain/sqldelight/         # SQLDelight schema
-│
-├── androidMain/kotlin/            # Android-specific (expect/actual)
-└── iosMain/kotlin/                # iOS-specific (expect/actual)
+├── commonMain/sqldelight/         # SQLDelight schema (.sq files)
+├── androidMain/kotlin/            # Android-specific implementations
+└── iosMain/kotlin/                # iOS-specific implementations
 ```
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Prasyarat
 
-- Android Studio Ladybug (2024.2.1) atau lebih baru
-- Xcode 15+ (untuk iOS)
-- JDK 17+
-
-### 👥 Ketentuan Kelompok
-
-| Ketentuan | Detail |
-|-----------|--------|
-| Jumlah Anggota | **1 - 3 mahasiswa** per kelompok |
-| Format Branch | `project/[NIM-NIM-...]-[NamaAplikasi]` |
-
-**Contoh Branch:**
-- Individu: `project/121140001-TodoMaster`
-- 2 orang: `project/121140003-121140004-FitnessApp`
-- 3 orang: `project/121140007-121140008-121140009-StudyPlanner`
+- **Android Studio Ladybug (2024.2.1)** atau lebih baru
+- **JDK 17** atau 21
+- **Xcode 15+** (khusus untuk build iOS di macOS)
 
 ### Setup
 
-1. **Fork & Clone repository**
+1. **Clone repository**
    ```bash
    git clone git@github.com:andika-123140096/123140096-123140088-DailyBliss.git
    cd 123140096-123140088-DailyBliss
-
-   git checkout -b project/123140096-123140088-DailyBliss
    ```
 
-2. **Setup `local.properties`**
+2. **Konfigurasi API Key**
 
-   Salin template, lalu isi API key:
+   Aplikasi membutuhkan API key Google Gemini. Salin template file dan isi API key kamu:
    ```bash
    cp local.properties.example local.properties
-   # edit local.properties dan isi GEMINI_API_KEY=...
+   # Edit local.properties dan isi:
+   # GEMINI_API_KEY=AIza...
    ```
+   Dapatkan API key gratis di [Google AI Studio](https://aistudio.google.com/).
 
-   Dapatkan API key gratis di: https://aistudio.google.com/
-
-3. **Sync & Build**
-   ```bash
-   ./gradlew build              # build semua target
-   ./gradlew :composeApp:assembleDebug   # build APK debug saja (lebih cepat)
-   ```
-
-4. **Run**
-   - **Android**: pilih run configuration `composeApp` di Android Studio, atau
-     `./gradlew :composeApp:installDebug` ke emulator/device aktif.
-   - **iOS** (opsional): folder `iosApp/` belum disertakan di template ini —
-     lihat panduan di [`docs/CARA_MENJALANKAN.md`](./docs/CARA_MENJALANKAN.md#8-menjalankan-ios-lanjutan-opsional).
-
-## 📚 Materi yang Dicakup
-
-| Pertemuan | Topik | File/Folder Reference |
-|-----------|-------|----------------------|
-| 1 | Setup Environment | Root project setup |
-| 2 | Kotlin Lanjutan | `core/util/`, coroutines, Flow |
-| 3 | Compose Basics | `presentation/components/` |
-| 4 | MVVM & State | `presentation/screens/*/ViewModel.kt` |
-| 5 | Navigation | `presentation/navigation/` |
-| 6 | Networking | `data/remote/`, Ktor setup |
-| 7 | Local Storage | `data/local/`, SQLDelight |
-| 8 | Platform Code | `androidMain/`, `iosMain/`, expect/actual |
-| 9 | AI Integration | `data/remote/api/GeminiService.kt` |
-| 10 | Testing | `commonTest/` |
+3. **Build & Run**
+   - **Android**: Pilih konfigurasi `composeApp` dan klik **Run** (▶️).
+   - **iOS**: Folder `iosApp/` saat ini belum disertakan, namun framework Kotlin tetap bisa di-build untuk target iOS.
 
 ## 🧪 Testing
 
+Kami menggunakan `kotlin.test`, `coroutines-test`, dan `turbine` untuk memastikan stabilitas aplikasi.
+
 ```bash
-# Run all tests
+# Jalankan semua unit test
 ./gradlew allTests
 
-# Run common tests only
+# Jalankan test khusus Android
 ./gradlew :composeApp:testDebugUnitTest
 ```
 
-## 📝 Tugas Mahasiswa
-
-### Sprint 1: Foundation
-- [x] Clone dan setup project
-- [x] Pahami struktur folder
-- [x] Modifikasi tema/warna
-
-### Sprint 2: Core Features
-- [ ] Tambahkan field baru di Note (misal: priority, dueDate)
-- [ ] Implementasi fitur kategori/tags
-- [ ] Tambahkan validasi input
-
-### Sprint 3: Advanced Features
-- [ ] Implementasi search dengan debounce
-- [ ] Tambahkan filter dan sort
-- [ ] Implementasi offline-first
-
-### Sprint 4: AI & Polish
-- [ ] Integrasikan fitur AI baru
-- [ ] UI polish dan animasi
-- [ ] Tambahkan unit tests
-
-### Sprint 5: Final
-- [ ] Bug fixes
-- [ ] Dokumentasi
-- [ ] Prepare demo
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Buat branch fitur (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buat Pull Request
-
 ## 📄 License
 
-MIT License - silakan gunakan untuk pembelajaran.
+MIT License
 
 ## 👨‍🏫 Dosen Pengampu
 ### Pak Habib
@@ -242,7 +163,3 @@ MIT License - silakan gunakan untuk pembelajaran.
 
 **Program Studi Teknik Informatika**  
 Institut Teknologi Sumatera (ITERA)
-
----
-
-*Template ini dibuat untuk mendukung pembelajaran Pengembangan Aplikasi Mobile dengan Kotlin Multiplatform.*
