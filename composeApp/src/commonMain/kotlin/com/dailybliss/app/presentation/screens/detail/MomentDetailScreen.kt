@@ -56,11 +56,11 @@ fun MomentDetailScreen(
         }
     }
     
-    val singleImagePicker = rememberImagePickerLauncher(
-        onResult = { uri ->
-            uri?.let { 
+    val imagePicker = rememberImagePickerLauncher(
+        onResult = { bytesList ->
+            if (bytesList.isNotEmpty()) {
                 activeBlockIndex?.let { index ->
-                    viewModel.addImageBlock(it, index)
+                    viewModel.addImageGroupBlock(bytesList, index)
                 }
             }
         }
@@ -149,27 +149,23 @@ fun MomentDetailScreen(
                     itemsIndexed(state.contentBlocks) { index, block ->
                         Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                             when (block) {
-                                is ContentBlock.Text -> {
-                                    TextBlockItem(
-                                        text = block.text,
-                                        onTextChange = { viewModel.onBlockChange(index, block.copy(text = it)) },
+                                is ContentBlock.Html -> {
+                                    HtmlBlockItem(
+                                        html = block.content,
+                                        onHtmlChange = { viewModel.onBlockChange(index, block.copy(content = it)) },
                                         onRemove = { viewModel.removeBlock(index) },
-                                        onEnterPressed = { viewModel.addTextBlock(index) },
                                         onAttachMedia = { 
                                             activeBlockIndex = index
-                                            singleImagePicker.launch()
+                                            imagePicker.launch()
                                         },
                                         focusRequester = if (index < focusRequesters.size) focusRequesters[index] else FocusRequester()
                                     )
                                 }
-                                is ContentBlock.Image -> {
-                                    val isLast = index == state.contentBlocks.lastIndex
-                                    val noTextBelow = state.contentBlocks.getOrNull(index + 1) !is ContentBlock.Text
-                                    ImageBlockItem(
-                                        url = block.url,
-                                        showAddBlockButton = isLast || noTextBelow,
+                                is ContentBlock.ImageGroup -> {
+                                    ImageGroupBlockItem(
+                                        urls = block.urls,
                                         onRemove = { viewModel.removeBlock(index) },
-                                        onAddBlockBelow = { viewModel.addTextBlock(index) }
+                                        onAddTextBelow = { viewModel.addHtmlBlock(index) }
                                     )
                                 }
                             }

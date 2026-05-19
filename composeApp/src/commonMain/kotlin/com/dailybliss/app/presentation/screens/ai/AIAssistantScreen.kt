@@ -42,7 +42,7 @@ fun AIAssistantScreen(
     val density = LocalDensity.current
     
     val imagePicker = rememberImagePickerLauncher(
-        onResult = { bytes -> viewModel.onImageSelected(bytes) }
+        onResult = { bytesList -> viewModel.onImageSelected(bytesList.firstOrNull()) }
     )
     
     LaunchedEffect(uiState.messages.size) {

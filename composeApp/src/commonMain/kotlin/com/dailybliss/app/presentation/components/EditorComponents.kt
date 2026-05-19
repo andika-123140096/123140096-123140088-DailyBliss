@@ -3,6 +3,8 @@ package com.dailybliss.app.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -27,22 +29,28 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 
 @Composable
-fun TextBlockItem(
-    text: String,
-    onTextChange: (String) -> Unit,
+fun HtmlBlockItem(
+    html: String,
+    onHtmlChange: (String) -> Unit,
     onRemove: () -> Unit,
-    onEnterPressed: () -> Unit,
     onAttachMedia: () -> Unit,
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var textFieldValue by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(html, TextRange(html.length))) }
+
+    // Update internal state when external html changes (e.g. from load)
+    LaunchedEffect(html) {
+        if (html != textFieldValue.text) {
+            textFieldValue = TextFieldValue(html, TextRange(html.length))
+        }
+    }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.Top
     ) {
         // Media Action Button - Top Aligned
@@ -50,7 +58,7 @@ fun TextBlockItem(
             modifier = Modifier.size(28.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            if (isFocused || text.isEmpty()) {
+            if (isFocused || html.isEmpty()) {
                 IconButton(
                     onClick = onAttachMedia,
                     modifier = Modifier.size(24.dp)
@@ -70,16 +78,8 @@ fun TextBlockItem(
         BasicTextField(
             value = textFieldValue,
             onValueChange = {
-                if (it.text.endsWith("\n") && it.text.length > textFieldValue.text.length) {
-                    // Prevent newline from being added if we handle Enter to create a new block
-                    val cleaned = it.text.removeSuffix("\n")
-                    textFieldValue = it.copy(text = cleaned)
-                    onTextChange(cleaned)
-                    onEnterPressed()
-                } else {
-                    textFieldValue = it
-                    onTextChange(it.text)
-                }
+                textFieldValue = it
+                onHtmlChange(it.text)
             },
             modifier = Modifier
                 .weight(1f)
@@ -91,7 +91,7 @@ fun TextBlockItem(
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown && 
                         keyEvent.key == Key.Backspace && 
-                        text.isEmpty()) {
+                        html.isEmpty()) {
                         onRemove()
                         true
                     } else {
@@ -105,9 +105,9 @@ fun TextBlockItem(
             ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             decorationBox = { innerTextField ->
-                if (text.isEmpty()) {
+                if (html.isEmpty()) {
                     Text(
-                        text = "Tulis cerita...",
+                        text = "Mulai menulis...",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                     )
@@ -121,7 +121,7 @@ fun TextBlockItem(
             modifier = Modifier.size(28.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            if (isFocused) {
+            if (isFocused && html.isNotEmpty()) {
                 IconButton(
                     onClick = onRemove,
                     modifier = Modifier.size(24.dp)
@@ -139,13 +139,14 @@ fun TextBlockItem(
 }
 
 @Composable
-fun ImageBlockItem(
-    url: String,
-    showAddBlockButton: Boolean,
+fun ImageGroupBlockItem(
+    urls: List<String>,
     onRemove: () -> Unit,
-    onAddBlockBelow: () -> Unit,
+    onAddTextBelow: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val pagerState = rememberPagerState(pageCount = { urls.size })
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -157,15 +158,39 @@ fun ImageBlockItem(
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
         ) {
-            AsyncImage(
-                model = url,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 400.dp),
-                contentScale = ContentScale.FillWidth
-            )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+                pageSpacing = 8.dp
+            ) { page ->
+                AsyncImage(
+                    model = urls[page],
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 500.dp),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
             
+            // Image count indicator
+            if (urls.size > 1) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(12.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "${pagerState.currentPage + 1} / ${urls.size}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+
             IconButton(
                 onClick = onRemove,
                 modifier = Modifier
@@ -183,31 +208,30 @@ fun ImageBlockItem(
             }
         }
         
-        if (showAddBlockButton) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
-                    .clickable { onAddBlockBelow() },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Add,
-                        null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Tambah tulisan di bawah gambar",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+        // Add text button below image group
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .height(40.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
+                .clickable { onAddTextBelow() },
+            contentAlignment = Alignment.Center
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Add,
+                    null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Tambah tulisan di bawah gambar",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

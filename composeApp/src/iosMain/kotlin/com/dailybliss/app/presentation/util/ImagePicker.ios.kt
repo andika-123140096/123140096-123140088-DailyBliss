@@ -7,7 +7,7 @@ import com.dailybliss.app.core.util.PlatformContext
 
 @Composable
 actual fun rememberImagePickerLauncher(
-    onResult: (ByteArray?) -> Unit
+    onResult: (List<ByteArray>) -> Unit
 ): ImagePickerLauncher {
     return remember {
         object : ImagePickerLauncher {

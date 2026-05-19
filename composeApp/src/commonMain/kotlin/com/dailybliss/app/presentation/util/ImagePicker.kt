@@ -6,7 +6,7 @@ import com.dailybliss.app.core.util.PlatformContext
 
 @Composable
 expect fun rememberImagePickerLauncher(
-    onResult: (ByteArray?) -> Unit
+    onResult: (List<ByteArray>) -> Unit
 ): ImagePickerLauncher
 
 interface ImagePickerLauncher {

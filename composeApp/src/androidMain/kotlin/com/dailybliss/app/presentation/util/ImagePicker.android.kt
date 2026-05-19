@@ -16,21 +16,23 @@ import com.dailybliss.app.core.util.PlatformContext
 
 @Composable
 actual fun rememberImagePickerLauncher(
-    onResult: (ByteArray?) -> Unit
+    onResult: (List<ByteArray>) -> Unit
 ): ImagePickerLauncher {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            if (uri != null) {
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
                 try {
-                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    onResult(bytes)
+                    val bytesList = uris.mapNotNull { uri ->
+                        context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    }
+                    onResult(bytesList)
                 } catch (e: Exception) {
-                    onResult(null)
+                    onResult(emptyList())
                 }
             } else {
-                onResult(null)
+                onResult(emptyList())
             }
         }
     )

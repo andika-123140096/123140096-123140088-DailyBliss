@@ -23,14 +23,16 @@ class BackgroundAIProcessor(
             val contentBlocks = try {
                 if (moment.content.startsWith("{\"blocks\":")) {
                     json.decodeFromString<MomentContent>(moment.content).blocks
+                } else if (moment.content.contains("<") || moment.content.isNotEmpty()) {
+                    MomentContent.fromHtml(moment.content).blocks
                 } else {
-                    listOf(ContentBlock.Text(moment.content))
+                    listOf(ContentBlock.Html(moment.content))
                 }
             } catch (e: Exception) {
-                listOf(ContentBlock.Text(moment.content))
+                listOf(ContentBlock.Html(moment.content))
             }
 
-            val allText = contentBlocks.filterIsInstance<ContentBlock.Text>().joinToString("\n") { it.text }
+            val allText = contentBlocks.filterIsInstance<ContentBlock.Html>().joinToString("\n") { it.content }
             if (allText.isBlank()) return@launch
 
             // Perform AI Analysis
