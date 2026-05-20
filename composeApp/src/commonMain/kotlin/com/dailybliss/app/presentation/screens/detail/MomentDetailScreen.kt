@@ -1,10 +1,9 @@
 package com.dailybliss.app.presentation.screens.detail
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
@@ -19,10 +18,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.presentation.components.*
+import com.dailybliss.app.presentation.util.HtmlConverter
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
 import org.koin.compose.viewmodel.koinViewModel
+
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,35 +37,15 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
-    var activeBlockIndex by remember { mutableStateOf<Int?>(null) }
+    var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
+    var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
+    var activeStyles by remember { mutableStateOf(setOf<String>()) }
     
-    // Unified Focus Management
-    val blocksSize = (uiState as? MomentDetailUiState.Success)?.contentBlocks?.size ?: 0
-    val focusRequesters = remember(blocksSize) {
-        List(blocksSize) { FocusRequester() }
-    }
-    
-    LaunchedEffect(uiState) {
-        val state = uiState
-        if (state is MomentDetailUiState.Success) {
-            state.requestedFocusIndex?.let { index ->
-                if (index in focusRequesters.indices) {
-                    try {
-                        focusRequesters[index].requestFocus()
-                        viewModel.clearFocusRequest()
-                    } catch (e: Exception) {}
-                }
-            }
-        }
-    }
-    
+    var lastCursorPosition by remember { mutableStateOf(-1) }
     val imagePicker = rememberImagePickerLauncher(
         onResult = { bytesList ->
             if (bytesList.isNotEmpty()) {
-                activeBlockIndex?.let { index ->
-                    viewModel.addImageGroupBlock(bytesList, index)
-                }
+                viewModel.addImage(bytesList, lastCursorPosition)
             }
         }
     )
@@ -90,86 +74,107 @@ fun MomentDetailScreen(
     }
     
     Scaffold(
-        containerColor = Color.White
+        containerColor = Color.White,
+        bottomBar = {
+            if (focusedValue != null) {
+                FormattingToolbar(
+                    activeStyles = activeStyles,
+                    onStyleClick = { style ->
+                        activeStyles = if (activeStyles.contains(style)) {
+                            activeStyles - style
+                        } else {
+                            activeStyles + style
+                        }
+                        
+                        // Also apply to selection if exists
+                        focusedValue?.let { value ->
+                            if (!value.selection.collapsed) {
+                                val spanStyle = when (style) {
+                                    "b" -> SpanStyle(fontWeight = FontWeight.Bold)
+                                    "i" -> SpanStyle(fontStyle = FontStyle.Italic)
+                                    "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
+                                    else -> SpanStyle()
+                                }
+                                val newValue = HtmlConverter.toggleStyle(value, spanStyle)
+                                updateFocusedValue?.invoke(newValue)
+                            }
+                        }
+                    },
+                    onGalleryClick = { 
+                        lastCursorPosition = focusedValue?.selection?.start ?: -1
+                        imagePicker.launch()
+                    },
+                    modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.ime)
+                )
+            }
+        }
     ) { paddingValues ->
         when (val state = uiState) {
             is MomentDetailUiState.Loading -> LoadingIndicator()
             is MomentDetailUiState.Success -> {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentPadding = PaddingValues(bottom = 120.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 120.dp)
                 ) {
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onNavigateBack
                         ) {
-                            IconButton(
-                                onClick = onNavigateBack
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
-                            }
-                            
-                            BasicTextField(
-                                value = state.title,
-                                onValueChange = viewModel::onTitleChange,
-                                textStyle = MaterialTheme.typography.headlineMedium.copy(
-                                    color = Color.Black,
-                                    fontWeight = FontWeight.Bold,
-                                    lineHeight = 34.sp
-                                ),
-                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                decorationBox = { innerTextField ->
-                                    if (state.title.isEmpty()) {
-                                        Text(
-                                            text = "Judul...",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            color = Color.LightGray,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    innerTextField()
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                            )
-                            
-                            IconButton(
-                                onClick = { showDeleteDialog = true }
-                            ) {
-                                Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
-                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
+                        }
+                        
+                        BasicTextField(
+                            value = state.title,
+                            onValueChange = viewModel::onTitleChange,
+                            textStyle = MaterialTheme.typography.headlineMedium.copy(
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                lineHeight = 30.sp
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            decorationBox = { innerTextField ->
+                                if (state.title.isEmpty()) {
+                                    Text(
+                                        text = "Judul...",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = Color.LightGray,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                innerTextField()
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                        
+                        IconButton(
+                            onClick = { showDeleteDialog = true }
+                        ) {
+                            Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
                         }
                     }
 
-                    itemsIndexed(state.contentBlocks) { index, block ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            when (block) {
-                                is ContentBlock.Html -> {
-                                    HtmlBlockItem(
-                                        html = block.content,
-                                        onHtmlChange = { viewModel.onBlockChange(index, block.copy(content = it)) },
-                                        onRemove = { viewModel.removeBlock(index) },
-                                        onAttachMedia = { 
-                                            activeBlockIndex = index
-                                            imagePicker.launch()
-                                        },
-                                        focusRequester = if (index < focusRequesters.size) focusRequesters[index] else FocusRequester()
-                                    )
-                                }
-                                is ContentBlock.ImageGroup -> {
-                                    ImageGroupBlockItem(
-                                        urls = block.urls,
-                                        onRemove = { viewModel.removeBlock(index) },
-                                        onAddTextBelow = { viewModel.addHtmlBlock(index) }
-                                    )
-                                }
-                            }
-                        }
+                    Box(modifier = Modifier.padding(horizontal = 0.dp)) {
+                        HtmlBlockItem(
+                            html = state.content,
+                            onHtmlChange = viewModel::onContentChange,
+                            activeStyles = activeStyles,
+                            onFocusValueChange = { value, update ->
+                                focusedValue = value
+                                updateFocusedValue = update
+                            },
+                            focusRequester = remember { FocusRequester() }
+                        )
                     }
                 }
             }

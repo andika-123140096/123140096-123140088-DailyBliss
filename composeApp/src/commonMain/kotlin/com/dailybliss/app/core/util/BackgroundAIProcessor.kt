@@ -1,7 +1,5 @@
 package com.dailybliss.app.core.util
 
-import com.dailybliss.app.domain.model.ContentBlock
-import com.dailybliss.app.domain.model.MomentContent
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MomentRepository
 import kotlinx.coroutines.CoroutineScope
@@ -19,20 +17,9 @@ class BackgroundAIProcessor(
     fun processMoment(momentId: Long) {
         applicationScope.launch {
             val moment = momentRepository.getMomentById(momentId).first() ?: return@launch
-            
-            val contentBlocks = try {
-                if (moment.content.startsWith("{\"blocks\":")) {
-                    json.decodeFromString<MomentContent>(moment.content).blocks
-                } else if (moment.content.contains("<") || moment.content.isNotEmpty()) {
-                    MomentContent.fromHtml(moment.content).blocks
-                } else {
-                    listOf(ContentBlock.Html(moment.content))
-                }
-            } catch (e: Exception) {
-                listOf(ContentBlock.Html(moment.content))
-            }
+            // Strip HTML tags for AI processing
+            val allText = moment.content.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
 
-            val allText = contentBlocks.filterIsInstance<ContentBlock.Html>().joinToString("\n") { it.content }
             if (allText.isBlank()) return@launch
 
             // Perform AI Analysis

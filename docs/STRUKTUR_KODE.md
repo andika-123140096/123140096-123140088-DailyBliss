@@ -103,9 +103,9 @@ composeApp/src/
 │   │
 │   ├── domain/                               # Domain Layer (Pure Kotlin)
 │   │   ├── model/
-│   │   │   ├── Moment.kt                     # Main domain model
-│   │   │   └── MomentContent.kt              # Content structure
-│   │   │
+L106- │   │   │   ├── Moment.kt                     # Main domain model
+L108- │   │   │
+
 │   │   ├── repository/
 │   │   │   ├── MomentRepository.kt           # Moment repo interface
 │   │   │   └── AIRepository.kt               # AI repo interface

@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,6 +45,7 @@ fun AppNavHost(
     )
     
     val isAIAssistant = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true
+    val isCreateMoment = currentDestination?.hierarchy?.any { it.hasRoute(Route.CreateMoment::class) } == true
     
     val showBottomBar = hideBottomBarScreens.none { route ->
         currentDestination?.hierarchy?.any { it.hasRoute(route) } == true
@@ -118,63 +118,65 @@ fun AppNavHost(
                     )
                 }
             }
+        },
+        content = { paddingValues ->
+            // Screens that manage their own bottom padding to stay flush with the keyboard
+            val navHostPadding = if (isAIAssistant || isCreateMoment) {
+                PaddingValues(top = paddingValues.calculateTopPadding(), bottom = 0.dp)
+            } else {
+                paddingValues
+            }
+
+            NavHost(
+                navController = navController,
+                startDestination = Route.Home,
+                modifier = modifier.padding(navHostPadding)
+            ) {
+                composable<Route.Home> {
+                    HomeScreen(
+                        onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
+                        onNavigateToDetail = { id -> actions.navigateToMomentDetail(id) },
+                        onNavigateToSettings = { actions.navigateToSettings() }
+                    )
+                }
+
+                composable<Route.Journal> {
+                    JournalScreen(
+                        onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
+                        onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) }
+                    )
+                }
+
+                composable<Route.CreateMoment> {
+                    CreateMomentScreen(
+                        onNavigateBack = { actions.navigateBack() }
+                    )
+                }
+
+                composable<Route.MomentDetail> { backStackEntry ->
+                    val route: Route.MomentDetail = backStackEntry.toRoute()
+                    MomentDetailScreen(
+                        momentId = route.momentId,
+                        onNavigateBack = { actions.navigateBack() }
+                    )
+                }
+
+                composable<Route.AIAssistant> {
+                    AIAssistantScreen(
+                        onNavigateBack = { actions.navigateBack() }
+                    )
+                }
+                
+                composable<Route.Settings> {
+                    SettingsScreen(
+                        onNavigateBack = { actions.navigateBack() }
+                    )
+                }
+            }
         }
-    ) { paddingValues ->
-        // AIAssistant manages its own bottom padding dynamically to stay flush with the keyboard
-        val navHostPadding = if (isAIAssistant) {
-            PaddingValues(top = paddingValues.calculateTopPadding(), bottom = 0.dp)
-        } else {
-            paddingValues
-        }
-
-        NavHost(
-            navController = navController,
-            startDestination = Route.Home,
-            modifier = modifier.padding(navHostPadding)
-        ) {
-            composable<Route.Home> {
-                HomeScreen(
-                    onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
-                    onNavigateToDetail = { id -> actions.navigateToMomentDetail(id) },
-                    onNavigateToSettings = { actions.navigateToSettings() }
-                )
-            }
-
-            composable<Route.Journal> {
-                JournalScreen(
-                    onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
-                    onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) }
-                )
-            }
-
-            composable<Route.CreateMoment> {
-                CreateMomentScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
-
-            composable<Route.MomentDetail> { backStackEntry ->
-                val route: Route.MomentDetail = backStackEntry.toRoute()
-                MomentDetailScreen(
-                    momentId = route.momentId,
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
-
-            composable<Route.AIAssistant> {
-                AIAssistantScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
-            
-            composable<Route.Settings> {
-                SettingsScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
-        }
-    }
+    )
 }
+
 
 private class NavigationActionsImpl(private val navController: NavHostController) : NavigationActions {
     override fun navigateToHome() {

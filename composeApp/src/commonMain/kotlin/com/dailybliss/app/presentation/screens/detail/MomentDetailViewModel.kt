@@ -2,17 +2,13 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.domain.model.ContentBlock
-import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.model.MomentContent
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
 import com.dailybliss.app.presentation.util.FileStorage
+import com.dailybliss.app.presentation.util.HtmlConverter
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.serialization.json.Json
 
 class MomentDetailViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
@@ -27,204 +23,107 @@ class MomentDetailViewModel(
     private val _events = MutableSharedFlow<MomentDetailEvent>()
     val events = _events.asSharedFlow()
 
-    private var currentMomentId: Long? = null
-    private val json = Json { ignoreUnknownKeys = true }
-    
+    private var currentId: Long = 0
+
     fun loadMoment(id: Long) {
-        if (currentMomentId == id) return
-        currentMomentId = id
-        
+        currentId = id
         viewModelScope.launch {
-            val moment = getMomentByIdUseCase(id).first()
-            if (moment != null) {
-                val parsedContent = try {
-                    if (moment.content.startsWith("{\"blocks\":")) {
-                        // Legacy support for older JSON format
-                        val legacyContent = json.decodeFromString<LegacyMomentContent>(moment.content)
-                        val convertedBlocks = legacyContent.blocks.map { block ->
-                            when (block) {
-                                is LegacyContentBlock.Text -> ContentBlock.Html(block.text)
-                                is LegacyContentBlock.Image -> ContentBlock.ImageGroup(listOf(block.url))
-                            }
-                        }
-                        MomentContent(convertedBlocks)
-                    } else if (moment.content.contains("<") || moment.content.isNotEmpty()) {
-                        // New HTML format
-                        MomentContent.fromHtml(moment.content)
-                    } else {
-                        MomentContent(listOf(ContentBlock.Html("")))
-                    }
-                } catch (e: Exception) {
-                    MomentContent(listOf(ContentBlock.Html(moment.content)))
-                }
-
-                _uiState.update { 
-                    MomentDetailUiState.Success(
-                        moment = moment,
+            getMomentByIdUseCase(id).collect { moment ->
+                if (moment != null) {
+                    _uiState.value = MomentDetailUiState.Success(
                         title = moment.title,
-                        contentBlocks = if (parsedContent.blocks.isEmpty()) listOf(ContentBlock.Html("")) else parsedContent.blocks,
-                        requestedFocusIndex = null
+                        content = moment.content,
+                        moment = moment
                     )
+                } else {
+                    _uiState.value = MomentDetailUiState.NotFound
                 }
-            } else {
-                _uiState.value = MomentDetailUiState.NotFound
             }
         }
     }
 
-    fun onTitleChange(newTitle: String) {
+    fun onTitleChange(title: String) {
         val currentState = _uiState.value
         if (currentState is MomentDetailUiState.Success) {
-            _uiState.value = currentState.copy(title = newTitle)
-            saveChangesInternal()
+            _uiState.value = currentState.copy(title = title)
+            saveChanges()
         }
     }
 
-    fun onBlockChange(index: Int, block: ContentBlock) {
+    fun onContentChange(content: String) {
         val currentState = _uiState.value
         if (currentState is MomentDetailUiState.Success) {
-            val newBlocks = currentState.contentBlocks.toMutableList()
-            if (index in newBlocks.indices) {
-                newBlocks[index] = block
-                _uiState.value = currentState.copy(contentBlocks = newBlocks)
-                saveChangesInternal()
-            }
+            _uiState.value = currentState.copy(content = content)
+            saveChanges()
         }
     }
 
-    fun addHtmlBlock(afterIndex: Int) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            val newBlocks = currentState.contentBlocks.toMutableList()
-            val newIndex = afterIndex + 1
-            newBlocks.add(newIndex, ContentBlock.Html(""))
-            _uiState.value = currentState.copy(
-                contentBlocks = newBlocks,
-                requestedFocusIndex = newIndex
-            )
-            saveChangesInternal()
-        }
-    }
-
-    fun addImageGroupBlock(bytesList: List<ByteArray>, afterIndex: Int) {
+    fun addImage(bytesList: List<ByteArray>, insertionIndex: Int = -1) {
         viewModelScope.launch {
             val urls = bytesList.mapNotNull { fileStorage.saveImage(it) }
             if (urls.isNotEmpty()) {
+                val imagesHtml = urls.joinToString("") { "<img src=\"$it\" />" }
+                val imageGroupHtml = "<div class=\"image-group\">$imagesHtml</div>"
+                
                 val currentState = _uiState.value
                 if (currentState is MomentDetailUiState.Success) {
-                    val newBlocks = currentState.contentBlocks.toMutableList()
-                    val newIndex = afterIndex + 1
-                    newBlocks.add(newIndex, ContentBlock.ImageGroup(urls))
-                    
-                    // If the block before is text and empty, remove it
-                    val beforeBlock = newBlocks.getOrNull(afterIndex)
-                    if (beforeBlock is ContentBlock.Html && beforeBlock.content.isEmpty() && newBlocks.size > 1) {
-                        newBlocks.removeAt(afterIndex)
+                    val currentContent = currentState.content
+                    val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
+                        currentContent + imageGroupHtml
+                    } else {
+                        var htmlIndex = 0
+                        var textCount = 0
+                        while (htmlIndex < currentContent.length && textCount < insertionIndex) {
+                            if (currentContent[htmlIndex] == '<') {
+                                val end = currentContent.indexOf('>', htmlIndex)
+                                if (end == -1) break
+                                htmlIndex = end + 1
+                            } else {
+                                htmlIndex++
+                                textCount++
+                            }
+                        }
+                        currentContent.substring(0, htmlIndex) + imageGroupHtml + currentContent.substring(htmlIndex)
                     }
-
-                    _uiState.value = currentState.copy(
-                        contentBlocks = newBlocks,
-                        requestedFocusIndex = null
-                    )
-                    saveChangesInternal()
+                    
+                    _uiState.value = currentState.copy(content = newContent)
+                    saveChanges()
                 }
             }
         }
     }
 
-    fun clearFocusRequest() {
+    private fun saveChanges() {
         val currentState = _uiState.value
         if (currentState is MomentDetailUiState.Success) {
-            _uiState.value = currentState.copy(requestedFocusIndex = null)
-        }
-    }
-
-    fun removeBlock(index: Int) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            if (currentState.contentBlocks.size > 1) {
-                val newBlocks = currentState.contentBlocks.toMutableList()
-                newBlocks.removeAt(index)
-                val focusBackIndex = if (index > 0) index - 1 else 0
-                _uiState.value = currentState.copy(
-                    contentBlocks = newBlocks,
-                    requestedFocusIndex = focusBackIndex
-                )
-                saveChangesInternal()
-            } else {
-                _uiState.value = currentState.copy(
-                    contentBlocks = listOf(ContentBlock.Html("")),
-                )
-                saveChangesInternal()
-            }
-        }
-    }
-
-    private fun saveChangesInternal() {
-        val state = _uiState.value
-        if (state is MomentDetailUiState.Success) {
             viewModelScope.launch {
-                val momentContent = MomentContent(state.contentBlocks)
-                val htmlContent = momentContent.toHtml()
-                val mainImageUrl = state.contentBlocks.filterIsInstance<ContentBlock.ImageGroup>().firstOrNull()?.urls?.firstOrNull()
-                
-                val updatedMoment = state.moment.copy(
-                    title = state.title.trim(),
-                    content = htmlContent,
-                    imageUrl = mainImageUrl ?: state.moment.imageUrl,
-                    updatedAt = Clock.System.now()
+                val updatedMoment = currentState.moment.copy(
+                    title = currentState.title,
+                    content = currentState.content
                 )
                 saveMomentUseCase(updatedMoment)
             }
         }
     }
 
-    fun saveChanges() {
-        saveChangesInternal()
-        viewModelScope.launch {
-            _events.emit(MomentDetailEvent.MomentSaved)
-        }
-    }
-
     fun deleteMoment() {
-        val id = currentMomentId ?: return
         viewModelScope.launch {
-            deleteMomentUseCase(id)
+            deleteMomentUseCase(currentId)
             _events.emit(MomentDetailEvent.MomentDeleted)
         }
     }
 }
 
-// Helper classes for legacy JSON format support
-@kotlinx.serialization.Serializable
-private sealed class LegacyContentBlock {
-    @kotlinx.serialization.Serializable
-    @kotlinx.serialization.SerialName("com.dailybliss.app.domain.model.ContentBlock.Text")
-    data class Text(val text: String) : LegacyContentBlock()
-    
-    @kotlinx.serialization.Serializable
-    @kotlinx.serialization.SerialName("com.dailybliss.app.domain.model.ContentBlock.Image")
-    data class Image(val url: String, val caption: String? = null) : LegacyContentBlock()
-}
-
-@kotlinx.serialization.Serializable
-private data class LegacyMomentContent(
-    val blocks: List<LegacyContentBlock>
-)
-
 sealed interface MomentDetailUiState {
     data object Loading : MomentDetailUiState
     data class Success(
-        val moment: Moment,
         val title: String,
-        val contentBlocks: List<ContentBlock>,
-        val requestedFocusIndex: Int? = null
+        val content: String,
+        val moment: com.dailybliss.app.domain.model.Moment
     ) : MomentDetailUiState
     data object NotFound : MomentDetailUiState
 }
 
 sealed interface MomentDetailEvent {
     data object MomentDeleted : MomentDetailEvent
-    data object MomentSaved : MomentDetailEvent
-    data class Error(val message: String) : MomentDetailEvent
 }

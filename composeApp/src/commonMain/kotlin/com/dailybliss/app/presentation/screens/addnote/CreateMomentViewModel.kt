@@ -3,18 +3,16 @@ package com.dailybliss.app.presentation.screens.addnote
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.core.util.BackgroundAIProcessor
-import com.dailybliss.app.domain.model.ContentBlock
 import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.model.MomentContent
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
 import com.dailybliss.app.presentation.util.FileStorage
+import com.dailybliss.app.presentation.util.HtmlConverter
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.serialization.json.Json
 
 class CreateMomentViewModel(
     private val saveMomentUseCase: SaveMomentUseCase,
@@ -31,7 +29,6 @@ class CreateMomentViewModel(
     val events = _events.asSharedFlow()
 
     private var currentMomentId: Long? = null
-    private val json = Json { ignoreUnknownKeys = true }
     
     fun loadMoment(id: Long) {
         if (currentMomentId == id) return
@@ -42,31 +39,10 @@ class CreateMomentViewModel(
             val moment = getMomentByIdUseCase(id).first()
             
             moment?.let {
-                val parsedContent = try {
-                    if (it.content.startsWith("{\"blocks\":")) {
-                        // Legacy support for older JSON format
-                        val legacyContent = json.decodeFromString<LegacyMomentContent>(it.content)
-                        val convertedBlocks = legacyContent.blocks.map { block ->
-                            when (block) {
-                                is LegacyContentBlock.Text -> ContentBlock.Html(block.text)
-                                is LegacyContentBlock.Image -> ContentBlock.ImageGroup(listOf(block.url))
-                            }
-                        }
-                        MomentContent(convertedBlocks)
-                    } else if (it.content.contains("<") || it.content.isNotEmpty()) {
-                        // New HTML format
-                        MomentContent.fromHtml(it.content)
-                    } else {
-                        MomentContent(listOf(ContentBlock.Html("")))
-                    }
-                } catch (e: Exception) {
-                    MomentContent(listOf(ContentBlock.Html(it.content)))
-                }
-
                 _uiState.update { state ->
                     state.copy(
                         title = it.title,
-                        contentBlocks = if (parsedContent.blocks.isEmpty()) listOf(ContentBlock.Html("")) else parsedContent.blocks,
+                        content = it.content,
                         imageUrl = it.imageUrl,
                         mood = it.mood,
                         tags = it.tags,
@@ -83,93 +59,49 @@ class CreateMomentViewModel(
         _uiState.update { it.copy(title = title, titleError = null) }
     }
 
-    fun onBlockChange(index: Int, block: ContentBlock) {
-        _uiState.update { state ->
-            val newBlocks = state.contentBlocks.toMutableList()
-            if (index in newBlocks.indices) {
-                newBlocks[index] = block
-                state.copy(contentBlocks = newBlocks)
-            } else state
-        }
+    fun onContentChange(content: String) {
+        _uiState.update { it.copy(content = content) }
     }
 
-    fun addHtmlBlock(afterIndex: Int? = null) {
-        _uiState.update { state ->
-            val newBlocks = state.contentBlocks.toMutableList()
-            val newBlock = ContentBlock.Html("")
-            val newIndex = if (afterIndex != null && afterIndex + 1 <= newBlocks.size) {
-                afterIndex + 1
-            } else {
-                newBlocks.size
-            }
-            newBlocks.add(newIndex, newBlock)
-            state.copy(
-                contentBlocks = newBlocks,
-                requestedFocusIndex = newIndex
-            )
-        }
-    }
-
-    fun addImageGroupBlock(bytesList: List<ByteArray>, afterIndex: Int? = null) {
+    fun addImage(bytesList: List<ByteArray>, insertionIndex: Int = -1) {
         viewModelScope.launch {
             val urls = bytesList.mapNotNull { fileStorage.saveImage(it) }
             if (urls.isNotEmpty()) {
+                val imagesHtml = urls.joinToString("") { "<img src=\"$it\" />" }
+                val imageGroupHtml = "<div class=\"image-group\">$imagesHtml</div>"
+                
                 _uiState.update { state ->
-                    val newBlocks = state.contentBlocks.toMutableList()
-                    val newBlock = ContentBlock.ImageGroup(urls)
-                    val newIndex = if (afterIndex != null && afterIndex + 1 <= newBlocks.size) {
-                        afterIndex + 1
+                    val newContent = if (insertionIndex == -1 || insertionIndex >= state.content.length) {
+                        state.content + imageGroupHtml
                     } else {
-                        newBlocks.size
-                    }
-                    newBlocks.add(newIndex, newBlock)
-                    
-                    // If the block before is text and empty, remove it
-                    if (afterIndex != null && afterIndex < newBlocks.size - 1) {
-                        val beforeBlock = newBlocks.getOrNull(afterIndex)
-                        if (beforeBlock is ContentBlock.Html && beforeBlock.content.isEmpty() && newBlocks.size > 1) {
-                            newBlocks.removeAt(afterIndex)
+                        var htmlIndex = 0
+                        var textCount = 0
+                        while (htmlIndex < state.content.length && textCount < insertionIndex) {
+                            if (state.content[htmlIndex] == '<') {
+                                val end = state.content.indexOf('>', htmlIndex)
+                                if (end == -1) break
+                                htmlIndex = end + 1
+                            } else {
+                                htmlIndex++
+                                textCount++
+                            }
                         }
+                        state.content.substring(0, htmlIndex) + imageGroupHtml + state.content.substring(htmlIndex)
                     }
-
+                    
                     state.copy(
-                        contentBlocks = newBlocks,
-                        requestedFocusIndex = null
+                        content = newContent,
+                        imageUrl = urls.first()
                     )
                 }
             }
         }
     }
 
-    fun clearFocusRequest() {
-        _uiState.update { it.copy(requestedFocusIndex = null) }
-    }
-
-    fun removeBlock(index: Int) {
-        _uiState.update { state ->
-            if (state.contentBlocks.size > 1) {
-                val newBlocks = state.contentBlocks.toMutableList()
-                newBlocks.removeAt(index)
-                
-                val focusBackIndex = if (index > 0) index - 1 else 0
-                state.copy(
-                    contentBlocks = newBlocks,
-                    requestedFocusIndex = focusBackIndex
-                )
-            } else {
-                state.copy(
-                    contentBlocks = listOf(ContentBlock.Html("")),
-                    imageUrl = null
-                )
-            }
-        }
-    }
-
     fun saveMoment() {
         val state = _uiState.value
-        val allText = state.contentBlocks.filterIsInstance<ContentBlock.Html>().joinToString("\n") { it.content }
         
-        if (state.title.isBlank() && allText.isBlank()) {
+        if (state.title.isBlank() && state.content.isBlank()) {
             _uiState.update { it.copy(titleError = "Tuliskan sesuatu...") }
             return
         }
@@ -177,15 +109,11 @@ class CreateMomentViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             
-            val momentContent = MomentContent(state.contentBlocks)
-            val htmlContent = momentContent.toHtml()
-            val mainImageUrl = state.contentBlocks.filterIsInstance<ContentBlock.ImageGroup>().firstOrNull()?.urls?.firstOrNull()
-            
             val moment = Moment(
                 id = currentMomentId ?: 0,
                 title = state.title.trim(),
-                content = htmlContent,
-                imageUrl = mainImageUrl,
+                content = state.content,
+                imageUrl = state.imageUrl,
                 mood = state.mood,
                 tags = state.tags,
                 createdAt = if (currentMomentId == null) Clock.System.now() else state.createdAt,
@@ -197,7 +125,6 @@ class CreateMomentViewModel(
                 currentMomentId = newId
             }
             
-            // Trigger background AI processing for tagging and mood analysis
             backgroundAIProcessor.processMoment(newId)
             
             _uiState.update { it.copy(isSaving = false) }
@@ -206,26 +133,9 @@ class CreateMomentViewModel(
     }
 }
 
-// Helper classes for legacy JSON format support
-@kotlinx.serialization.Serializable
-private sealed class LegacyContentBlock {
-    @kotlinx.serialization.Serializable
-    @kotlinx.serialization.SerialName("com.dailybliss.app.domain.model.ContentBlock.Text")
-    data class Text(val text: String) : LegacyContentBlock()
-    
-    @kotlinx.serialization.Serializable
-    @kotlinx.serialization.SerialName("com.dailybliss.app.domain.model.ContentBlock.Image")
-    data class Image(val url: String, val caption: String? = null) : LegacyContentBlock()
-}
-
-@kotlinx.serialization.Serializable
-private data class LegacyMomentContent(
-    val blocks: List<LegacyContentBlock>
-)
-
 data class CreateMomentUiState(
     val title: String = "",
-    val contentBlocks: List<ContentBlock> = listOf(ContentBlock.Html("")),
+    val content: String = "",
     val imageUrl: String? = null,
     val mood: String? = null,
     val tags: List<String> = emptyList(),
@@ -233,8 +143,7 @@ data class CreateMomentUiState(
     val isSaving: Boolean = false,
     val isEditMode: Boolean = false,
     val titleError: String? = null,
-    val createdAt: Instant = Clock.System.now(),
-    val requestedFocusIndex: Int? = null
+    val createdAt: Instant = Clock.System.now()
 )
 
 sealed interface CreateMomentEvent {

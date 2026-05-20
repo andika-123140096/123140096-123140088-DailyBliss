@@ -16,21 +16,12 @@ data class Moment(
 ) {
     val preview: String
         get() {
-            return if (content.startsWith("{\"blocks\":")) {
-                // Legacy JSON support
-                try {
-                    val textPart = content.split("\"text\":\"").getOrNull(1)?.split("\"")?.getOrNull(0) ?: ""
-                    if (textPart.length > 120) "${textPart.take(120)}..." else textPart
-                } catch (e: Exception) {
-                    if (content.length > 120) "${content.take(120)}..." else content
-                }
-            } else if (content.contains("<")) {
-                // HTML support - strip tags for preview
-                val stripped = content.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
-                if (stripped.length > 120) "${stripped.take(120)}..." else stripped
-            } else {
-                if (content.length > 120) "${content.take(120)}..." else content
-            }
+            if (content.isEmpty()) return ""
+
+            // HTML support - strip tags for preview
+            val stripped = content.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
+            return if (stripped.length > 120) "${stripped.take(120)}..." else stripped
         }
+
 }
 
