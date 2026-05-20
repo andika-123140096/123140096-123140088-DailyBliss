@@ -34,4 +34,15 @@ object SystemPrompts {
         Contoh: "Apa satu hal kecil yang membuatmu tersenyum hari ini?"
         Berikan jawaban dalam format JSON: {"prompt": "Pertanyaan di sini"}.
         """
+
+    const val DAILY_PROMPT_REQUEST = "Berikan aku satu pertanyaan hari ini."
+
+    fun getGreetingPrompt(nickname: String, style: String) = """
+        Berikan sapaan singkat, hangat, dan puitis untuk pengguna bernama '$nickname' di aplikasi jurnal 'DailyBliss'. 
+        Gunakan gaya bahasa: '$style'.
+        Maksimal 2 kalimat. 
+        Berikan kesan tenang dan blissful. 
+        Sapa pengguna dengan namanya. 
+        Jangan gunakan markdown.
+    """.trimIndent()
 }

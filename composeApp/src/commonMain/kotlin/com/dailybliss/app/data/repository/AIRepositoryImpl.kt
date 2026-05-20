@@ -91,7 +91,7 @@ class AIRepositoryImpl(private val geminiService: GeminiService, private val use
         val result =
             geminiService
                 .generateContent(
-                    parts = listOf(GeminiPart(text = "Berikan aku satu pertanyaan hari ini.")),
+                    parts = listOf(GeminiPart(text = SystemPrompts.DAILY_PROMPT_REQUEST)),
                     systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION,
                 ).getOrNull()
 

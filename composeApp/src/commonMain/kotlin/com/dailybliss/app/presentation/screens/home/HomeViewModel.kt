@@ -3,6 +3,7 @@ package com.dailybliss.app.presentation.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.data.local.datastore.UserPreferences
+import com.dailybliss.app.data.remote.api.SystemPrompts
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
@@ -109,14 +110,7 @@ class HomeViewModel(
                     listOf(
                         ChatMessage(
                             role = "user",
-                            text = """
-                                Berikan sapaan singkat, hangat, dan puitis untuk pengguna bernama '$nickname' di aplikasi jurnal 'DailyBliss'. 
-                                Gunakan gaya bahasa: '$style'.
-                                Maksimal 2 kalimat. 
-                                Berikan kesan tenang dan blissful. 
-                                Sapa pengguna dengan namanya. 
-                                Jangan gunakan markdown.
-                            """.trimIndent(),
+                            text = SystemPrompts.getGreetingPrompt(nickname, style),
                         ),
                     ),
                 )
