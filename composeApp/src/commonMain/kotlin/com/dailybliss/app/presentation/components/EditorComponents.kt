@@ -37,7 +37,7 @@ fun HtmlBlockItem(
     html: String,
     onHtmlChange: (String) -> Unit,
     activeStyles: Set<String>,
-    onFocusValueChange: (TextFieldValue, (TextFieldValue) -> Unit) -> Unit,
+    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit) -> Unit,
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
@@ -54,7 +54,7 @@ fun HtmlBlockItem(
                             newParts[index] = HtmlPart.Text(newTextHtml)
                             onHtmlChange(joinParts(newParts))
                         },
-                        activeStyles = activeStyles,
+                        parentActiveStyles = activeStyles,
                         onFocusValueChange = onFocusValueChange,
                         focusRequester = if (index == 0) focusRequester else remember { FocusRequester() },
                         isPlaceholderVisible = index == 0 && parts.size == 1
@@ -80,8 +80,8 @@ fun HtmlBlockItem(
 private fun HtmlTextPart(
     htmlPart: HtmlPart.Text,
     onPartChange: (String) -> Unit,
-    activeStyles: Set<String>,
-    onFocusValueChange: (TextFieldValue, (TextFieldValue) -> Unit) -> Unit,
+    parentActiveStyles: Set<String>,
+    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit) -> Unit,
     focusRequester: FocusRequester,
     isPlaceholderVisible: Boolean
 ) {
@@ -98,7 +98,7 @@ private fun HtmlTextPart(
 
     LaunchedEffect(htmlPart.content) {
         val converted = HtmlConverter.toAnnotatedString(htmlPart.content)
-        if (converted.text != textFieldValue.text) {
+        if (converted != textFieldValue.annotatedString) {
             textFieldValue = textFieldValue.copy(annotatedString = converted)
         }
     }
@@ -116,39 +116,63 @@ private fun HtmlTextPart(
                 
                 finalValue = newValue.copy(
                     annotatedString = buildAnnotatedString {
-                        // 1. Start with the text from newValue
                         append(newValue.text)
                         
-                        // 2. Re-apply ALL previous styles to their updated positions
-                        // We map original indices to new indices based on where text was inserted
+                        // Re-apply and extend previous styles
                         textFieldValue.annotatedString.spanStyles.forEach { span ->
                             var newStart = span.start
                             var newEnd = span.end
                             
-                            // If insertion is before or at the start of the span, shift both
-                            if (startOfNewText <= span.start) {
+                            val isStyleActive = when {
+                                span.item.fontWeight == FontWeight.Bold -> parentActiveStyles.contains("b")
+                                span.item.fontStyle == FontStyle.Italic -> parentActiveStyles.contains("i")
+                                span.item.textDecoration?.contains(TextDecoration.Underline) == true -> parentActiveStyles.contains("u")
+                                else -> false
+                            }
+
+                            if (startOfNewText < span.start) {
                                 newStart += diff
                                 newEnd += diff
-                            }
-                            // If insertion is inside the span, extend the end
-                            else if (startOfNewText < span.end) {
+                            } else if (startOfNewText == span.start) {
+                                if (isStyleActive) {
+                                    newEnd += diff
+                                } else {
+                                    newStart += diff
+                                    newEnd += diff
+                                }
+                            } else if (startOfNewText < span.end) {
                                 newEnd += diff
+                            } else if (startOfNewText == span.end) {
+                                if (isStyleActive) {
+                                    newEnd += diff
+                                }
                             }
                             
-                            if (newStart < newValue.text.length) {
+                            if (newStart < newEnd && newStart <= newValue.text.length) {
                                 addStyle(span.item, newStart, minOf(newEnd, newValue.text.length))
                             }
                         }
                         
-                        // 3. Apply NEW active styles to the newly typed range
-                        activeStyles.forEach { styleKey ->
+                        // Apply NEW active styles from parent (toolbar) for any range not already covered
+                        parentActiveStyles.forEach { styleKey ->
                             val style = when(styleKey) {
                                 "b" -> SpanStyle(fontWeight = FontWeight.Bold)
                                 "i" -> SpanStyle(fontStyle = FontStyle.Italic)
                                 "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
                                 else -> null
                             }
-                            style?.let { addStyle(it, startOfNewText, cursorPosition) }
+                            style?.let { 
+                                // Only add if not already covered by existing (extended) style
+                                val alreadyCovered = finalValue.annotatedString.spanStyles.any { s ->
+                                    s.start <= startOfNewText && s.end >= cursorPosition && 
+                                    ((styleKey == "b" && s.item.fontWeight == FontWeight.Bold) ||
+                                     (styleKey == "i" && s.item.fontStyle == FontStyle.Italic) ||
+                                     (styleKey == "u" && s.item.textDecoration?.contains(TextDecoration.Underline) == true))
+                                }
+                                if (!alreadyCovered) {
+                                    addStyle(it, startOfNewText, cursorPosition) 
+                                }
+                            }
                         }
                     }
                 )
@@ -165,13 +189,10 @@ private fun HtmlTextPart(
                             var newStart = span.start
                             var newEnd = span.end
                             
-                            // Shift back if deletion was before
                             if (cursorPosition <= span.start) {
                                 newStart = maxOf(0, newStart - diff)
                                 newEnd = maxOf(0, newEnd - diff)
-                            }
-                            // Shrink if deletion was inside
-                            else if (cursorPosition < span.end) {
+                            } else if (cursorPosition < span.end) {
                                 newEnd = maxOf(newStart, newEnd - diff)
                             }
                             
@@ -181,6 +202,9 @@ private fun HtmlTextPart(
                         }
                     }
                 )
+            } else {
+                // Selection or composition change - keep spans from previous state
+                finalValue = newValue.copy(annotatedString = textFieldValue.annotatedString)
             }
             
             textFieldValue = finalValue
@@ -191,7 +215,8 @@ private fun HtmlTextPart(
             }
             
             if (isFocused) {
-                onFocusValueChange(finalValue) { updatedFromParent ->
+                val currentStyles = getActiveStylesAt(finalValue)
+                onFocusValueChange(finalValue, currentStyles) { updatedFromParent ->
                     if (updatedFromParent.annotatedString != textFieldValue.annotatedString) {
                         textFieldValue = updatedFromParent
                         onPartChange(HtmlConverter.fromAnnotatedString(updatedFromParent.annotatedString))
@@ -206,7 +231,7 @@ private fun HtmlTextPart(
             .onFocusChanged { 
                 isFocused = it.isFocused 
                 if (it.isFocused) {
-                    onFocusValueChange(textFieldValue) { newValue ->
+                    onFocusValueChange(textFieldValue, getActiveStylesAt(textFieldValue)) { newValue ->
                         textFieldValue = newValue
                     }
                 }
@@ -229,6 +254,30 @@ private fun HtmlTextPart(
             innerTextField()
         }
     )
+}
+
+private fun getActiveStylesAt(value: TextFieldValue): Set<String> {
+    val selection = value.selection
+    val spans = value.annotatedString.spanStyles
+    val active = mutableSetOf<String>()
+    
+    // Check style at cursor or within selection
+    val checkPos = if (selection.collapsed) maxOf(0, selection.start - 1) else selection.start
+    
+    spans.filter { 
+        if (selection.collapsed) {
+            it.start <= checkPos && it.end > checkPos
+        } else {
+            it.start < selection.max && it.end > selection.min
+        }
+    }.forEach { span ->
+        when {
+            span.item.fontWeight == FontWeight.Bold -> active.add("b")
+            span.item.fontStyle == FontStyle.Italic -> active.add("i")
+            span.item.textDecoration?.contains(TextDecoration.Underline) == true -> active.add("u")
+        }
+    }
+    return active
 }
 
 private sealed class HtmlPart {

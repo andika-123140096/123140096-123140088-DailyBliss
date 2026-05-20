@@ -16,7 +16,6 @@ class DailyBlissApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize Koin DI
         initKoin(            platformModules = listOf(androidModule)
         ) {
             androidContext(this@DailyBlissApplication)

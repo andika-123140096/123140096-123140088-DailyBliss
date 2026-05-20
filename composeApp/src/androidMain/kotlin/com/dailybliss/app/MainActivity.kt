@@ -25,11 +25,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Meminta semua izin yang diperlukan saat startup
-        checkAndRequestPermissions()
-        
-        // Enable edge-to-edge display
         enableEdgeToEdge()
         
         setContent {

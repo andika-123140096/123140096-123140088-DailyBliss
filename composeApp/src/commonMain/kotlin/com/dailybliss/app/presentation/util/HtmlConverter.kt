@@ -69,7 +69,7 @@ object HtmlConverter {
         if (text.isEmpty()) return ""
         
         val html = StringBuilder()
-        val spans = annotatedString.spanStyles
+        val spans = annotatedString.spanStyles.sortedBy { it.start }
         
         // Define boundaries where styles change
         val boundaries = (spans.flatMap { listOf(it.start, it.end) } + 0 + text.length)
@@ -109,18 +109,57 @@ object HtmlConverter {
             .replace("</i><i>", "")
             .replace("</u><u>", "")
             .replace("</u></i></b><b><i><u>", "")
-            .replace("<br/>", "\n") // Keep internal newlines as actual newlines for splitHtml
     }
 
     fun toggleStyle(value: TextFieldValue, style: SpanStyle): TextFieldValue {
         val selection = value.selection
         if (selection.collapsed) return value
         
+        val annotatedString = value.annotatedString
+        val start = selection.min
+        val end = selection.max
+        
+        // Find if this style already exists in the selection
+        val isPresent = annotatedString.spanStyles.any { span ->
+            span.start <= start && span.end >= end && isSimilarStyle(span.item, style)
+        }
+        
         val newAnnotatedString = buildAnnotatedString {
-            append(value.annotatedString)
-            addStyle(style, selection.min, selection.max)
+            append(annotatedString.text)
+            
+            // Re-add existing styles, but split/remove the one we're toggling
+            annotatedString.spanStyles.forEach { span ->
+                if (isSimilarStyle(span.item, style)) {
+                    if (isPresent) {
+                        // Removing: keep parts outside selection
+                        if (span.start < start) {
+                            addStyle(span.item, span.start, start)
+                        }
+                        if (span.end > end) {
+                            addStyle(span.item, end, span.end)
+                        }
+                    } else {
+                        // Adding: we'll merge it later, but keep existing for now
+                        addStyle(span.item, span.start, span.end)
+                    }
+                } else {
+                    addStyle(span.item, span.start, span.end)
+                }
+            }
+            
+            // If not present, add it
+            if (!isPresent) {
+                addStyle(style, start, end)
+            }
         }
         
         return value.copy(annotatedString = newAnnotatedString)
+    }
+
+    private fun isSimilarStyle(s1: SpanStyle, s2: SpanStyle): Boolean {
+        if (s1.fontWeight == FontWeight.Bold && s2.fontWeight == FontWeight.Bold) return true
+        if (s1.fontStyle == FontStyle.Italic && s2.fontStyle == FontStyle.Italic) return true
+        if (s1.textDecoration == TextDecoration.Underline && s2.textDecoration == TextDecoration.Underline) return true
+        return false
     }
 }

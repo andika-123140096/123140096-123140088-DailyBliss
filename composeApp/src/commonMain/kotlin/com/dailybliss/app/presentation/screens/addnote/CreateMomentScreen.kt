@@ -1,5 +1,6 @@
 package com.dailybliss.app.presentation.screens.addnote
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,18 +60,11 @@ fun CreateMomentScreen(
         }
     }
     
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (uiState.isLoading) {
             LoadingIndicator()
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = paddingValues.calculateTopPadding())
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 // Top Bar
                 Row(
                     modifier = Modifier
@@ -182,8 +176,9 @@ fun CreateMomentScreen(
                             html = uiState.content,
                             onHtmlChange = viewModel::onContentChange,
                             activeStyles = activeStyles,
-                            onFocusValueChange = { value, update ->
+                            onFocusValueChange = { value, styles, update ->
                                 focusedValue = value
+                                activeStyles = styles
                                 updateFocusedValue = update
                             },
                             focusRequester = remember { FocusRequester() }
@@ -194,7 +189,7 @@ fun CreateMomentScreen(
                     Spacer(modifier = Modifier.height(100.dp))
                 }
 
-                // Toolbar and Keyboard Handling
+                // Toolbar and Keyboard Handling - AIAssistant Mechanism
                 if (focusedValue != null) {
                     FormattingToolbar(
                         activeStyles = activeStyles,
@@ -230,14 +225,17 @@ fun CreateMomentScreen(
                 // DYNAMIC SPACER: Copy from AIAssistantScreen.kt
                 val imeBottom = WindowInsets.ime.getBottom(density)
                 val navBarBottom = WindowInsets.navigationBars.getBottom(density)
-                
-                // Since showBottomBar is false for this screen in AppNavHost, 
-                // we only need to account for system navigation bars.
+                // Since this screen is in the NavHost exception (bottom=0.dp), we use maxOf
                 val spacerHeightPx = maxOf(imeBottom, navBarBottom)
                 val spacerHeightDp = with(density) { spacerHeightPx.toDp() }
 
                 Spacer(Modifier.height(spacerHeightDp))
             }
         }
+        
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
+        )
     }
 }

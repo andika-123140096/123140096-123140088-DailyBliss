@@ -24,7 +24,6 @@ import com.dailybliss.app.core.di.initKoinIOS
  */
 fun MainViewController() = ComposeUIViewController(
     configure = {
-        // Initialize Koin for iOS
         initKoinIOS()
     }
 ) {

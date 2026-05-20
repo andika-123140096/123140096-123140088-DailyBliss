@@ -49,6 +49,7 @@ fun AppNavHost(
     
     val isAIAssistant = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true
     val isCreateMoment = currentDestination?.hierarchy?.any { it.hasRoute(Route.CreateMoment::class) } == true
+    val isMomentDetail = currentDestination?.hierarchy?.any { it.hasRoute(Route.MomentDetail::class) } == true
     
     val showBottomBar = hideBottomBarScreens.none { route ->
         currentDestination?.hierarchy?.any { it.hasRoute(route) } == true
@@ -143,7 +144,7 @@ fun AppNavHost(
         },
         content = { paddingValues ->
             // Screens that manage their own bottom padding to stay flush with the keyboard
-            val navHostPadding = if (isAIAssistant || isCreateMoment) {
+            val navHostPadding = if (isAIAssistant || isCreateMoment || isMomentDetail) {
                 PaddingValues(top = paddingValues.calculateTopPadding(), bottom = 0.dp)
             } else {
                 paddingValues

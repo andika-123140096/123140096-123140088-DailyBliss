@@ -1,5 +1,6 @@
 package com.dailybliss.app.presentation.screens.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,143 +75,152 @@ fun MomentDetailScreen(
         )
     }
     
-    Scaffold(
-        containerColor = Color.White,
-        bottomBar = {
-            if (focusedValue != null) {
-                FormattingToolbar(
-                    activeStyles = activeStyles,
-                    onStyleClick = { style ->
-                        activeStyles = if (activeStyles.contains(style)) {
-                            activeStyles - style
-                        } else {
-                            activeStyles + style
-                        }
-                        
-                        // Also apply to selection if exists
-                        focusedValue?.let { value ->
-                            if (!value.selection.collapsed) {
-                                val spanStyle = when (style) {
-                                    "b" -> SpanStyle(fontWeight = FontWeight.Bold)
-                                    "i" -> SpanStyle(fontStyle = FontStyle.Italic)
-                                    "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
-                                    else -> SpanStyle()
-                                }
-                                val newValue = HtmlConverter.toggleStyle(value, spanStyle)
-                                updateFocusedValue?.invoke(newValue)
-                            }
-                        }
-                    },
-                    onGalleryClick = { 
-                        lastCursorPosition = focusedValue?.selection?.start ?: -1
-                        imagePicker.launch()
-                    },
-                    modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.ime)
-                )
-            }
-        }
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         when (val state = uiState) {
             is MomentDetailUiState.Loading -> LoadingIndicator()
             is MomentDetailUiState.Success -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 120.dp)
-                ) {
-                    Row(
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        IconButton(
-                            onClick = onNavigateBack
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
-                        }
-                        
-                        BasicTextField(
-                            value = state.title,
-                            onValueChange = viewModel::onTitleChange,
-                            textStyle = MaterialTheme.typography.headlineMedium.copy(
-                                color = Color.Black,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 24.sp,
-                                lineHeight = 30.sp
-                            ),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { innerTextField ->
-                                if (state.title.isEmpty()) {
-                                    Text(
-                                        text = "Judul...",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        color = Color.LightGray,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                innerTextField()
-                            },
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        )
-                        
-                        state.moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
-                            Text(
-                                text = emoji,
-                                fontSize = 28.sp,
-                                modifier = Modifier.padding(end = 8.dp)
+                                .fillMaxWidth()
+                                .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = onNavigateBack
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
+                            }
+                            
+                            BasicTextField(
+                                value = state.title,
+                                onValueChange = viewModel::onTitleChange,
+                                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp,
+                                    lineHeight = 30.sp
+                                ),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                decorationBox = { innerTextField ->
+                                    if (state.title.isEmpty()) {
+                                        Text(
+                                            text = "Judul...",
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            color = Color.LightGray,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    innerTextField()
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                             )
+                            
+                            state.moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
+                                Text(
+                                    text = emoji,
+                                    fontSize = 28.sp,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { showDeleteDialog = true }
+                            ) {
+                                Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
+                            }
                         }
 
-                        IconButton(
-                            onClick = { showDeleteDialog = true }
-                        ) {
-                            Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
-                        }
-                    }
-
-                    if (state.moment.tags.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            state.moment.tags.forEach { tag ->
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp, 
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                    )
-                                ) {
-                                    Text(
-                                        text = "#$tag",
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                        if (state.moment.tags.isNotEmpty()) {
+                            FlowRow(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                state.moment.tags.forEach { tag ->
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            1.dp, 
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "#$tag",
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                         }
+
+                        Box(modifier = Modifier.padding(horizontal = 0.dp)) {
+                            HtmlBlockItem(
+                                html = state.content,
+                                onHtmlChange = viewModel::onContentChange,
+                                activeStyles = activeStyles,
+                                onFocusValueChange = { value, styles, update ->
+                                    focusedValue = value
+                                    activeStyles = styles
+                                    updateFocusedValue = update
+                                },
+                                focusRequester = remember { FocusRequester() }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
 
-                    Box(modifier = Modifier.padding(horizontal = 0.dp)) {
-                        HtmlBlockItem(
-                            html = state.content,
-                            onHtmlChange = viewModel::onContentChange,
+                    // Toolbar and Keyboard Handling - AIAssistant Mechanism
+                    if (focusedValue != null) {
+                        FormattingToolbar(
                             activeStyles = activeStyles,
-                            onFocusValueChange = { value, update ->
-                                focusedValue = value
-                                updateFocusedValue = update
+                            onStyleClick = { style ->
+                                activeStyles = if (activeStyles.contains(style)) {
+                                    activeStyles - style
+                                } else {
+                                    activeStyles + style
+                                }
+                                
+                                // Also apply to selection if exists
+                                focusedValue?.let { value ->
+                                    if (!value.selection.collapsed) {
+                                        val spanStyle = when (style) {
+                                            "b" -> SpanStyle(fontWeight = FontWeight.Bold)
+                                            "i" -> SpanStyle(fontStyle = FontStyle.Italic)
+                                            "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
+                                            else -> SpanStyle()
+                                        }
+                                        val newValue = HtmlConverter.toggleStyle(value, spanStyle)
+                                        updateFocusedValue?.invoke(newValue)
+                                    }
+                                }
                             },
-                            focusRequester = remember { FocusRequester() }
+                            onGalleryClick = { 
+                                lastCursorPosition = focusedValue?.selection?.start ?: -1
+                                imagePicker.launch()
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
+
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+                    val imeBottom = WindowInsets.ime.getBottom(density)
+                    val navBarBottom = WindowInsets.navigationBars.getBottom(density)
+                    val spacerHeightPx = maxOf(imeBottom, navBarBottom)
+                    val spacerHeightDp = with(density) { spacerHeightPx.toDp() }
+
+                    Spacer(Modifier.height(spacerHeightDp))
                 }
             }
             is MomentDetailUiState.NotFound -> {
