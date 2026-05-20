@@ -3,6 +3,7 @@ package com.dailybliss.app.domain.usecase
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.repository.MomentRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.toInstant
 
 enum class MomentSortBy(val displayName: String) {
     TITLE_ASC("Judul (A-Z)"),
@@ -40,6 +41,17 @@ class GetMomentByIdUseCase(private val repository: MomentRepository) {
 
 class GetMomentsFromSameDayUseCase(private val repository: MomentRepository) {
     operator fun invoke(dayMonth: String): Flow<List<Moment>> = repository.getMomentsFromSameDay(dayMonth)
+}
+
+class GetMomentsForDateUseCase(private val repository: MomentRepository) {
+    operator fun invoke(date: kotlinx.datetime.LocalDate): Flow<List<Moment>> {
+        val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val startOfDay = kotlinx.datetime.LocalDateTime(date.year, date.month, date.dayOfMonth, 0, 0, 0, 0)
+            .toInstant(tz).toEpochMilliseconds()
+        val endOfDay = kotlinx.datetime.LocalDateTime(date.year, date.month, date.dayOfMonth, 23, 59, 59, 999_999_999)
+            .toInstant(tz).toEpochMilliseconds()
+        return repository.getMomentsByDateRange(startOfDay, endOfDay)
+    }
 }
 
 class GetMomentsByDateRangeUseCase(private val repository: MomentRepository) {

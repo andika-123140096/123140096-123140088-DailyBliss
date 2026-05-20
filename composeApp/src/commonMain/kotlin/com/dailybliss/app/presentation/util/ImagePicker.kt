@@ -12,4 +12,5 @@ interface ImagePickerLauncher {
 
 expect class FileStorage(context: PlatformContext) {
     suspend fun saveImage(bytes: ByteArray): String?
+    suspend fun loadImage(path: String): ByteArray?
 }

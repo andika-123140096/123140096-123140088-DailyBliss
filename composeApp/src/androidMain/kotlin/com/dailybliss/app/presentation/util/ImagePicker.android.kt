@@ -5,9 +5,11 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.dailybliss.app.core.util.PlatformContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -15,19 +17,23 @@ import java.util.UUID
 @Composable
 actual fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): ImagePickerLauncher {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val launcher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickMultipleVisualMedia(),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
-                    try {
-                        val bytesList =
-                            uris.mapNotNull { uri ->
-                                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    scope.launch {
+                        try {
+                            val bytesList = withContext(Dispatchers.IO) {
+                                uris.mapNotNull { uri ->
+                                    context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                                }
                             }
-                        onResult(bytesList)
-                    } catch (e: Exception) {
-                        onResult(emptyList())
+                            onResult(bytesList)
+                        } catch (e: Exception) {
+                            onResult(emptyList())
+                        }
                     }
                 } else {
                     onResult(emptyList())
@@ -51,6 +57,14 @@ actual class FileStorage actual constructor(private val context: PlatformContext
             val file = File(context.androidContext.filesDir, fileName)
             file.writeBytes(bytes)
             file.absolutePath
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    actual suspend fun loadImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
+        try {
+            File(path).readBytes()
         } catch (e: Exception) {
             null
         }

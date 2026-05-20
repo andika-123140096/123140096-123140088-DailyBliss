@@ -73,7 +73,7 @@ class GeminiService(private val client: HttpClient) {
             }.execute { response ->
                 if (response.status != HttpStatusCode.OK) {
                     val errorBody = response.bodyAsText()
-                    throw Exception("API Error (\${response.status.value}): \$errorBody")
+                    throw Exception("API Error (${response.status.value}): $errorBody")
                 }
 
                 val channel = response.bodyAsChannel()
@@ -92,7 +92,7 @@ class GeminiService(private val client: HttpClient) {
                                     emit(text)
                                 }
                             } catch (e: Exception) {
-                                println("GeminiService: SSE stream parse error: \${e.message}")
+                                println("GeminiService: SSE stream parse error: ${e.message}")
                             }
                         }
                     }
@@ -101,13 +101,13 @@ class GeminiService(private val client: HttpClient) {
         }
     }
 
-    suspend fun generateContent(prompt: String, systemPrompt: String? = null): Result<String> = runCatching {
+    suspend fun generateContent(parts: List<GeminiPart>, systemPrompt: String? = null): Result<String> = runCatching {
         retryWithBackoff {
             val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
 
             val contents = listOf(
                 GeminiContent(
-                    parts = listOf(GeminiPart(text = prompt)),
+                    parts = parts,
                     role = "user",
                 ),
             )
@@ -129,7 +129,7 @@ class GeminiService(private val client: HttpClient) {
 
             if (response.status != HttpStatusCode.OK) {
                 val errorBody = response.bodyAsText()
-                throw Exception("API Error (\${response.status.value}): \$errorBody")
+                throw Exception("API Error (${response.status.value}): $errorBody")
             }
 
             val geminiResponse = response.body<GeminiResponse>()
@@ -162,7 +162,7 @@ class GeminiService(private val client: HttpClient) {
 
             if (response.status != HttpStatusCode.OK) {
                 val errorBody = response.bodyAsText()
-                throw Exception("API Error (\${response.status.value}): \$errorBody")
+                throw Exception("API Error (${response.status.value}): $errorBody")
             }
 
             val geminiResponse = response.body<GeminiResponse>()

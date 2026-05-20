@@ -23,6 +23,9 @@ sealed interface Route {
 
     @Serializable
     data object Settings : Route
+
+    @Serializable
+    data class DailyMoments(val dateStr: String) : Route
 }
 
 interface NavigationActions {
@@ -31,6 +34,8 @@ interface NavigationActions {
     fun navigateToJournal()
 
     fun navigateToCalendar()
+
+    fun navigateToDailyMoments(dateStr: String)
 
     fun navigateToCreateMoment(momentId: Long? = null)
 

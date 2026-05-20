@@ -35,6 +35,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
+    var currentBlockOffset by remember { mutableStateOf(0) }
 
     var lastCursorPosition by remember { mutableStateOf(-1) }
     val imagePicker = rememberImagePickerLauncher(
@@ -171,10 +172,11 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                             html = uiState.content,
                             onHtmlChange = viewModel::onContentChange,
                             activeStyles = activeStyles,
-                            onFocusValueChange = { value, styles, update ->
+                            onFocusValueChange = { value, styles, update, offset ->
                                 focusedValue = value
                                 activeStyles = styles
                                 updateFocusedValue = update
+                                currentBlockOffset = offset
                             },
                             focusRequester = remember { FocusRequester() },
                         )
@@ -210,7 +212,11 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                             }
                         },
                         onGalleryClick = {
-                            lastCursorPosition = focusedValue?.selection?.start ?: -1
+                            lastCursorPosition = if (focusedValue != null) {
+                                currentBlockOffset + focusedValue!!.selection.start
+                            } else {
+                                -1
+                            }
                             imagePicker.launch()
                         },
                         modifier = Modifier.fillMaxWidth(),

@@ -2,6 +2,7 @@ package com.dailybliss.app.core.util
 
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MomentRepository
+import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -12,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 class BackgroundAIProcessor(
     private val aiRepository: AIRepository,
     private val momentRepository: MomentRepository,
+    private val fileStorage: FileStorage,
     private val applicationScope: CoroutineScope,
 ) {
     private val activeJobs = mutableMapOf<Long, Job>()
@@ -42,9 +44,12 @@ class BackgroundAIProcessor(
                                 return@launch
                             }
 
-                            // Perform AI Analysis
-                            val moodResult = aiRepository.analyzeMood(allText)
-                            val tagsResult = aiRepository.generateTags(allText)
+                            // Load visual context from cover image
+                            val imageBytes = moment.imageUrl?.let { fileStorage.loadImage(it) }
+
+                            // Perform Multimodal AI Analysis
+                            val moodResult = aiRepository.analyzeMood(content = allText, imageBytes = imageBytes)
+                            val tagsResult = aiRepository.generateTags(content = allText, imageBytes = imageBytes)
 
                             if (moodResult != null || tagsResult.isNotEmpty()) {
                                 val updatedMoment =

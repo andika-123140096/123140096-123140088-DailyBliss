@@ -57,41 +57,55 @@ class CreateMomentViewModel(
     }
 
     fun onContentChange(content: String) {
-        _uiState.update { it.copy(content = content) }
+        _uiState.update { it.copy(
+            content = content,
+            imageUrl = extractFirstImage(content)
+        ) }
     }
 
     fun addImage(bytesList: List<ByteArray>, insertionIndex: Int = -1) {
         viewModelScope.launch {
             val urls = bytesList.mapNotNull { fileStorage.saveImage(it) }
-            if (urls.isNotEmpty()) {
-                val imagesHtml = urls.joinToString("") { "<img src=\"\$it\" />" }
+            if (urls.isEmpty()) return@launch
 
-                _uiState.update { state ->
-                    val newContent = if (insertionIndex == -1 || insertionIndex >= state.content.length) {
-                        state.content + imagesHtml
-                    } else {
-                        var htmlIndex = 0
-                        var textCount = 0
-                        while (htmlIndex < state.content.length && textCount < insertionIndex) {
-                            if (state.content[htmlIndex] == '<') {
-                                val end = state.content.indexOf('>', htmlIndex)
-                                if (end == -1) break
-                                htmlIndex = end + 1
-                            } else {
-                                htmlIndex++
-                                textCount++
+            val imagesHtml = "<div class=\"image-group\">" +
+                urls.joinToString("") { "<img src=\"$it\" />" } +
+                "</div>"
+
+            _uiState.update { state ->
+                val currentContent = state.content
+                
+                val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
+                    currentContent + imagesHtml
+                } else {
+                    // Find actual HTML index corresponding to text index
+                    var htmlIdx = 0
+                    var textCount = 0
+                    while (htmlIdx < currentContent.length && textCount < insertionIndex) {
+                        if (currentContent[htmlIdx] == '<') {
+                            val end = currentContent.indexOf('>', htmlIdx)
+                            if (end != -1) {
+                                htmlIdx = end + 1
+                                continue
                             }
                         }
-                        state.content.substring(0, htmlIndex) + imagesHtml + state.content.substring(htmlIndex)
+                        htmlIdx++
+                        textCount++
                     }
-
-                    state.copy(
-                        content = newContent,
-                        imageUrl = urls.first(),
-                    )
+                    currentContent.substring(0, htmlIdx) + imagesHtml + currentContent.substring(htmlIdx)
                 }
+
+                state.copy(
+                    content = newContent,
+                    imageUrl = extractFirstImage(newContent)
+                )
             }
         }
+    }
+
+    private fun extractFirstImage(html: String): String? {
+        val match = Regex("<img src=\"(.*?)\" />").find(html)
+        return match?.groupValues?.get(1)
     }
 
     fun saveMoment() {

@@ -21,7 +21,7 @@ data class CalendarUiState(
     val currentMonth: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.let { LocalDate(it.year, it.month, 1) },
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val days: List<CalendarDay> = emptyList(),
-    val moments: List<Moment> = emptyList(),
+    val currentStreak: Int = 0,
     val isLoading: Boolean = false,
 )
 
@@ -38,14 +38,13 @@ class CalendarViewModel(
         viewModelScope.launch {
             getAllMomentsUseCase().collect { moments ->
                 updateCalendarDays(moments)
-                loadMomentsForSelectedDate()
+                calculateStreak(moments)
             }
         }
     }
 
     fun onDateSelected(date: LocalDate) {
         _uiState.update { it.copy(selectedDate = date) }
-        loadMomentsForSelectedDate()
     }
 
     fun nextMonth() {
@@ -68,21 +67,35 @@ class CalendarViewModel(
         }
     }
 
-    private fun loadMomentsForSelectedDate() {
-        val selected = _uiState.value.selectedDate
-        val dayMonth = "\${selected.monthNumber.toString().padStart(2, '0')}-\${selected.dayOfMonth.toString().padStart(2, '0')}"
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            getMomentsFromSameDayUseCase(dayMonth).collect { moments ->
-                // Filter specifically for the selected year as well
-                val filtered = moments.filter {
-                    val dt = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault())
-                    dt.year == selected.year
-                }
-                _uiState.update { it.copy(moments = filtered, isLoading = false) }
+    private fun calculateStreak(moments: List<Moment>) {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        
+        // Get unique dates that have moments
+        val momentDates = moments.map { 
+            it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date 
+        }.toSet()
+        
+        var streak = 0
+        var currentDate = today
+        
+        // If no moment today, check if there was one yesterday. 
+        // If not, streak is 0.
+        if (!momentDates.contains(today)) {
+            val yesterday = today.minus(1, DateTimeUnit.DAY)
+            if (!momentDates.contains(yesterday)) {
+                _uiState.update { it.copy(currentStreak = 0) }
+                return
             }
+            currentDate = yesterday
         }
+        
+        // Count backwards
+        while (momentDates.contains(currentDate)) {
+            streak++
+            currentDate = currentDate.minus(1, DateTimeUnit.DAY)
+        }
+        
+        _uiState.update { it.copy(currentStreak = streak) }
     }
 
     private fun updateCalendarDays(allMoments: List<Moment>) {

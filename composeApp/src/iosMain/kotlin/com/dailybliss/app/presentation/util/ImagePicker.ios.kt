@@ -13,6 +13,7 @@ actual fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): Ima
     }
 }
 
-actual class FileStorage actual constructor(context: PlatformContext) {
+actual class FileStorage actual constructor(private val context: PlatformContext) {
     actual suspend fun saveImage(bytes: ByteArray): String? = null
+    actual suspend fun loadImage(path: String): ByteArray? = null
 }

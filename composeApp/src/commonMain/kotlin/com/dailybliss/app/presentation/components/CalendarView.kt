@@ -44,7 +44,7 @@ fun CalendarView(
         // Days Grid (6 rows of 7 days)
         val rows = days.chunked(7)
         rows.forEach { rowDays ->
-            Row(modifier = Modifier.fillMaxWidth().height(56.dp)) {
+            Row(modifier = Modifier.fillMaxWidth().height(64.dp)) {
                 rowDays.forEach { day ->
                     CalendarDayItem(
                         day = day,
@@ -73,9 +73,9 @@ private fun CalendarDayItem(day: CalendarDay, isSelected: Boolean, onClick: () -
             .fillMaxHeight()
             .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() }
-            .padding(4.dp),
+            .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
     ) {
         Box(
             modifier = Modifier
@@ -95,21 +95,19 @@ private fun CalendarDayItem(day: CalendarDay, isSelected: Boolean, onClick: () -
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        Row(
-            modifier = Modifier.height(12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (day.mood != null) {
-                Text(text = day.mood, fontSize = 8.sp)
-            } else if (day.hasMoments) {
-                Box(
-                    modifier = Modifier
-                        .size(4.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
-                )
-            }
+        if (day.mood != null) {
+            Text(
+                text = day.mood,
+                fontSize = 18.sp,
+                modifier = Modifier.wrapContentSize(),
+            )
+        } else if (day.hasMoments) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+            )
         }
     }
 }

@@ -37,12 +37,23 @@ fun HtmlBlockItem(
     html: String,
     onHtmlChange: (String) -> Unit = { _ -> },
     activeStyles: Set<String> = emptySet(),
-    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit) -> Unit = { _, _, _ -> },
+    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit, Int) -> Unit = { _, _, _, _ -> },
     focusRequester: FocusRequester = remember { FocusRequester() },
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val parts = remember(html) { splitHtml(html) }
+    val textOffsets = remember(parts) {
+        val offsets = mutableListOf<Int>()
+        var currentOffset = 0
+        parts.forEach { part ->
+            offsets.add(currentOffset)
+            if (part is HtmlPart.Text) {
+                currentOffset += HtmlConverter.toAnnotatedString(part.content).length
+            }
+        }
+        offsets
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         parts.forEachIndexed { index, part ->
@@ -56,7 +67,9 @@ fun HtmlBlockItem(
                             onHtmlChange(joinParts(newParts))
                         },
                         parentActiveStyles = activeStyles,
-                        onFocusValueChange = onFocusValueChange,
+                        onFocusValueChange = { value, styles, update ->
+                            onFocusValueChange(value, styles, update, textOffsets[index])
+                        },
                         focusRequester = if (index == 0) focusRequester else remember { FocusRequester() },
                         isPlaceholderVisible = index == 0 && parts.size == 1,
                         enabled = enabled,

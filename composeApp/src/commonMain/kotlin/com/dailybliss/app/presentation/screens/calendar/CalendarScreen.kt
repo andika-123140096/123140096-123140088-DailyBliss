@@ -1,9 +1,6 @@
 package com.dailybliss.app.presentation.screens.calendar
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -15,19 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.presentation.components.CalendarView
-import com.dailybliss.app.presentation.components.LoadingIndicator
-import com.dailybliss.app.presentation.components.MomentItem
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
-    onNavigateToMomentDetail: (Long) -> Unit,
+    onNavigateToDailyMoments: (String) -> Unit,
     viewModel: CalendarViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,7 +64,7 @@ fun CalendarScreen(
                 }
 
                 Text(
-                    text = "\${uiState.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} \${uiState.currentMonth.year}",
+                    text = "${uiState.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${uiState.currentMonth.year}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 )
 
@@ -79,61 +73,49 @@ fun CalendarScreen(
                 }
             }
 
+            // Streak Section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                ),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = "🔥",
+                        fontSize = 24.sp,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${uiState.currentStreak} Hari Beruntun Menulis",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                        ),
+                    )
+                }
+            }
+
             // Calendar View
             CalendarView(
                 days = uiState.days,
                 selectedDate = uiState.selectedDate,
-                onDateSelected = { viewModel.onDateSelected(it) },
+                onDateSelected = { date ->
+                    viewModel.onDateSelected(date)
+                    val dateStr = "${date.year}-${date.monthNumber.toString().padStart(2, '0')}-${date.dayOfMonth.toString().padStart(2, '0')}"
+                    onNavigateToDailyMoments(dateStr)
+                },
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Moments for Selected Day
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                    )
-                    .padding(top = 24.dp),
-            ) {
-                if (uiState.isLoading) {
-                    LoadingIndicator()
-                } else if (uiState.moments.isEmpty()) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            "Tidak ada jurnal",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        )
-                        Text(
-                            "Kamu belum menulis apapun di tanggal ini.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(uiState.moments) { moment ->
-                            MomentItem(
-                                moment = moment,
-                                onClick = { onNavigateToMomentDetail(moment.id) },
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

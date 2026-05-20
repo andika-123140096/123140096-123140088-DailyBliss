@@ -16,6 +16,7 @@ import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
 import com.dailybliss.app.presentation.screens.calendar.CalendarViewModel
+import com.dailybliss.app.presentation.screens.calendar.DailyMomentsViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
@@ -37,6 +38,7 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    single { FileStorage(get()) }
     singleOf(::BackgroundAIProcessor)
 }
 
@@ -79,6 +81,7 @@ val useCaseModule = module {
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
     singleOf(::GetMomentsFromSameDayUseCase)
+    singleOf(::GetMomentsForDateUseCase)
     singleOf(::GetMomentsByDateRangeUseCase)
 }
 
@@ -88,7 +91,8 @@ val viewModelModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::JournalViewModel)
     viewModelOf(::CalendarViewModel)
-    viewModel { CreateMomentViewModel(get(), get(), get(), FileStorage(get())) }
+    viewModel { parameters -> DailyMomentsViewModel(dateStr = parameters.get(), get()) }
+    viewModelOf(::CreateMomentViewModel)
     viewModelOf(::MomentDetailViewModel)
     viewModelOf(::AIAssistantViewModel)
     viewModelOf(::SettingsViewModel)

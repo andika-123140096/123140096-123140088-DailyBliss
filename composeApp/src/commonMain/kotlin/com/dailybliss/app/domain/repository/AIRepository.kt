@@ -17,12 +17,12 @@ interface AIRepository {
     /**
      * Analyzes the mood of a given journal content.
      */
-    suspend fun analyzeMood(content: String): MoodResult?
+    suspend fun analyzeMood(content: String, imageBytes: ByteArray? = null): MoodResult?
 
     /**
      * Generates relevant tags for a given journal content.
      */
-    suspend fun generateTags(content: String): List<String>
+    suspend fun generateTags(content: String, imageBytes: ByteArray? = null): List<String>
 
     /**
      * Generates a daily reflective prompt.

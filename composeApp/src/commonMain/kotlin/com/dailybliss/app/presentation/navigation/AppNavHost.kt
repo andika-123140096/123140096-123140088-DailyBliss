@@ -29,6 +29,7 @@ import androidx.navigation.toRoute
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentScreen
 import com.dailybliss.app.presentation.screens.ai.AIAssistantScreen
 import com.dailybliss.app.presentation.screens.calendar.CalendarScreen
+import com.dailybliss.app.presentation.screens.calendar.DailyMomentsScreen
 import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
 import com.dailybliss.app.presentation.screens.home.HomeScreen
 import com.dailybliss.app.presentation.screens.home.JournalScreen
@@ -44,6 +45,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
         Route.CreateMoment::class,
         Route.MomentDetail::class,
         Route.Settings::class,
+        Route.DailyMoments::class,
     )
 
     val isAIAssistant = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true
@@ -206,6 +208,15 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
 
                 composable<Route.Calendar> {
                     CalendarScreen(
+                        onNavigateToDailyMoments = { dateStr -> actions.navigateToDailyMoments(dateStr) },
+                    )
+                }
+
+                composable<Route.DailyMoments> { backStackEntry ->
+                    val route: Route.DailyMoments = backStackEntry.toRoute()
+                    DailyMomentsScreen(
+                        dateStr = route.dateStr,
+                        onNavigateBack = { actions.navigateBack() },
                         onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
                     )
                 }
@@ -269,6 +280,10 @@ private class NavigationActionsImpl(private val navController: NavHostController
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    override fun navigateToDailyMoments(dateStr: String) {
+        navController.navigate(Route.DailyMoments(dateStr))
     }
 
     override fun navigateToCreateMoment(momentId: Long?) {

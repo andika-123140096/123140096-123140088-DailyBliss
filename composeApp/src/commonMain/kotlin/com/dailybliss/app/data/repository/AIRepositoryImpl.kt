@@ -35,11 +35,17 @@ class AIRepositoryImpl(private val geminiService: GeminiService, private val use
             ).getOrThrow()
     }
 
-    override suspend fun analyzeMood(content: String): MoodResult? {
+    override suspend fun analyzeMood(content: String, imageBytes: ByteArray?): MoodResult? {
+        val parts = mutableListOf<GeminiPart>()
+        if (imageBytes != null) {
+            parts.add(GeminiPart(inline_data = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
+        }
+        parts.add(GeminiPart(text = content))
+
         val result =
             geminiService
                 .generateContent(
-                    prompt = content,
+                    parts = parts,
                     systemPrompt = SystemPrompts.MOOD_ANALYSIS_PROMPT,
                 ).getOrNull()
 
@@ -56,11 +62,17 @@ class AIRepositoryImpl(private val geminiService: GeminiService, private val use
         }
     }
 
-    override suspend fun generateTags(content: String): List<String> {
+    override suspend fun generateTags(content: String, imageBytes: ByteArray?): List<String> {
+        val parts = mutableListOf<GeminiPart>()
+        if (imageBytes != null) {
+            parts.add(GeminiPart(inline_data = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
+        }
+        parts.add(GeminiPart(text = content))
+
         val result =
             geminiService
                 .generateContent(
-                    prompt = content,
+                    parts = parts,
                     systemPrompt = SystemPrompts.TAG_GENERATION_PROMPT,
                 ).getOrNull()
 
@@ -79,7 +91,7 @@ class AIRepositoryImpl(private val geminiService: GeminiService, private val use
         val result =
             geminiService
                 .generateContent(
-                    prompt = "Berikan aku satu pertanyaan hari ini.",
+                    parts = listOf(GeminiPart(text = "Berikan aku satu pertanyaan hari ini.")),
                     systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION,
                 ).getOrNull()
 

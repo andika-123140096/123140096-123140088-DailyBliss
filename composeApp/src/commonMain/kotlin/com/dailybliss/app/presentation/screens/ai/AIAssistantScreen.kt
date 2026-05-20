@@ -116,14 +116,14 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                 tonalElevation = 2.dp,
                 color = MaterialTheme.colorScheme.surface,
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     uiState.selectedImageBytes?.let { bytes ->
                         Box(modifier = Modifier.padding(bottom = 8.dp)) {
                             AsyncImage(
                                 model = bytes,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(100.dp)
+                                    .size(80.dp)
                                     .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
                             )
@@ -132,43 +132,65 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .padding(4.dp)
-                                    .size(24.dp)
+                                    .size(20.dp)
                                     .background(Color.Black.copy(alpha = 0.5f), CircleShape),
                             ) {
-                                Icon(Icons.Default.Send, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                Icon(Icons.Default.Send, null, tint = Color.White, modifier = Modifier.size(10.dp))
                             }
                         }
                     }
 
                     Row(
-                        verticalAlignment = Alignment.Bottom,
-                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                     ) {
-                        IconButton(onClick = { imagePicker.launch() }) {
-                            Icon(Icons.Default.AutoAwesome, "Add Image", tint = MaterialTheme.colorScheme.primary)
+                        IconButton(onClick = { imagePicker.launch() }, modifier = Modifier.size(40.dp)) {
+                            Icon(
+                                Icons.Default.AutoAwesome,
+                                "Add Image",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
 
-                        TextField(
+                        androidx.compose.foundation.text.BasicTextField(
                             value = uiState.input,
                             onValueChange = viewModel::onInputChange,
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("Ketik pesan...") },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
                             ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                            decorationBox = { innerTextField ->
+                                if (uiState.input.isEmpty()) {
+                                    Text(
+                                        "Ketik pesan...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                    )
+                                }
+                                innerTextField()
+                            },
                             maxLines = 4,
                         )
+
+                        Spacer(modifier = Modifier.width(4.dp))
 
                         IconButton(
                             onClick = { viewModel.sendMessage() },
                             enabled = uiState.input.isNotBlank() || uiState.selectedImageBytes != null,
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 Icons.Default.Send,
                                 "Send",
+                                modifier = Modifier.size(20.dp),
                                 tint = if (uiState.input.isNotBlank() || uiState.selectedImageBytes != null) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
