@@ -87,7 +87,7 @@ private val MonochromeColorScheme = lightColorScheme(
 fun DailyBlissTheme(
     @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = false,
     themeName: String = "Sage Green",
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = when (themeName) {
         "Ocean Blue" -> OceanBlueColorScheme

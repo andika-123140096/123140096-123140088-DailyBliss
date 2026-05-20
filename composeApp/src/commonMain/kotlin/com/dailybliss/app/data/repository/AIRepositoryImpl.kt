@@ -7,16 +7,28 @@ import com.dailybliss.app.data.remote.api.SystemPrompts
 import com.dailybliss.app.data.remote.dto.GeminiContent
 import com.dailybliss.app.data.remote.dto.GeminiInlineData
 import com.dailybliss.app.data.remote.dto.GeminiPart
+import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MoodResult
-import com.dailybliss.app.presentation.screens.ai.ChatMessage
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class AIRepositoryImpl(private val geminiService: GeminiService, private val userPreferences: UserPreferences) : AIRepository {
+class AIRepositoryImpl(
+    private val geminiService: GeminiService,
+    private val userPreferences: UserPreferences,
+    private val applicationScope: CoroutineScope,
+) : AIRepository {
     private val json = Json { ignoreUnknownKeys = true }
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    override val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    private val _isChatLoading = MutableStateFlow(false)
+    override val isChatLoading: StateFlow<Boolean> = _isChatLoading.asStateFlow()
 
     override suspend fun streamChat(messages: List<ChatMessage>): Flow<String> {
         val geminiContents = mapToGeminiContents(messages)
@@ -33,6 +45,62 @@ class AIRepositoryImpl(private val geminiService: GeminiService, private val use
                 contents = geminiContents,
                 systemPrompt = getDynamicSystemPrompt(),
             ).getOrThrow()
+    }
+
+    override fun sendMessage(text: String, imageBytes: ByteArray?) {
+        val userMessage = ChatMessage(
+            role = "user",
+            text = text.trim(),
+            imageBytes = imageBytes,
+        )
+
+        val placeholderModelMessage = ChatMessage(role = "model", text = "")
+
+        _chatMessages.update { it + userMessage + placeholderModelMessage }
+        _isChatLoading.value = true
+
+        applicationScope.launch {
+            var attempt = 1
+            while (true) {
+                try {
+                    // Send history excluding the placeholder (last message)
+                    val history = _chatMessages.value.dropLast(1)
+                    val fullResponse = chat(history)
+
+                    _chatMessages.update { messages ->
+                        val updated = messages.toMutableList()
+                        if (updated.isNotEmpty()) {
+                            updated[updated.lastIndex] = updated.lastIndex.let {
+                                updated[it].copy(text = fullResponse, isError = false)
+                            }
+                        }
+                        updated
+                    }
+                    _isChatLoading.value = false
+                    break
+                } catch (e: Exception) {
+                    _chatMessages.update { messages ->
+                        val updated = messages.toMutableList()
+                        if (updated.isNotEmpty()) {
+                            updated[updated.lastIndex] = updated.lastIndex.let {
+                                updated[it].copy(
+                                    text = "Koneksi terputus (Percobaan $attempt): ${e.message}. Mencoba menghubungkan kembali...",
+                                    isError = true,
+                                )
+                            }
+                        }
+                        updated
+                    }
+                    attempt++
+                    delay(3000)
+                }
+            }
+        }
+    }
+
+    override fun clearChat() {
+        _chatMessages.value = emptyList()
+        _isChatLoading.value = false
     }
 
     override suspend fun analyzeMood(content: String, imageBytes: ByteArray?): MoodResult? {

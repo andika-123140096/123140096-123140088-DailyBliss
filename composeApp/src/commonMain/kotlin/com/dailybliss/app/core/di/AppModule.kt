@@ -69,7 +69,7 @@ val preferencesModule = module {
 
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
-    single { AIRepositoryImpl(get(), get()) } bind AIRepository::class
+    single { AIRepositoryImpl(get(), get(), get()) } bind AIRepository::class
 }
 
 // ==================== USE CASE MODULE ====================

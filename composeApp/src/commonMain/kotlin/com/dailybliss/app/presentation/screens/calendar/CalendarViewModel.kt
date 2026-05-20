@@ -69,16 +69,16 @@ class CalendarViewModel(
 
     private fun calculateStreak(moments: List<Moment>) {
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        
+
         // Get unique dates that have moments
-        val momentDates = moments.map { 
-            it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date 
+        val momentDates = moments.map {
+            it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
         }.toSet()
-        
+
         var streak = 0
         var currentDate = today
-        
-        // If no moment today, check if there was one yesterday. 
+
+        // If no moment today, check if there was one yesterday.
         // If not, streak is 0.
         if (!momentDates.contains(today)) {
             val yesterday = today.minus(1, DateTimeUnit.DAY)
@@ -88,13 +88,13 @@ class CalendarViewModel(
             }
             currentDate = yesterday
         }
-        
+
         // Count backwards
         while (momentDates.contains(currentDate)) {
             streak++
             currentDate = currentDate.minus(1, DateTimeUnit.DAY)
         }
-        
+
         _uiState.update { it.copy(currentStreak = streak) }
     }
 

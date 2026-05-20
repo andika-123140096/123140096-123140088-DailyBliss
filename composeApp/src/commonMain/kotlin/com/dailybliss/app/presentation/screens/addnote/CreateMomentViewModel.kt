@@ -57,10 +57,12 @@ class CreateMomentViewModel(
     }
 
     fun onContentChange(content: String) {
-        _uiState.update { it.copy(
-            content = content,
-            imageUrl = extractFirstImage(content)
-        ) }
+        _uiState.update {
+            it.copy(
+                content = content,
+                imageUrl = extractFirstImage(content),
+            )
+        }
     }
 
     fun addImage(bytesList: List<ByteArray>, insertionIndex: Int = -1) {
@@ -74,7 +76,7 @@ class CreateMomentViewModel(
 
             _uiState.update { state ->
                 val currentContent = state.content
-                
+
                 val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
                     currentContent + imagesHtml
                 } else {
@@ -97,7 +99,7 @@ class CreateMomentViewModel(
 
                 state.copy(
                     content = newContent,
-                    imageUrl = extractFirstImage(newContent)
+                    imageUrl = extractFirstImage(newContent),
                 )
             }
         }

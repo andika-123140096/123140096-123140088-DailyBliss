@@ -44,7 +44,7 @@ class MomentDetailViewModel(
     fun updateTitle(newTitle: String) {
         val currentMoment = _uiState.value.moment ?: return
         if (currentMoment.title == newTitle) return
-        
+
         val updated = currentMoment.copy(title = newTitle)
         _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
     }
@@ -55,7 +55,7 @@ class MomentDetailViewModel(
 
         val updated = currentMoment.copy(
             content = newContent,
-            imageUrl = extractFirstImage(newContent)
+            imageUrl = extractFirstImage(newContent),
         )
         _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
     }
@@ -93,7 +93,7 @@ class MomentDetailViewModel(
 
             val updated = currentMoment.copy(
                 content = newContent,
-                imageUrl = extractFirstImage(newContent)
+                imageUrl = extractFirstImage(newContent),
             )
             _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
         }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.presentation.components.EmptyState
 import com.dailybliss.app.presentation.components.TypingIndicator
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
@@ -149,7 +150,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 Icons.Default.AutoAwesome,
                                 "Add Image",
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
 
@@ -160,7 +161,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 .weight(1f)
                                 .background(
                                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    RoundedCornerShape(20.dp)
+                                    RoundedCornerShape(20.dp),
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -172,7 +173,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                     Text(
                                         "Ketik pesan...",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                                     )
                                 }
                                 innerTextField()
@@ -185,7 +186,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                         IconButton(
                             onClick = { viewModel.sendMessage() },
                             enabled = uiState.input.isNotBlank() || uiState.selectedImageBytes != null,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
                                 Icons.Default.Send,

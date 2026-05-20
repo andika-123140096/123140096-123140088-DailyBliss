@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.remote.api.SystemPrompts
+import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
 import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
-import com.dailybliss.app.presentation.screens.ai.ChatMessage
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock

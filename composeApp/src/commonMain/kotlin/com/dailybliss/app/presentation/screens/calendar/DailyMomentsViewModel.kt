@@ -20,7 +20,7 @@ class DailyMomentsViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
-        DailyMomentsUiState(date = LocalDate.parse(dateStr))
+        DailyMomentsUiState(date = LocalDate.parse(dateStr)),
     )
     val uiState = _uiState.asStateFlow()
 
