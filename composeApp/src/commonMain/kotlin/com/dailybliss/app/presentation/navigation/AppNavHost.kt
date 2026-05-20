@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +27,7 @@ import androidx.navigation.toRoute
 import com.dailybliss.app.presentation.screens.settings.SettingsScreen
 import com.dailybliss.app.presentation.screens.ai.AIAssistantScreen
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentScreen
+import com.dailybliss.app.presentation.screens.calendar.CalendarScreen
 import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
 import com.dailybliss.app.presentation.screens.home.JournalScreen
 import com.dailybliss.app.presentation.screens.home.HomeScreen
@@ -97,6 +100,25 @@ fun AppNavHost(
                             unselectedTextColor = Color.Gray
                         )
                     )
+
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } == true,
+                        onClick = { actions.navigateToCalendar() },
+                        icon = { 
+                            Icon(
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } == true) Icons.Default.DateRange else Icons.Outlined.DateRange,
+                                contentDescription = "Calendar"
+                            ) 
+                        },
+                        label = { Text("Kalender") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray
+                        )
+                    )
                     
                     NavigationBarItem(
                         selected = isAIAssistant,
@@ -147,6 +169,12 @@ fun AppNavHost(
                     )
                 }
 
+                composable<Route.Calendar> {
+                    CalendarScreen(
+                        onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) }
+                    )
+                }
+
                 composable<Route.CreateMoment> {
                     CreateMomentScreen(
                         onNavigateBack = { actions.navigateBack() }
@@ -191,6 +219,16 @@ private class NavigationActionsImpl(private val navController: NavHostController
 
     override fun navigateToJournal() {
         navController.navigate(Route.Journal) {
+            popUpTo(Route.Home) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    override fun navigateToCalendar() {
+        navController.navigate(Route.Calendar) {
             popUpTo(Route.Home) {
                 saveState = true
             }

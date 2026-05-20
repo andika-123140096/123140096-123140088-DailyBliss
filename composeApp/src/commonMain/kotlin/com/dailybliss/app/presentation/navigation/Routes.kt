@@ -20,12 +20,16 @@ sealed interface Route {
     data object AIAssistant : Route
 
     @Serializable
+    data object Calendar : Route
+
+    @Serializable
     data object Settings : Route
 }
 
 interface NavigationActions {
     fun navigateToHome()
     fun navigateToJournal()
+    fun navigateToCalendar()
     fun navigateToCreateMoment(momentId: Long? = null)
     fun navigateToMomentDetail(momentId: Long)
     fun navigateToAIAssistant()

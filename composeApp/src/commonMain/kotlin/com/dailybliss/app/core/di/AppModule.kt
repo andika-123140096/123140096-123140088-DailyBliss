@@ -11,14 +11,10 @@ import com.dailybliss.app.data.repository.AIRepositoryImpl
 import com.dailybliss.app.data.repository.MomentRepositoryImpl
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MomentRepository
-import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
-import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
-import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
-import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
-import com.dailybliss.app.domain.usecase.SaveMomentUseCase
-import com.dailybliss.app.domain.usecase.SearchMomentsUseCase
+import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
+import com.dailybliss.app.presentation.screens.calendar.CalendarViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
@@ -81,6 +77,7 @@ val useCaseModule = module {
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
     singleOf(::GetMomentsFromSameDayUseCase)
+    singleOf(::GetMomentsByDateRangeUseCase)
 }
 
 // ==================== VIEWMODEL MODULE ====================
@@ -88,6 +85,7 @@ val useCaseModule = module {
 val viewModelModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::JournalViewModel)
+    viewModelOf(::CalendarViewModel)
     viewModelOf(::CreateMomentViewModel)
     viewModelOf(::MomentDetailViewModel)
     viewModelOf(::AIAssistantViewModel)
@@ -117,4 +115,3 @@ fun initKoin(
         modules(platformModules + sharedModules)
     }
 }
-

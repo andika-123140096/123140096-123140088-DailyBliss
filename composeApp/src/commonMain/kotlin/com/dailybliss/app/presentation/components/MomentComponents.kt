@@ -74,6 +74,21 @@ fun MomentCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                if (moment.tags.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        moment.tags.take(3).forEach { tag ->
+                            Text(
+                                text = "#$tag",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
             }
 
             moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
@@ -87,6 +102,7 @@ fun MomentCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PremiumBlissCard(
     moment: Moment,
@@ -119,14 +135,29 @@ fun PremiumBlissCard(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text(
-                    text = moment.title.ifBlank { "Momen Tanpa Judul" },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = moment.title.ifBlank { "Momen Tanpa Judul" },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
+                        Text(
+                            text = emoji,
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
                 
                 val previewText = moment.preview
                 if (previewText.isNotBlank()) {
@@ -138,6 +169,28 @@ fun PremiumBlissCard(
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+
+                if (moment.tags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        moment.tags.forEach { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    text = "#$tag",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

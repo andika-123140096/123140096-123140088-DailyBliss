@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,7 +29,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MomentDetailScreen(
     momentId: Long,
@@ -157,10 +158,44 @@ fun MomentDetailScreen(
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                         
+                        state.moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
+                            Text(
+                                text = emoji,
+                                fontSize = 28.sp,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        }
+
                         IconButton(
                             onClick = { showDeleteDialog = true }
                         ) {
                             Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
+                        }
+                    }
+
+                    if (state.moment.tags.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            state.moment.tags.forEach { tag ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp, 
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    )
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
                         }
                     }
 

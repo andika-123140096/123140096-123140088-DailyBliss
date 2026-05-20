@@ -44,3 +44,7 @@ class GetMomentsFromSameDayUseCase(private val repository: MomentRepository) {
     operator fun invoke(dayMonth: String): Flow<List<Moment>> = repository.getMomentsFromSameDay(dayMonth)
 }
 
+class GetMomentsByDateRangeUseCase(private val repository: MomentRepository) {
+    operator fun invoke(start: Long, end: Long): Flow<List<Moment>> = repository.getMomentsByDateRange(start, end)
+}
+

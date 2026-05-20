@@ -10,10 +10,13 @@ import com.dailybliss.app.presentation.util.HtmlConverter
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+import com.dailybliss.app.core.util.BackgroundAIProcessor
+
 class MomentDetailViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val saveMomentUseCase: SaveMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
+    private val backgroundAIProcessor: BackgroundAIProcessor,
     private val fileStorage: FileStorage
 ) : ViewModel() {
 
@@ -24,6 +27,7 @@ class MomentDetailViewModel(
     val events = _events.asSharedFlow()
 
     private var currentId: Long = 0
+    private var lastAnalyzedContent: String = ""
 
     fun loadMoment(id: Long) {
         currentId = id
@@ -35,6 +39,7 @@ class MomentDetailViewModel(
                         content = moment.content,
                         moment = moment
                     )
+                    lastAnalyzedContent = moment.content
                 } else {
                     _uiState.value = MomentDetailUiState.NotFound
                 }
@@ -102,6 +107,15 @@ class MomentDetailViewModel(
                     content = currentState.content
                 )
                 saveMomentUseCase(updatedMoment)
+                
+                // Re-analyze if content changed significantly (more than 20 chars or words changed)
+                val stripped = currentState.content.replace(Regex("<[^>]*>"), " ").trim()
+                val lastStripped = lastAnalyzedContent.replace(Regex("<[^>]*>"), " ").trim()
+                
+                if (Math.abs(stripped.length - lastStripped.length) > 20 || stripped != lastStripped) {
+                    backgroundAIProcessor.processMoment(currentId, force = true)
+                    lastAnalyzedContent = currentState.content
+                }
             }
         }
     }

@@ -13,5 +13,6 @@ interface MomentRepository {
     suspend fun deleteMoment(id: Long)
     suspend fun deleteMoments(ids: List<Long>)
     fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>>
+    fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>>
 }
 

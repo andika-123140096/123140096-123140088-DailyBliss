@@ -40,6 +40,12 @@ WHERE strftime('%m-%d', datetime(created_at / 1000, 'unixepoch')) = ?
 AND strftime('%Y', datetime(created_at / 1000, 'unixepoch')) < strftime('%Y', 'now')
 ORDER BY created_at DESC;
 
+-- Get moments within a date range (for calendar)
+getMomentsByDateRange:
+SELECT * FROM MomentEntity
+WHERE created_at >= ? AND created_at < ?
+ORDER BY created_at DESC;
+
 -- Insert new moment
 insertMoment:
 INSERT INTO MomentEntity (title, content, media_url, mood, tags, is_pinned, created_at, updated_at)

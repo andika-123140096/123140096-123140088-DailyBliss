@@ -71,5 +71,8 @@ class MomentRepositoryImpl(
 
     override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> =
         queries.getMomentsFromSameDay(dayMonth).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+
+    override fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>> =
+        queries.getMomentsByDateRange(start, end).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
 }
 
