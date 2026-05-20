@@ -26,8 +26,7 @@ data class CalendarUiState(
 )
 
 class CalendarViewModel(
-    private val getAllMomentsUseCase: GetAllMomentsUseCase,
-    private val getMomentsByDateRangeUseCase: GetMomentsByDateRangeUseCase
+    private val getAllMomentsUseCase: GetAllMomentsUseCase
 ) : ViewModel() {
 
     private val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -46,9 +45,6 @@ class CalendarViewModel(
         val streak = calculateStreak(allMoments)
         
         // Filter moments for selected date
-        val startOfDay = LocalDateTime(selectedDate, LocalTime(0, 0)).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-        val endOfDay = LocalDateTime(selectedDate, LocalTime(23, 59, 59)).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-        
         val selectedMoments = allMoments.filter { 
             val date = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
             date == selectedDate

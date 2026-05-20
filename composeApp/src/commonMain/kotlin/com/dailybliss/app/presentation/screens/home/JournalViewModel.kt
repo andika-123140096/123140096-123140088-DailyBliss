@@ -17,9 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class JournalViewModel(
-    private val getAllMomentsUseCase: GetAllMomentsUseCase,
-    private val searchMomentsUseCase: SearchMomentsUseCase,
-    private val saveMomentUseCase: SaveMomentUseCase
+    private val getAllMomentsUseCase: GetAllMomentsUseCase
 ) : ViewModel() {
 
     private val _query = MutableStateFlow("")
@@ -70,7 +68,7 @@ class JournalViewModel(
         _sortBy.value = sort
     }
 
-    fun togglePin(momentId: Long) {
+    fun togglePin() {
         viewModelScope.launch {
             // Logic to toggle pin if needed
         }

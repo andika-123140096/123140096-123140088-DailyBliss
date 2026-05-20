@@ -17,7 +17,6 @@ import kotlinx.datetime.Instant
 class CreateMomentViewModel(
     private val saveMomentUseCase: SaveMomentUseCase,
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
-    private val aiRepository: AIRepository,
     private val backgroundAIProcessor: BackgroundAIProcessor,
     private val fileStorage: FileStorage
 ) : ViewModel() {
