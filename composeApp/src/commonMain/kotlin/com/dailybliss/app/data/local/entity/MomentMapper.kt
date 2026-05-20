@@ -4,19 +4,17 @@ import com.dailybliss.app.data.local.MomentEntity
 import com.dailybliss.app.domain.model.Moment
 import kotlinx.datetime.Instant
 
-fun MomentEntity.toDomain(): Moment {
-    return Moment(
-        id = id,
-        title = title,
-        content = content,
-        imageUrl = media_url,
-        mood = mood,
-        tags = tags?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
-        isPinned = is_pinned == 1L,
-        createdAt = Instant.fromEpochMilliseconds(created_at),
-        updatedAt = Instant.fromEpochMilliseconds(updated_at)
-    )
-}
+fun MomentEntity.toDomain(): Moment = Moment(
+    id = id,
+    title = title,
+    content = content,
+    imageUrl = media_url,
+    mood = mood,
+    tags = tags?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
+    isPinned = is_pinned == 1L,
+    createdAt = Instant.fromEpochMilliseconds(created_at),
+    updatedAt = Instant.fromEpochMilliseconds(updated_at),
+)
 
 data class MomentEntityValues(
     val title: String,
@@ -26,23 +24,18 @@ data class MomentEntityValues(
     val tags: String?,
     val isPinned: Long,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
 )
 
-fun Moment.toEntityValues(): MomentEntityValues {
-    return MomentEntityValues(
-        title = title,
-        content = content,
-        mediaUrl = imageUrl,
-        mood = mood,
-        tags = if (tags.isEmpty()) null else tags.joinToString(","),
-        isPinned = if (isPinned) 1L else 0L,
-        createdAt = createdAt.toEpochMilliseconds(),
-        updatedAt = updatedAt.toEpochMilliseconds()
-    )
-}
+fun Moment.toEntityValues(): MomentEntityValues = MomentEntityValues(
+    title = title,
+    content = content,
+    mediaUrl = imageUrl,
+    mood = mood,
+    tags = if (tags.isEmpty()) null else tags.joinToString(","),
+    isPinned = if (isPinned) 1L else 0L,
+    createdAt = createdAt.toEpochMilliseconds(),
+    updatedAt = updatedAt.toEpochMilliseconds(),
+)
 
-fun List<MomentEntity>.toDomainList(): List<Moment> {
-    return map { it.toDomain() }
-}
-
+fun List<MomentEntity>.toDomainList(): List<Moment> = map { it.toDomain() }

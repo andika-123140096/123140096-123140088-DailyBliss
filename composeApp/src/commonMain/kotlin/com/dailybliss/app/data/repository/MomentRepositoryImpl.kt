@@ -15,22 +15,32 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
-class MomentRepositoryImpl(
-    database: BlissDatabase
-) : MomentRepository {
+class MomentRepositoryImpl(database: BlissDatabase) : MomentRepository {
     private val queries = database.momentQueries
 
-    override fun getAllMoments(): Flow<List<Moment>> =
-        queries.getAllMoments().asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+    override fun getAllMoments(): Flow<List<Moment>> = queries
+        .getAllMoments()
+        .asFlow()
+        .mapToList(Dispatchers.Default)
+        .map { it.toDomainList() }
 
-    override fun getPinnedMoments(): Flow<List<Moment>> =
-        queries.getPinnedMoments().asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+    override fun getPinnedMoments(): Flow<List<Moment>> = queries
+        .getPinnedMoments()
+        .asFlow()
+        .mapToList(Dispatchers.Default)
+        .map { it.toDomainList() }
 
-    override fun searchMoments(query: String): Flow<List<Moment>> =
-        queries.searchMoments(query, query).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+    override fun searchMoments(query: String): Flow<List<Moment>> = queries
+        .searchMoments(query, query)
+        .asFlow()
+        .mapToList(Dispatchers.Default)
+        .map { it.toDomainList() }
 
-    override fun getMomentById(id: Long): Flow<Moment?> =
-        queries.getMomentById(id).asFlow().mapToOneOrNull(Dispatchers.Default).map { it?.toDomain() }
+    override fun getMomentById(id: Long): Flow<Moment?> = queries
+        .getMomentById(id)
+        .asFlow()
+        .mapToOneOrNull(Dispatchers.Default)
+        .map { it?.toDomain() }
 
     override suspend fun insertMoment(moment: Moment): Long = withContext(Dispatchers.Default) {
         val values = moment.toEntityValues()
@@ -42,7 +52,7 @@ class MomentRepositoryImpl(
             tags = values.tags,
             is_pinned = values.isPinned,
             created_at = values.createdAt,
-            updated_at = values.updatedAt
+            updated_at = values.updatedAt,
         )
         queries.lastInsertId().executeAsOne()
     }
@@ -57,7 +67,7 @@ class MomentRepositoryImpl(
             tags = values.tags,
             is_pinned = values.isPinned,
             updated_at = Clock.System.now().toEpochMilliseconds(),
-            id = moment.id
+            id = moment.id,
         )
     }
 
@@ -69,10 +79,15 @@ class MomentRepositoryImpl(
         queries.deleteMomentsByIds(ids)
     }
 
-    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> =
-        queries.getMomentsFromSameDay(dayMonth).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> = queries
+        .getMomentsFromSameDay(dayMonth)
+        .asFlow()
+        .mapToList(Dispatchers.Default)
+        .map { it.toDomainList() }
 
-    override fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>> =
-        queries.getMomentsByDateRange(start, end).asFlow().mapToList(Dispatchers.Default).map { it.toDomainList() }
+    override fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>> = queries
+        .getMomentsByDateRange(start, end)
+        .asFlow()
+        .mapToList(Dispatchers.Default)
+        .map { it.toDomainList() }
 }
-

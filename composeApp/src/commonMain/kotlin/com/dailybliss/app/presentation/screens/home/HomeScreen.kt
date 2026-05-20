@@ -30,7 +30,7 @@ fun HomeScreen(
     onNavigateToCreateMoment: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -44,8 +44,8 @@ fun HomeScreen(
                         "DailyBliss",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = (-0.5).sp
-                        )
+                            letterSpacing = (-0.5).sp,
+                        ),
                     )
                 },
                 actions = {
@@ -53,13 +53,13 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
         floatingActionButton = {
@@ -68,43 +68,43 @@ fun HomeScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(4.dp)
+                elevation = FloatingActionButtonDefaults.elevation(4.dp),
             ) {
                 Icon(Icons.Default.Add, "Add", modifier = Modifier.size(24.dp))
             }
-        }
+        },
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
         ) {
             // Greeting Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 24.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "“",
                         style = MaterialTheme.typography.displayLarge.copy(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                            fontSize = 60.sp
-                        )
+                            fontSize = 60.sp,
+                        ),
                     )
-                    
+
                     Text(
                         text = uiState.greeting,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Medium,
                             fontStyle = FontStyle.Italic,
                             textAlign = TextAlign.Center,
-                            lineHeight = 32.sp
+                            lineHeight = 32.sp,
                         ),
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
                 }
             }
@@ -117,22 +117,22 @@ fun HomeScreen(
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
-                    )
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                    ),
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
                             "Inspirasi Hari Ini",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             prompt,
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                lineHeight = 24.sp
-                            )
+                                lineHeight = 24.sp,
+                            ),
                         )
                     }
                 }
@@ -144,13 +144,13 @@ fun HomeScreen(
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     items(uiState.memoryLaneMoments) { moment ->
                         MomentCard(
                             moment = moment,
                             onClick = { onNavigateToDetail(moment.id) },
-                            modifier = Modifier.width(280.dp)
+                            modifier = Modifier.width(280.dp),
                         )
                     }
                 }
@@ -161,13 +161,13 @@ fun HomeScreen(
                 SectionHeader("Sering Dikunjungi 📌", modifier = Modifier.padding(top = 16.dp))
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     uiState.pinnedMoments.forEach { moment ->
                         MomentCard(
                             moment = moment,
                             onClick = { onNavigateToDetail(moment.id) },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -184,9 +184,9 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         text = title,
         style = MaterialTheme.typography.titleMedium.copy(
             fontWeight = FontWeight.Bold,
-            letterSpacing = 0.5.sp
+            letterSpacing = 0.5.sp,
         ),
         modifier = modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-        color = MaterialTheme.colorScheme.onSurface
+        color = MaterialTheme.colorScheme.onSurface,
     )
 }

@@ -15,35 +15,34 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class AIRepositoryImpl(
-    private val geminiService: GeminiService,
-    private val userPreferences: UserPreferences
-) : AIRepository {
-    
+class AIRepositoryImpl(private val geminiService: GeminiService, private val userPreferences: UserPreferences) : AIRepository {
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun streamChat(messages: List<ChatMessage>): Flow<String> {
         val geminiContents = mapToGeminiContents(messages)
         return geminiService.streamContent(
             contents = geminiContents,
-            systemInstruction = getDynamicSystemPrompt()
+            systemPrompt = getDynamicSystemPrompt(),
         )
     }
 
     override suspend fun chat(messages: List<ChatMessage>): String {
         val geminiContents = mapToGeminiContents(messages)
-        return geminiService.generateChat(
-            contents = geminiContents,
-            systemInstruction = getDynamicSystemPrompt()
-        ).getOrThrow()
+        return geminiService
+            .generateChat(
+                contents = geminiContents,
+                systemPrompt = getDynamicSystemPrompt(),
+            ).getOrThrow()
     }
 
     override suspend fun analyzeMood(content: String): MoodResult? {
-        val result = geminiService.generateContent(
-            prompt = content,
-            systemPrompt = SystemPrompts.MOOD_ANALYSIS_PROMPT
-        ).getOrNull()
-        
+        val result =
+            geminiService
+                .generateContent(
+                    prompt = content,
+                    systemPrompt = SystemPrompts.MOOD_ANALYSIS_PROMPT,
+                ).getOrNull()
+
         return result?.let {
             try {
                 // Remove Markdown code blocks if present
@@ -58,27 +57,32 @@ class AIRepositoryImpl(
     }
 
     override suspend fun generateTags(content: String): List<String> {
-        val result = geminiService.generateContent(
-            prompt = content,
-            systemPrompt = SystemPrompts.TAG_GENERATION_PROMPT
-        ).getOrNull()
-        
+        val result =
+            geminiService
+                .generateContent(
+                    prompt = content,
+                    systemPrompt = SystemPrompts.TAG_GENERATION_PROMPT,
+                ).getOrNull()
+
         return result?.let {
             try {
                 val jsonStr = it.replace("```json", "").replace("```", "").trim()
                 json.decodeFromString<TagsResponse>(jsonStr).tags
             } catch (e: Exception) {
+                println("AIRepository: operation failed: ${e.message}")
                 emptyList()
             }
         } ?: emptyList()
     }
 
     override suspend fun generateDailyPrompt(): String? {
-        val result = geminiService.generateContent(
-            prompt = "Berikan aku satu pertanyaan hari ini.",
-            systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION
-        ).getOrNull()
-        
+        val result =
+            geminiService
+                .generateContent(
+                    prompt = "Berikan aku satu pertanyaan hari ini.",
+                    systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION,
+                ).getOrNull()
+
         return result?.let {
             try {
                 val jsonStr = it.replace("```json", "").replace("```", "").trim()
@@ -91,65 +95,65 @@ class AIRepositoryImpl(
 
     @Serializable
     private data class MoodResponse(val mood: String, val emoji: String)
-    
+
     @Serializable
     private data class TagsResponse(val tags: List<String>)
-    
+
     @Serializable
     private data class PromptResponse(val prompt: String)
 
     private suspend fun getDynamicSystemPrompt(): String {
-    val nickname = userPreferences.nickname.first()
-    val style = userPreferences.aiLanguageStyle.first()
-    
-    return """
-        ${SystemPrompts.CHAT_SYSTEM_PROMPT}
-        
-        PANDUAN KHUSUS UNTUK $nickname:
-        - Kamu sedang berbicara dengan: $nickname.
-        - Gaya bahasa WAJIB: $style.
-        
-        DEFINISI GAYA BAHASA '$style' (Ikuti dengan ketat):
-        1. 'Santai/Kasual': Gunakan bahasa percakapan sehari-hari yang akrab namun sopan. Boleh gunakan kata seperti 'banget', 'kok', 'sih'. Hindari bahasa yang terlalu alay/lebay. Anggap $nickname adalah teman dekat.
-        2. 'Formal/Baku': Gunakan kosakata bahasa Indonesia yang standar (EYD). Gunakan kalimat yang lengkap dan tertata. Tetap hangat, tapi pertahankan profesionalisme. Cocok untuk refleksi serius.
-        3. 'Puitis/Puitik': Gunakan diksi yang indah, lembut, dan penuh makna. Gunakan sedikit metafora alam atau perasaan. Fokus pada ketenangan dan keindahan momen kecil.
-        
-        CATATAN PENTING:
-        - Jangan berlebihan (jangan 'lebay'). Tetaplah terasa natural seperti manusia, bukan AI yang dipaksakan.
-        - Pastikan perbedaan antara gaya 'Santai' dan 'Puitis' sangat terasa jelas dari pilihan kata (diksi).
-        - Selalu panggil nama '$nickname' dalam responmu agar terasa personal.
-    """.trimIndent()
-}
+        val nickname = userPreferences.nickname.first()
+        val style = userPreferences.aiLanguageStyle.first()
 
-    private fun mapToGeminiContents(messages: List<ChatMessage>): List<GeminiContent> {
-        return messages.map { chatMessage ->
-            val parts = mutableListOf<GeminiPart>()
+        return """
+            ${SystemPrompts.CHAT_SYSTEM_PROMPT}
             
-            chatMessage.imageBytes?.let { bytes ->
-                parts.add(
-                    GeminiPart(
-                        inline_data = GeminiInlineData(
-                            mime_type = "image/jpeg",
-                            data = bytes.toBase64()
-                        )
-                    )
-                )
-            }
+            PANDUAN KHUSUS UNTUK $nickname:
+            - Kamu sedang berbicara dengan: $nickname.
+            - Gaya bahasa WAJIB: $style.
+            
+            DEFINISI GAYA BAHASA '$style' (Ikuti dengan ketat):
+            1. 'Santai/Kasual': Gunakan bahasa percakapan sehari-hari yang akrab namun sopan. Boleh gunakan kata seperti 'banget', 'kok', 'sih'. Hindari bahasa yang terlalu alay/lebay. Anggap $nickname adalah teman dekat.
+            2. 'Formal/Baku': Gunakan kosakata bahasa Indonesia yang standar (EYD). Gunakan kalimat yang lengkap dan tertata. Tetap hangat, tapi pertahankan profesionalisme. Cocok untuk refleksi serius.
+            3. 'Puitis/Puitik': Gunakan diksi yang indah, lembut, dan penuh makna. Gunakan sedikit metafora alam atau perasaan. Fokus pada ketenangan dan keindahan momen kecil.
+            
+            CATATAN PENTING:
+            - Jangan berlebihan (jangan 'lebay'). Tetaplah terasa natural seperti manusia, bukan AI yang dipaksakan.
+            - Pastikan perbedaan antara gaya 'Santai' dan 'Puitis' sangat terasa jelas dari pilihan kata (diksi).
+            - Selalu panggil nama '$nickname' dalam responmu agar terasa personal.
+        """.trimIndent()
+    }
 
-            val textContent = if (chatMessage.text.isBlank() && chatMessage.imageBytes != null) {
+    private fun mapToGeminiContents(messages: List<ChatMessage>): List<GeminiContent> = messages.map { chatMessage ->
+        val parts = mutableListOf<GeminiPart>()
+
+        chatMessage.imageBytes?.let { bytes ->
+            parts.add(
+                GeminiPart(
+                    inline_data =
+                    GeminiInlineData(
+                        mime_type = "image/jpeg",
+                        data = bytes.toBase64(),
+                    ),
+                ),
+            )
+        }
+
+        val textContent =
+            if (chatMessage.text.isBlank() && chatMessage.imageBytes != null) {
                 "Jelaskan gambar ini."
             } else {
                 chatMessage.text
             }
-            
-            if (textContent.isNotBlank()) {
-                parts.add(GeminiPart(text = textContent))
-            }
-            
-            GeminiContent(
-                parts = parts,
-                role = if (chatMessage.role == "user") "user" else "model"
-            )
+
+        if (textContent.isNotBlank()) {
+            parts.add(GeminiPart(text = textContent))
         }
+
+        GeminiContent(
+            parts = parts,
+            role = if (chatMessage.role == "user") "user" else "model",
+        )
     }
 }

@@ -15,24 +15,23 @@ object SystemPrompts {
         Tujuan: Menciptakan suasana yang tenang, nyaman, dan reflektif.
         """
 
-        const val MOOD_ANALYSIS_PROMPT = """
+    const val MOOD_ANALYSIS_PROMPT = """
         Analisis suasana hati dari teks jurnal berikut. 
         Berikan jawaban dalam format JSON sederhana: {"mood": "NamaMood", "emoji": "😊"}.
         Pilihan mood: Bahagia, Sedih, Marah, Cemas, Tenang, Bersemangat, Lelah.
         Sesuaikan emoji dengan mood.
         """
 
-        const val TAG_GENERATION_PROMPT = """
+    const val TAG_GENERATION_PROMPT = """
         Berikan maksimal 3 tag yang relevan untuk teks jurnal berikut.
         Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
         Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
         """
 
-        const val DAILY_PROMPT_GENERATION = """
+    const val DAILY_PROMPT_GENERATION = """
         Berikan satu pertanyaan reflektif harian yang menarik untuk pengguna aplikasi jurnal.
         Pertanyaan harus mendalam namun tetap hangat, membantu pengguna untuk mulai menulis.
         Contoh: "Apa satu hal kecil yang membuatmu tersenyum hari ini?"
         Berikan jawaban dalam format JSON: {"prompt": "Pertanyaan di sini"}.
         """
-        }
-
+}

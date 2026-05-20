@@ -1,13 +1,10 @@
 package com.dailybliss.app.presentation.util
 
 import androidx.compose.runtime.Composable
-
 import com.dailybliss.app.core.util.PlatformContext
 
 @Composable
-expect fun rememberImagePickerLauncher(
-    onResult: (List<ByteArray>) -> Unit
-): ImagePickerLauncher
+expect fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): ImagePickerLauncher
 
 interface ImagePickerLauncher {
     fun launch()

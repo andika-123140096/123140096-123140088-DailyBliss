@@ -10,7 +10,7 @@ enum class MomentSortBy(val displayName: String) {
     CREATED_ASC("Dibuat (Lama)"),
     CREATED_DESC("Dibuat (Baru)"),
     UPDATED_ASC("Diupdate (Lama)"),
-    UPDATED_DESC("Diupdate (Baru)")
+    UPDATED_DESC("Diupdate (Baru)"),
 }
 
 class GetAllMomentsUseCase(private val repository: MomentRepository) {
@@ -22,13 +22,11 @@ class SearchMomentsUseCase(private val repository: MomentRepository) {
 }
 
 class SaveMomentUseCase(private val repository: MomentRepository) {
-    suspend operator fun invoke(moment: Moment): Long {
-        return if (moment.id == 0L) {
-            repository.insertMoment(moment)
-        } else {
-            repository.updateMoment(moment)
-            moment.id
-        }
+    suspend operator fun invoke(moment: Moment): Long = if (moment.id == 0L) {
+        repository.insertMoment(moment)
+    } else {
+        repository.updateMoment(moment)
+        moment.id
     }
 }
 
@@ -47,4 +45,3 @@ class GetMomentsFromSameDayUseCase(private val repository: MomentRepository) {
 class GetMomentsByDateRangeUseCase(private val repository: MomentRepository) {
     operator fun invoke(start: Long, end: Long): Flow<List<Moment>> = repository.getMomentsByDateRange(start, end)
 }
-

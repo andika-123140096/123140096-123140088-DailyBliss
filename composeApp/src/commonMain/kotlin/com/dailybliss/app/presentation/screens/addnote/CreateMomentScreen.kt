@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,26 +29,22 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun CreateMomentScreen(
-    onNavigateBack: () -> Unit,
-    viewModel: CreateMomentViewModel = koinViewModel()
-) {
+fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
-    val density = LocalDensity.current
-    
+
     var lastCursorPosition by remember { mutableStateOf(-1) }
     val imagePicker = rememberImagePickerLauncher(
         onResult = { bytesList ->
             if (bytesList.isNotEmpty()) {
                 viewModel.addImage(bytesList, lastCursorPosition)
             }
-        }
+        },
     )
-    
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -59,33 +54,33 @@ fun CreateMomentScreen(
             }
         }
     }
-    
+
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (uiState.isLoading) {
             LoadingIndicator()
         } else {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().imePadding()) {
                 // Top Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, 
-                            "Back", 
-                            tint = MaterialTheme.colorScheme.primary
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            "Back",
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.weight(1f))
-                    
+
                     if (uiState.isSaving) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp).padding(end = 16.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
                         )
                     }
 
@@ -93,15 +88,15 @@ fun CreateMomentScreen(
                         onClick = { viewModel.saveMoment() },
                         enabled = !uiState.isSaving,
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
                     ) {
                         Text(
-                            "Simpan", 
+                            "Simpan",
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
+                                letterSpacing = 0.5.sp,
+                            ),
                         )
                     }
                 }
@@ -109,7 +104,7 @@ fun CreateMomentScreen(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState()),
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         BasicTextField(
@@ -119,7 +114,7 @@ fun CreateMomentScreen(
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 24.sp,
-                                lineHeight = 30.sp
+                                lineHeight = 30.sp,
                             ),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { innerTextField ->
@@ -128,43 +123,43 @@ fun CreateMomentScreen(
                                         text = "Judul Cerita",
                                         style = MaterialTheme.typography.headlineMedium.copy(
                                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                            fontWeight = FontWeight.Bold,
+                                        ),
                                     )
                                 }
                                 innerTextField()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp)
+                                .padding(vertical = 12.dp),
                         )
 
                         // Mood & Tags Display
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             uiState.mood?.let { mood ->
                                 SuggestionChip(
                                     onClick = {},
                                     label = { Text(mood) },
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(12.dp),
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
 
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 uiState.tags.forEach { tag ->
                                     AssistChip(
                                         onClick = {},
                                         label = { Text("#$tag") },
                                         colors = AssistChipDefaults.assistChipColors(
-                                            labelColor = MaterialTheme.colorScheme.secondary
+                                            labelColor = MaterialTheme.colorScheme.secondary,
                                         ),
                                         border = null,
-                                        shape = RoundedCornerShape(12.dp)
+                                        shape = RoundedCornerShape(12.dp),
                                     )
                                 }
                             }
@@ -181,10 +176,10 @@ fun CreateMomentScreen(
                                 activeStyles = styles
                                 updateFocusedValue = update
                             },
-                            focusRequester = remember { FocusRequester() }
+                            focusRequester = remember { FocusRequester() },
                         )
                     }
-                    
+
                     // Extra padding for the last item to not be covered by toolbar
                     Spacer(modifier = Modifier.height(100.dp))
                 }
@@ -199,7 +194,7 @@ fun CreateMomentScreen(
                             } else {
                                 activeStyles + style
                             }
-                            
+
                             // Also apply to selection if exists
                             focusedValue?.let { value ->
                                 if (!value.selection.collapsed) {
@@ -214,28 +209,19 @@ fun CreateMomentScreen(
                                 }
                             }
                         },
-                        onGalleryClick = { 
+                        onGalleryClick = {
                             lastCursorPosition = focusedValue?.selection?.start ?: -1
                             imagePicker.launch()
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-
-                // DYNAMIC SPACER: Copy from AIAssistantScreen.kt
-                val imeBottom = WindowInsets.ime.getBottom(density)
-                val navBarBottom = WindowInsets.navigationBars.getBottom(density)
-                // Since this screen is in the NavHost exception (bottom=0.dp), we use maxOf
-                val spacerHeightPx = maxOf(imeBottom, navBarBottom)
-                val spacerHeightDp = with(density) { spacerHeightPx.toDp() }
-
-                Spacer(Modifier.height(spacerHeightDp))
             }
         }
-        
+
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp),
         )
     }
 }

@@ -30,7 +30,4 @@ interface AIRepository {
     suspend fun generateDailyPrompt(): String?
 }
 
-data class MoodResult(
-    val mood: String,
-    val emoji: String
-)
+data class MoodResult(val mood: String, val emoji: String)

@@ -8,9 +8,6 @@ import com.dailybliss.app.core.util.PlatformContext
  * Menyimpan file preferences di internal storage aplikasi
  * (`/data/data/<package>/files/`).
  */
-actual class DataStoreFactory actual constructor(
-    private val context: PlatformContext
-) {
+actual class DataStoreFactory actual constructor(private val context: PlatformContext) {
     actual fun producePath(): String = context.androidContext.filesDir.absolutePath
 }
-

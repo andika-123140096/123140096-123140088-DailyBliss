@@ -2,7 +2,6 @@ package com.dailybliss.app.presentation.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -16,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,24 +24,20 @@ import coil3.compose.AsyncImage
 import com.dailybliss.app.domain.model.Moment
 
 @Composable
-fun MomentCard(
-    moment: Moment,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (!moment.imageUrl.isNullOrBlank()) {
                 AsyncImage(
@@ -52,11 +46,11 @@ fun MomentCard(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
             }
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = moment.title.ifBlank { "Momen Tanpa Judul" },
@@ -64,27 +58,27 @@ fun MomentCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
-                
+
                 Text(
                     text = moment.preview,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 if (moment.tags.isNotEmpty()) {
                     Row(
                         modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         moment.tags.take(3).forEach { tag ->
                             Text(
                                 text = "#$tag",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                             )
                         }
                     }
@@ -95,7 +89,7 @@ fun MomentCard(
                 Text(
                     text = emoji,
                     fontSize = 20.sp,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp),
                 )
             }
         }
@@ -104,11 +98,7 @@ fun MomentCard(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PremiumBlissCard(
-    moment: Moment,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -116,9 +106,9 @@ fun PremiumBlissCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column {
             if (!moment.imageUrl.isNullOrBlank()) {
@@ -128,17 +118,17 @@ fun PremiumBlissCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(160.dp),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
             }
-            
+
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Text(
                         text = moment.title.ifBlank { "Momen Tanpa Judul" },
@@ -147,18 +137,18 @@ fun PremiumBlissCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
-                    
+
                     moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
                         Text(
                             text = emoji,
                             fontSize = 22.sp,
-                            modifier = Modifier.padding(start = 8.dp)
+                            modifier = Modifier.padding(start = 8.dp),
                         )
                     }
                 }
-                
+
                 val previewText = moment.preview
                 if (previewText.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -167,7 +157,7 @@ fun PremiumBlissCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray, // Grey text as requested
                         maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
@@ -175,18 +165,18 @@ fun PremiumBlissCard(
                     Spacer(modifier = Modifier.height(12.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         moment.tags.forEach { tag ->
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                             ) {
                                 Text(
                                     text = "#$tag",
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
@@ -202,37 +192,33 @@ fun LoadingIndicator() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
             color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 3.dp
+            strokeWidth = 3.dp,
         )
     }
 }
 
 @Composable
-fun TypingIndicator(
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
-    
+fun TypingIndicator(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition()
+
     @Composable
-    fun animateDot(delay: Int): androidx.compose.runtime.State<Float> {
-        return infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = -6f, // Slightly lower jump for smaller dots
-            animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                animation = androidx.compose.animation.core.tween(durationMillis = 500, delayMillis = delay, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-            )
-        )
-    }
-    
+    fun animateDot(delay: Int): State<Float> = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f, // Slightly lower jump for smaller dots
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, delayMillis = delay, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+    )
+
     val dot1Offset by animateDot(0)
     val dot2Offset by animateDot(150)
     val dot3Offset by animateDot(300)
-    
+
     Row(
         modifier = modifier.padding(horizontal = 2.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(3.dp) // Tightened spacing
+        horizontalArrangement = Arrangement.spacedBy(3.dp), // Tightened spacing
     ) {
         Dot(dot1Offset)
         Dot(dot2Offset)
@@ -246,7 +232,7 @@ private fun Dot(offsetY: Float) {
         modifier = Modifier
             .size(4.dp) // Matches common body text font size
             .offset(y = offsetY.dp)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape),
     )
 }
 
@@ -255,20 +241,25 @@ fun EmptyState(title: String, message: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = title, 
+            text = title,
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = message, 
-            textAlign = TextAlign.Center, 
+            text = message,
+            textAlign = TextAlign.Center,
             color = Color.Gray, // Grey text as requested
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
     }
+}
+
+@Composable
+fun MomentItem(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    MomentCard(moment, onClick, modifier)
 }

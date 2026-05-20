@@ -12,7 +12,7 @@ data class Moment(
     val tags: List<String> = emptyList(),
     val isPinned: Boolean = false,
     val createdAt: Instant = Clock.System.now(),
-    val updatedAt: Instant = Clock.System.now()
+    val updatedAt: Instant = Clock.System.now(),
 ) {
     val preview: String
         get() {
@@ -22,6 +22,4 @@ data class Moment(
             val stripped = content.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
             return if (stripped.length > 120) "${stripped.take(120)}..." else stripped
         }
-
 }
-

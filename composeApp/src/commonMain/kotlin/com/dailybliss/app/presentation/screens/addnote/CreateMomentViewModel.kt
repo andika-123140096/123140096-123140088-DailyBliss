@@ -4,11 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
 import com.dailybliss.app.presentation.util.FileStorage
-import com.dailybliss.app.presentation.util.HtmlConverter
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -18,7 +16,7 @@ class CreateMomentViewModel(
     private val saveMomentUseCase: SaveMomentUseCase,
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val backgroundAIProcessor: BackgroundAIProcessor,
-    private val fileStorage: FileStorage
+    private val fileStorage: FileStorage,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateMomentUiState())
@@ -28,15 +26,15 @@ class CreateMomentViewModel(
     val events = _events.asSharedFlow()
 
     private var currentMomentId: Long? = null
-    
+
     fun loadMoment(id: Long) {
         if (currentMomentId == id) return
         currentMomentId = id
-        
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val moment = getMomentByIdUseCase(id).first()
-            
+
             moment?.let {
                 _uiState.update { state ->
                     state.copy(
@@ -47,7 +45,7 @@ class CreateMomentViewModel(
                         tags = it.tags,
                         isLoading = false,
                         isEditMode = true,
-                        createdAt = it.createdAt
+                        createdAt = it.createdAt,
                     )
                 }
             }
@@ -66,12 +64,11 @@ class CreateMomentViewModel(
         viewModelScope.launch {
             val urls = bytesList.mapNotNull { fileStorage.saveImage(it) }
             if (urls.isNotEmpty()) {
-                val imagesHtml = urls.joinToString("") { "<img src=\"$it\" />" }
-                val imageGroupHtml = "<div class=\"image-group\">$imagesHtml</div>"
-                
+                val imagesHtml = urls.joinToString("") { "<img src=\"\$it\" />" }
+
                 _uiState.update { state ->
                     val newContent = if (insertionIndex == -1 || insertionIndex >= state.content.length) {
-                        state.content + imageGroupHtml
+                        state.content + imagesHtml
                     } else {
                         var htmlIndex = 0
                         var textCount = 0
@@ -85,12 +82,12 @@ class CreateMomentViewModel(
                                 textCount++
                             }
                         }
-                        state.content.substring(0, htmlIndex) + imageGroupHtml + state.content.substring(htmlIndex)
+                        state.content.substring(0, htmlIndex) + imagesHtml + state.content.substring(htmlIndex)
                     }
-                    
+
                     state.copy(
                         content = newContent,
-                        imageUrl = urls.first()
+                        imageUrl = urls.first(),
                     )
                 }
             }
@@ -99,15 +96,15 @@ class CreateMomentViewModel(
 
     fun saveMoment() {
         val state = _uiState.value
-        
+
         if (state.title.isBlank() && state.content.isBlank()) {
             _uiState.update { it.copy(titleError = "Tuliskan sesuatu...") }
             return
         }
-        
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-            
+
             val moment = Moment(
                 id = currentMomentId ?: 0,
                 title = state.title.trim(),
@@ -116,16 +113,16 @@ class CreateMomentViewModel(
                 mood = state.mood,
                 tags = state.tags,
                 createdAt = if (currentMomentId == null) Clock.System.now() else state.createdAt,
-                updatedAt = Clock.System.now()
+                updatedAt = Clock.System.now(),
             )
-            
+
             val newId = saveMomentUseCase(moment)
             if (currentMomentId == null) {
                 currentMomentId = newId
             }
-            
+
             backgroundAIProcessor.processMoment(newId)
-            
+
             _uiState.update { it.copy(isSaving = false) }
             _events.emit(CreateMomentEvent.MomentSaved)
         }
@@ -142,7 +139,7 @@ data class CreateMomentUiState(
     val isSaving: Boolean = false,
     val isEditMode: Boolean = false,
     val titleError: String? = null,
-    val createdAt: Instant = Clock.System.now()
+    val createdAt: Instant = Clock.System.now(),
 )
 
 sealed interface CreateMomentEvent {

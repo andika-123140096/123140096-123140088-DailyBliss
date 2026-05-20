@@ -19,14 +19,14 @@ data class HomeUiState(
     val pinnedMoments: List<Moment> = emptyList(),
     val memoryLaneMoments: List<Moment> = emptyList(),
     val dailyPrompt: String? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
 )
 
 class HomeViewModel(
     private val aiRepository: AIRepository,
     private val userPreferences: UserPreferences,
     private val getAllMomentsUseCase: GetAllMomentsUseCase,
-    private val getMomentsFromSameDayUseCase: GetMomentsFromSameDayUseCase
+    private val getMomentsFromSameDayUseCase: GetMomentsFromSameDayUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -52,7 +52,7 @@ class HomeViewModel(
     private fun loadMemoryLane() {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val dayMonth = "${now.monthNumber.toString().padStart(2, '0')}-${now.dayOfMonth.toString().padStart(2, '0')}"
-        
+
         viewModelScope.launch {
             getMomentsFromSameDayUseCase(dayMonth).collect { moments ->
                 _uiState.update { it.copy(memoryLaneMoments = moments) }
@@ -65,7 +65,7 @@ class HomeViewModel(
             val lastTimestamp = userPreferences.aiCacheTimestamp.first()
             val now = Clock.System.now().toEpochMilliseconds()
             val cachedPrompt = userPreferences.aiDailyPromptCache.first()
-            
+
             if (cachedPrompt != null && (now - lastTimestamp) < CACHE_DURATION) {
                 _uiState.update { it.copy(dailyPrompt = cachedPrompt) }
             } else {
@@ -85,11 +85,11 @@ class HomeViewModel(
                 userPreferences.nickname,
                 userPreferences.aiLanguageStyle,
                 userPreferences.aiGreetingCache,
-                userPreferences.aiCacheTimestamp
+                userPreferences.aiCacheTimestamp,
             ) { nickname, style, cachedGreeting, lastTimestamp ->
                 val now = Clock.System.now().toEpochMilliseconds()
                 val isCacheValid = cachedGreeting != null && (now - lastTimestamp) < CACHE_DURATION
-                
+
                 GreetingParams(nickname, style, cachedGreeting, isCacheValid)
             }.collectLatest { params ->
                 if (params.isCacheValid && params.cachedGreeting != null) {
@@ -116,9 +116,9 @@ class HomeViewModel(
                                 Berikan kesan tenang dan blissful. 
                                 Sapa pengguna dengan namanya. 
                                 Jangan gunakan markdown.
-                            """.trimIndent()
-                        )
-                    )
+                            """.trimIndent(),
+                        ),
+                    ),
                 )
                 _uiState.update { it.copy(greeting = greeting, isLoading = false) }
                 userPreferences.setAiGreetingCache(greeting)
@@ -133,7 +133,7 @@ class HomeViewModel(
         val nickname: String,
         val style: String,
         val cachedGreeting: String?,
-        val isCacheValid: Boolean
+        val isCacheValid: Boolean,
     )
 
     companion object {

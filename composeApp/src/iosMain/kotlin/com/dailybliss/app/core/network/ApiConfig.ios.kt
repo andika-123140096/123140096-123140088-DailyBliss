@@ -4,13 +4,13 @@ import platform.Foundation.NSBundle
 
 /**
  * iOS implementation of ApiConfig
- * 
+ *
  * Mengambil API key dari Info.plist atau environment.
- * 
+ *
  * Setup:
  * 1. Buka iosApp/iosApp/Info.plist
  * 2. Tambahkan key: GEMINI_API_KEY dengan value: your_api_key
- * 
+ *
  * Atau untuk development, bisa hardcode langsung (JANGAN untuk production!)
  */
 actual object ApiConfig {
@@ -18,7 +18,7 @@ actual object ApiConfig {
         get() {
             // Try to get from Info.plist
             val plistValue = NSBundle.mainBundle.objectForInfoDictionaryKey("GEMINI_API_KEY") as? String
-            
+
             return plistValue ?: ""
         }
 
@@ -28,4 +28,3 @@ actual object ApiConfig {
             return plistValue ?: "gemini-1.5-flash"
         }
 }
-

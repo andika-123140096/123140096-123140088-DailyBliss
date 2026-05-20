@@ -42,8 +42,14 @@ jobs:
       - name: Create local.properties (Dummy)
         run: echo "GEMINI_API_KEY=dummy_key_for_ci" > local.properties
 
-      - name: Run Tests
-        run: ./gradlew check --parallel --build-cache
+      - name: Run Spotless Check
+        run: ./gradlew spotlessCheck --parallel --build-cache
+
+      - name: Run Detekt
+        run: ./gradlew detekt --parallel --build-cache
+
+      - name: Run Unit Tests
+        run: ./gradlew test --parallel --build-cache
 
   build-android:
     name: Build Android Debug

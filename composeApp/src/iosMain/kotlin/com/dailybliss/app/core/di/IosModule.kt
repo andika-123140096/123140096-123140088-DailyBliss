@@ -11,15 +11,15 @@ import org.koin.dsl.module
  *
  * Menyediakan dependencies platform yang dipakai di shared modules.
  */
-val iosModule = module {
-    single { PlatformContext() }
-    single { DatabaseDriverFactory(get()) }
-    single { DataStoreFactory(get()) }
-    single { FileStorage(get()) }
-}
+val iosModule =
+    module {
+        single { PlatformContext() }
+        single { DatabaseDriverFactory(get()) }
+        single { DataStoreFactory(get()) }
+        single { FileStorage(get()) }
+    }
 
 /** Helper untuk dipanggil dari Swift code. */
 fun initKoinIOS() {
     initKoin(platformModules = listOf(iosModule))
 }
-

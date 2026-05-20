@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
-import com.dailybliss.app.domain.usecase.GetMomentsByDateRangeUseCase
+import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 
 data class CalendarDay(
@@ -13,129 +14,130 @@ data class CalendarDay(
     val isCurrentMonth: Boolean,
     val isToday: Boolean,
     val mood: String? = null,
-    val hasMoments: Boolean = false
+    val hasMoments: Boolean = false,
 )
 
 data class CalendarUiState(
-    val currentMonth: LocalDate, // Using first day of month
-    val selectedDate: LocalDate,
-    val calendarDays: List<CalendarDay> = emptyList(),
-    val streak: Int = 0,
-    val selectedDateMoments: List<Moment> = emptyList(),
-    val isLoading: Boolean = true
+    val currentMonth: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.let { LocalDate(it.year, it.month, 1) },
+    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    val days: List<CalendarDay> = emptyList(),
+    val moments: List<Moment> = emptyList(),
+    val isLoading: Boolean = false,
 )
 
 class CalendarViewModel(
-    private val getAllMomentsUseCase: GetAllMomentsUseCase
+    private val getAllMomentsUseCase: GetAllMomentsUseCase,
+    private val getMomentsFromSameDayUseCase: GetMomentsFromSameDayUseCase,
 ) : ViewModel() {
 
-    private val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    private val _currentMonth = MutableStateFlow(now.let { LocalDate(it.year, it.month, 1) })
-    private val _selectedDate = MutableStateFlow(now)
+    private val _uiState = MutableStateFlow(CalendarUiState())
+    val uiState = _uiState.asStateFlow()
 
-    private val _allMoments = getAllMomentsUseCase()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val uiState: StateFlow<CalendarUiState> = combine(
-        _currentMonth,
-        _selectedDate,
-        _allMoments
-    ) { currentMonth, selectedDate, allMoments ->
-        val days = generateCalendarDays(currentMonth, allMoments)
-        val streak = calculateStreak(allMoments)
-        
-        // Filter moments for selected date
-        val selectedMoments = allMoments.filter { 
-            val date = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
-            date == selectedDate
+    init {
+        // Observe all moments to update calendar markers (moods, dots)
+        viewModelScope.launch {
+            getAllMomentsUseCase().collect { moments ->
+                updateCalendarDays(moments)
+                loadMomentsForSelectedDate()
+            }
         }
-
-        CalendarUiState(
-            currentMonth = currentMonth,
-            selectedDate = selectedDate,
-            calendarDays = days,
-            streak = streak,
-            selectedDateMoments = selectedMoments,
-            isLoading = false
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarUiState(now.let { LocalDate(it.year, it.month, 1) }, now))
+    }
 
     fun onDateSelected(date: LocalDate) {
-        _selectedDate.value = date
+        _uiState.update { it.copy(selectedDate = date) }
+        loadMomentsForSelectedDate()
     }
 
     fun nextMonth() {
-        val current = _currentMonth.value
-        _currentMonth.value = if (current.monthNumber == 12) {
-            LocalDate(current.year + 1, 1, 1)
-        } else {
-            LocalDate(current.year, current.monthNumber + 1, 1)
+        _uiState.update {
+            val next = it.currentMonth.plus(1, DateTimeUnit.MONTH)
+            it.copy(currentMonth = next)
+        }
+        viewModelScope.launch {
+            updateCalendarDays(getAllMomentsUseCase().first())
         }
     }
 
     fun previousMonth() {
-        val current = _currentMonth.value
-        _currentMonth.value = if (current.monthNumber == 1) {
-            LocalDate(current.year - 1, 12, 1)
-        } else {
-            LocalDate(current.year, current.monthNumber - 1, 1)
+        _uiState.update {
+            val prev = it.currentMonth.minus(1, DateTimeUnit.MONTH)
+            it.copy(currentMonth = prev)
+        }
+        viewModelScope.launch {
+            updateCalendarDays(getAllMomentsUseCase().first())
         }
     }
 
-    private fun generateCalendarDays(monthDate: LocalDate, allMoments: List<Moment>): List<CalendarDay> {
-        val days = mutableListOf<CalendarDay>()
-        
-        // Start from the first day of the month
-        val firstDayOfMonth = LocalDate(monthDate.year, monthDate.month, 1)
-        val dayOfWeekOfFirst = firstDayOfMonth.dayOfWeek.isoDayNumber // 1 (Mon) to 7 (Sun)
-        
-        // Padding from previous month (assuming we want to start from Monday)
-        val paddingDays = dayOfWeekOfFirst - 1
-        val startOfCalendar = firstDayOfMonth.minus(paddingDays, DateTimeUnit.DAY)
-        
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private fun loadMomentsForSelectedDate() {
+        val selected = _uiState.value.selectedDate
+        val dayMonth = "\${selected.monthNumber.toString().padStart(2, '0')}-\${selected.dayOfMonth.toString().padStart(2, '0')}"
 
-        // Create 42 days (6 weeks) to keep the grid height consistent
-        for (i in 0 until 42) {
-            val date = startOfCalendar.plus(i, DateTimeUnit.DAY)
-            val momentsOnDate = allMoments.filter { 
-                it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date == date 
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            getMomentsFromSameDayUseCase(dayMonth).collect { moments ->
+                // Filter specifically for the selected year as well
+                val filtered = moments.filter {
+                    val dt = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault())
+                    dt.year == selected.year
+                }
+                _uiState.update { it.copy(moments = filtered, isLoading = false) }
             }
-            
-            days.add(
-                CalendarDay(
-                    date = date,
-                    isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year,
-                    isToday = date == today,
-                    mood = momentsOnDate.firstOrNull()?.mood, // Just show the first mood found for that day
-                    hasMoments = momentsOnDate.isNotEmpty()
-                )
-            )
         }
-        
-        return days
     }
 
-    private fun calculateStreak(allMoments: List<Moment>): Int {
-        if (allMoments.isEmpty()) return 0
-        
-        val momentDates = allMoments.map { 
-            it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date 
-        }.distinct().sortedDescending()
-        
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val yesterday = today.minus(1, DateTimeUnit.DAY)
-        
-        var currentStreak = 0
-        var checkDate = if (momentDates.contains(today)) today else if (momentDates.contains(yesterday)) yesterday else null
-        
-        if (checkDate == null) return 0
-        
-        while (momentDates.contains(checkDate)) {
-            currentStreak++
-            checkDate = checkDate?.minus(1, DateTimeUnit.DAY)
+    private fun updateCalendarDays(allMoments: List<Moment>) {
+        val state = _uiState.value
+        val firstDayOfMonth = state.currentMonth
+        val daysInMonth = firstDayOfMonth.month.numberDays(firstDayOfMonth.year)
+        val firstDayOfWeek = firstDayOfMonth.dayOfWeek.isoDayNumber // 1 (Mon) to 7 (Sun)
+
+        val days = mutableListOf<CalendarDay>()
+
+        // Add days from previous month to fill the first week
+        val prevMonth = firstDayOfMonth.minus(1, DateTimeUnit.MONTH)
+        val daysInPrevMonth = prevMonth.month.numberDays(prevMonth.year)
+        for (i in (firstDayOfWeek - 1) downTo 1) {
+            val date = LocalDate(prevMonth.year, prevMonth.month, daysInPrevMonth - i + 1)
+            days.add(createCalendarDay(date, allMoments, false))
         }
-        
-        return currentStreak
+
+        // Add current month days
+        for (i in 1..daysInMonth) {
+            val date = LocalDate(firstDayOfMonth.year, firstDayOfMonth.month, i)
+            days.add(createCalendarDay(date, allMoments, true))
+        }
+
+        // Add days from next month to fill the last week
+        val nextMonth = firstDayOfMonth.plus(1, DateTimeUnit.MONTH)
+        val remainingDays = 42 - days.size
+        for (i in 1..remainingDays) {
+            val date = LocalDate(nextMonth.year, nextMonth.month, i)
+            days.add(createCalendarDay(date, allMoments, false))
+        }
+
+        _uiState.update { it.copy(days = days) }
+    }
+
+    private fun createCalendarDay(date: LocalDate, allMoments: List<Moment>, isCurrentMonth: Boolean): CalendarDay {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+        val momentsOnDate = allMoments.filter {
+            val dt = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault())
+            dt.date == date
+        }
+
+        return CalendarDay(
+            date = date,
+            isCurrentMonth = isCurrentMonth,
+            isToday = date == today,
+            mood = momentsOnDate.firstOrNull { !it.mood.isNullOrBlank() }?.mood?.split(" ")?.getOrNull(0),
+            hasMoments = momentsOnDate.isNotEmpty(),
+        )
+    }
+
+    private fun Month.numberDays(year: Int): Int = when (this) {
+        Month.FEBRUARY -> if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) 29 else 28
+        Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
+        else -> 31
     }
 }

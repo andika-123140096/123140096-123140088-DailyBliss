@@ -28,9 +28,6 @@ internal const val DATA_STORE_FILE_NAME = "dailybliss.preferences_pb"
  * Membuat DataStore<Preferences> dari [DataStoreFactory] platform-specific.
  * Dipanggil dari Koin module sebagai single instance.
  */
-fun DataStoreFactory.create(): DataStore<Preferences> {
-    return PreferenceDataStoreFactory.createWithPath(
-        produceFile = { "${producePath()}/$DATA_STORE_FILE_NAME".toPath() }
-    )
-}
-
+fun DataStoreFactory.create(): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
+    produceFile = { "${producePath()}/$DATA_STORE_FILE_NAME".toPath() },
+)

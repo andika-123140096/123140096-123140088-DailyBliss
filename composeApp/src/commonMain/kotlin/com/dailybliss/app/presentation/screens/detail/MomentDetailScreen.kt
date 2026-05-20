@@ -4,249 +4,181 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.presentation.components.*
-import com.dailybliss.app.presentation.util.HtmlConverter
-import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
+import com.dailybliss.app.presentation.components.HtmlBlockItem
+import com.dailybliss.app.presentation.components.LoadingIndicator
+import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
-
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextDecoration
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MomentDetailScreen(
     momentId: Long,
     onNavigateBack: () -> Unit,
-    viewModel: MomentDetailViewModel = koinViewModel()
+    viewModel: MomentDetailViewModel = koinViewModel { parametersOf(momentId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
-    var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
-    var activeStyles by remember { mutableStateOf(setOf<String>()) }
-    
-    var lastCursorPosition by remember { mutableStateOf(-1) }
-    val imagePicker = rememberImagePickerLauncher(
-        onResult = { bytesList ->
-            if (bytesList.isNotEmpty()) {
-                viewModel.addImage(bytesList, lastCursorPosition)
-            }
-        }
-    )
-    
-    LaunchedEffect(momentId) {
-        viewModel.loadMoment(momentId)
-    }
-    
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is MomentDetailEvent.MomentDeleted -> onNavigateBack()
-                else -> {}
-            }
-        }
-    }
-    
-    if (showDeleteDialog) {
-        DeleteConfirmationDialog(
-            onConfirm = {
-                showDeleteDialog = false
-                viewModel.deleteMoment()
-            },
-            onDismiss = { showDeleteDialog = false }
-        )
-    }
-    
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
-        when (val state = uiState) {
-            is MomentDetailUiState.Loading -> LoadingIndicator()
-            is MomentDetailUiState.Success -> {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = onNavigateBack
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
-                            }
-                            
-                            BasicTextField(
-                                value = state.title,
-                                onValueChange = viewModel::onTitleChange,
-                                textStyle = MaterialTheme.typography.headlineMedium.copy(
-                                    color = Color.Black,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 24.sp,
-                                    lineHeight = 30.sp
-                                ),
-                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                decorationBox = { innerTextField ->
-                                    if (state.title.isEmpty()) {
-                                        Text(
-                                            text = "Judul...",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            color = Color.LightGray,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    innerTextField()
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                            )
-                            
-                            state.moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
-                                Text(
-                                    text = emoji,
-                                    fontSize = 28.sp,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                            }
 
-                            IconButton(
-                                onClick = { showDeleteDialog = true }
-                            ) {
-                                Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
-                            }
-                        }
-
-                        if (state.moment.tags.isNotEmpty()) {
-                            FlowRow(
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                state.moment.tags.forEach { tag ->
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            1.dp, 
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                        )
-                                    ) {
-                                        Text(
-                                            text = "#$tag",
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Box(modifier = Modifier.padding(horizontal = 0.dp)) {
-                            HtmlBlockItem(
-                                html = state.content,
-                                onHtmlChange = viewModel::onContentChange,
-                                activeStyles = activeStyles,
-                                onFocusValueChange = { value, styles, update ->
-                                    focusedValue = value
-                                    activeStyles = styles
-                                    updateFocusedValue = update
-                                },
-                                focusRequester = remember { FocusRequester() }
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(100.dp))
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Detail Jurnal",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = (-0.5).sp,
+                        ),
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-
-                    // Toolbar and Keyboard Handling - AIAssistant Mechanism
-                    if (focusedValue != null) {
-                        FormattingToolbar(
-                            activeStyles = activeStyles,
-                            onStyleClick = { style ->
-                                activeStyles = if (activeStyles.contains(style)) {
-                                    activeStyles - style
-                                } else {
-                                    activeStyles + style
-                                }
-                                
-                                // Also apply to selection if exists
-                                focusedValue?.let { value ->
-                                    if (!value.selection.collapsed) {
-                                        val spanStyle = when (style) {
-                                            "b" -> SpanStyle(fontWeight = FontWeight.Bold)
-                                            "i" -> SpanStyle(fontStyle = FontStyle.Italic)
-                                            "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
-                                            else -> SpanStyle()
-                                        }
-                                        val newValue = HtmlConverter.toggleStyle(value, spanStyle)
-                                        updateFocusedValue?.invoke(newValue)
-                                    }
-                                }
-                            },
-                            onGalleryClick = { 
-                                lastCursorPosition = focusedValue?.selection?.start ?: -1
-                                imagePicker.launch()
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                },
+                actions = {
+                    val isPinned = uiState.moment?.isPinned == true
+                    IconButton(onClick = { viewModel.togglePin() }) {
+                        Icon(
+                            if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            "Pin",
+                            tint = if (isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                         )
                     }
-
-                    val density = androidx.compose.ui.platform.LocalDensity.current
-                    val imeBottom = WindowInsets.ime.getBottom(density)
-                    val navBarBottom = WindowInsets.navigationBars.getBottom(density)
-                    val spacerHeightPx = maxOf(imeBottom, navBarBottom)
-                    val spacerHeightDp = with(density) { spacerHeightPx.toDp() }
-
-                    Spacer(Modifier.height(spacerHeightDp))
-                }
+                    IconButton(onClick = { viewModel.refreshAIAnalysis() }) {
+                        Icon(Icons.Outlined.Refresh, "Refresh AI", tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            LoadingIndicator()
+        } else if (uiState.error != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
             }
-            is MomentDetailUiState.NotFound -> {
-                EmptyState("Tidak Ditemukan", "Momen mungkin telah dihapus.")
+        } else {
+            uiState.moment?.let { moment ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                ) {
+                    Text(
+                        text = moment.title.ifBlank { "Momen Tanpa Judul" },
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        ),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val dateStr = moment.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).let {
+                        "\${it.dayOfMonth} \${it.month.name.lowercase().replaceFirstChar { c -> c.uppercase() }} \${it.year}"
+                    }
+                    Text(
+                        text = dateStr,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Mood & Tags
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        moment.mood?.let { mood ->
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text(mood) },
+                                shape = RoundedCornerShape(12.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            moment.tags.forEach { tag ->
+                                AssistChip(
+                                    onClick = {},
+                                    label = { Text("#$tag") },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        labelColor = MaterialTheme.colorScheme.secondary,
+                                    ),
+                                    border = null,
+                                    shape = RoundedCornerShape(12.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    HtmlBlockItem(
+                        html = moment.content,
+                        onHtmlChange = {}, // Read-only in detail
+                        onFocusValueChange = { _, _, _ -> },
+                        enabled = false,
+                    )
+                }
             }
         }
     }
-}
 
-
-@Composable
-private fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Hapus Momen?") },
-        text = { Text("Tindakan ini tidak dapat dibatalkan.") },
-        confirmButton = {
-            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                Text("HAPUS")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray)) {
-                Text("BATAL")
-            }
-        },
-        containerColor = Color.White
-    )
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Jurnal") },
+            text = { Text("Apakah kamu yakin ingin menghapus jurnal ini? Tindakan ini tidak dapat dibatalkan.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMoment {
+                            onNavigateBack()
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            },
+        )
+    }
 }

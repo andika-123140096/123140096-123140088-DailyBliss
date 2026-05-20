@@ -1,6 +1,7 @@
 package com.dailybliss.app.core.di
 
 import com.dailybliss.app.core.network.HttpClientFactory
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.core.util.DatabaseDriverFactory
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
@@ -16,16 +17,17 @@ import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
 import com.dailybliss.app.presentation.screens.calendar.CalendarViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
-import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
-import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
+import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
@@ -86,7 +88,7 @@ val viewModelModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::JournalViewModel)
     viewModelOf(::CalendarViewModel)
-    viewModelOf(::CreateMomentViewModel)
+    viewModel { CreateMomentViewModel(get(), get(), get(), FileStorage(get())) }
     viewModelOf(::MomentDetailViewModel)
     viewModelOf(::AIAssistantViewModel)
     viewModelOf(::SettingsViewModel)
@@ -101,15 +103,12 @@ val sharedModules = listOf(
     preferencesModule,
     repositoryModule,
     useCaseModule,
-    viewModelModule
+    viewModelModule,
 )
 
 // ==================== INIT FUNCTION ====================
 
-fun initKoin(
-    platformModules: List<Module> = emptyList(),
-    config: KoinAppDeclaration? = null
-) {
+fun initKoin(platformModules: List<Module> = emptyList(), config: KoinAppDeclaration? = null) {
     startKoin {
         config?.invoke(this)
         modules(platformModules + sharedModules)
