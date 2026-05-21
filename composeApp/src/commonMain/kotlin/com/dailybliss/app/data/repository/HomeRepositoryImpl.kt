@@ -1,9 +1,11 @@
 package com.dailybliss.app.data.repository
 
 import com.dailybliss.app.data.local.BlissDatabase
+import com.dailybliss.app.data.remote.dto.FrankfurterResponse
 import com.dailybliss.app.data.remote.dto.IpResponse
 import com.dailybliss.app.data.remote.dto.NewsResponse
 import com.dailybliss.app.data.remote.dto.WeatherResponse
+import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
 import com.dailybliss.app.domain.repository.HomeRepository
@@ -16,6 +18,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
@@ -31,6 +34,37 @@ class HomeRepositoryImpl(
         coerceInputValues = true
     }
     private val momentQueries = database.momentQueries
+
+    override suspend fun getCurrencyRates(): CurrencyRates? = withContext(Dispatchers.IO) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        val cached = try { momentQueries.getCache(KEY_CURRENCY).executeAsOneOrNull() } catch (e: Exception) { null }
+
+        try {
+            val usdDeferred = async { 
+                httpClient.get("https://api.frankfurter.dev/v1/latest?base=USD&symbols=IDR").body<FrankfurterResponse>()
+            }
+            val sgdDeferred = async { 
+                httpClient.get("https://api.frankfurter.dev/v1/latest?base=SGD&symbols=IDR").body<FrankfurterResponse>()
+            }
+
+            val usdResponse = usdDeferred.await()
+            val sgdResponse = sgdDeferred.await()
+
+            val rates = CurrencyRates(
+                usdToIdr = usdResponse.rates["IDR"] ?: 0.0,
+                sgdToIdr = sgdResponse.rates["IDR"] ?: 0.0
+            )
+
+            momentQueries.insertCache(KEY_CURRENCY, json.encodeToString(rates), now)
+            rates
+        } catch (e: Exception) {
+            cached?.let {
+                try {
+                    json.decodeFromString<CurrencyRates>(it.data_)
+                } catch (inner: Exception) { null }
+            }
+        }
+    }
 
     override suspend fun getWeather(): WeatherInfo = withContext(Dispatchers.IO) {
         val cached = try { momentQueries.getCache(KEY_WEATHER).executeAsOneOrNull() } catch (e: Exception) { null }
@@ -126,6 +160,7 @@ class HomeRepositoryImpl(
     companion object {
         private const val KEY_WEATHER = "cache_weather_prod"
         private const val KEY_NEWS_FINAL = "cache_news_prod"
+        private const val KEY_CURRENCY = "cache_currency_prod"
         private const val CACHE_EXPIRY = 60 * 60 * 1000L // 1 hour
     }
 }

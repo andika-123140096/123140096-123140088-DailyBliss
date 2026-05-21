@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
 import com.dailybliss.app.domain.repository.HomeRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val weather: WeatherInfo? = null,
     val news: List<NewsArticle> = emptyList(),
+    val currencyRates: CurrencyRates? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -35,14 +37,17 @@ class HomeViewModel(
             try {
                 val weatherDeferred = async { homeRepository.getWeather() }
                 val newsDeferred = async { homeRepository.getPrabowoNews() }
+                val currencyDeferred = async { homeRepository.getCurrencyRates() }
 
                 val weather = weatherDeferred.await()
                 val news = newsDeferred.await()
+                val currency = currencyDeferred.await()
 
                 _uiState.update {
                     it.copy(
                         weather = weather,
                         news = news,
+                        currencyRates = currency,
                         isLoading = false
                     )
                 }

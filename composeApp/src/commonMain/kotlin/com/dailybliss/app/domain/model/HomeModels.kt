@@ -16,3 +16,9 @@ data class NewsArticle(
     val imageUrl: String,
     val url: String,
 )
+
+@Serializable
+data class CurrencyRates(
+    val usdToIdr: Double,
+    val sgdToIdr: Double,
+)
