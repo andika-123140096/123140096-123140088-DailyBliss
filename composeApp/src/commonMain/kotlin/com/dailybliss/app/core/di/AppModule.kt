@@ -3,6 +3,7 @@ package com.dailybliss.app.core.di
 import com.dailybliss.app.core.network.HttpClientFactory
 import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.core.util.DatabaseDriverFactory
+import com.dailybliss.app.core.util.LocationTracker
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
 import com.dailybliss.app.data.local.datastore.UserPreferences
@@ -41,6 +42,7 @@ import org.koin.dsl.module
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single { FileStorage(get()) }
+    single { LocationTracker(get()) }
     singleOf(::BackgroundAIProcessor)
 }
 
@@ -72,7 +74,7 @@ val preferencesModule = module {
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
     single { AIRepositoryImpl(get(), get(), get()) } bind AIRepository::class
-    single { HomeRepositoryImpl(get(), get()) } bind HomeRepository::class
+    single { HomeRepositoryImpl(get(), get(), get()) } bind HomeRepository::class
 }
 
 // ==================== USE CASE MODULE ====================

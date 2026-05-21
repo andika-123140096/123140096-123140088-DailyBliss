@@ -29,6 +29,7 @@ import coil3.compose.AsyncImage
 import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
+import com.dailybliss.app.presentation.util.LocationPermissionEffect
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +41,13 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Minta izin lokasi dan muat data
+    LocationPermissionEffect(
+        onPermissionResult = {
+            viewModel.loadHomeData()
+        }
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

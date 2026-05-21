@@ -9,6 +9,7 @@ import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
 import com.dailybliss.app.domain.repository.HomeRepository
+import com.dailybliss.app.core.util.LocationTracker
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -27,6 +28,7 @@ import kotlinx.serialization.json.Json
 class HomeRepositoryImpl(
     private val httpClient: HttpClient,
     private val database: BlissDatabase,
+    private val locationTracker: LocationTracker,
 ) : HomeRepository {
 
     private val json = Json { 
@@ -87,17 +89,31 @@ class HomeRepositoryImpl(
         var lon = 106.8456
         var city = "Jakarta"
 
-        try {
-            val response: HttpResponse = httpClient.get("https://ipapi.co/json/") {
-                header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-            }
-            if (response.status.isSuccess()) {
-                val data = json.decodeFromString<IpResponse>(response.bodyAsText())
-                lat = data.latitude
-                lon = data.longitude
-                city = data.city
-            }
-        } catch (e: Exception) { /* use default */ }
+        // Coba ambil lokasi GPS dulu
+        val actualLocation = try {
+            locationTracker.getCurrentLocation()
+        } catch (e: Exception) {
+            null
+        }
+        
+        if (actualLocation != null) {
+            lat = actualLocation.latitude
+            lon = actualLocation.longitude
+            city = "Lokasi Saat Ini"
+        } else {
+            // Fallback ke IP jika GPS tidak tersedia/diizinkan
+            try {
+                val response: HttpResponse = httpClient.get("https://ipapi.co/json/") {
+                    header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                }
+                if (response.status.isSuccess()) {
+                    val data = json.decodeFromString<IpResponse>(response.bodyAsText())
+                    lat = data.latitude
+                    lon = data.longitude
+                    city = data.city
+                }
+            } catch (e: Exception) { /* use default */ }
+        }
 
         val weatherResponse: WeatherResponse = httpClient.get(
             "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,wind_speed_10m"
