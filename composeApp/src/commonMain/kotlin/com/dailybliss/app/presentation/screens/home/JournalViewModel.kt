@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
 
+@OptIn(FlowPreview::class)
 class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
@@ -23,7 +26,7 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
     val uiState: StateFlow<JournalUiState> =
         combine(
             getAllMomentsUseCase(),
-            _query,
+            _query.debounce(300L),
             _sortBy,
         ) { moments, query, sort ->
             var filtered = moments

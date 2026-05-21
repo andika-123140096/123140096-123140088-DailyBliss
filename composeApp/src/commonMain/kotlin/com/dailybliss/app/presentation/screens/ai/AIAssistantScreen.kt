@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.presentation.components.EmptyState
 import com.dailybliss.app.presentation.components.TypingIndicator
@@ -120,14 +123,45 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     uiState.selectedImageBytes?.let { bytes ->
                         Box(modifier = Modifier.padding(bottom = 8.dp)) {
-                            AsyncImage(
+                            SubcomposeAsyncImage(
                                 model = bytes,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
-                            )
+                            ) {
+                                when (painter.state) {
+                                    is AsyncImagePainter.State.Loading -> {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                strokeWidth = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                            )
+                                        }
+                                    }
+                                    is AsyncImagePainter.State.Error -> {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Image,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                            )
+                                        }
+                                    }
+                                    else -> {
+                                        SubcomposeAsyncImageContent()
+                                    }
+                                }
+                            }
                             IconButton(
                                 onClick = { viewModel.onImageSelected(null) },
                                 modifier = Modifier
@@ -224,7 +258,7 @@ fun ChatBubble(message: ChatMessage) {
             horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
         ) {
             message.imageBytes?.let { bytes ->
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = bytes,
                     contentDescription = null,
                     modifier = Modifier
@@ -232,7 +266,38 @@ fun ChatBubble(message: ChatMessage) {
                         .size(200.dp)
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop,
-                )
+                ) {
+                    when (painter.state) {
+                        is AsyncImagePainter.State.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 3.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        is AsyncImagePainter.State.Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
+                }
             }
 
             if (message.text.isNotBlank()) {

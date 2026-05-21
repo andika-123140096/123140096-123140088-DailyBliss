@@ -15,12 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.domain.model.Moment
 
 @Composable
@@ -40,14 +44,45 @@ fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifie
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (!moment.imageUrl.isNullOrBlank()) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = moment.imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .size(60.dp)
                         .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop,
-                )
+                ) {
+                    when (painter.state) {
+                        is AsyncImagePainter.State.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        is AsyncImagePainter.State.Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.width(16.dp))
             }
 
@@ -112,14 +147,45 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
     ) {
         Column {
             if (!moment.imageUrl.isNullOrBlank()) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = moment.imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(160.dp),
                     contentScale = ContentScale.Crop,
-                )
+                ) {
+                    when (painter.state) {
+                        is AsyncImagePainter.State.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 3.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        is AsyncImagePainter.State.Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
+                }
             }
 
             Column(

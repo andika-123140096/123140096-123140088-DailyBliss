@@ -15,9 +15,13 @@ navigation = "2.8.0-alpha10"
 coil = "3.0.4"
 detekt = "1.23.8"
 spotless = "7.0.2"
+kover = "0.8.3"
+compose-test = "1.7.0"
 
 # Testing
 turbine = "1.2.0"
+androidx-test-junit = "1.2.1"
+espresso-core = "3.6.1"
 
 [libraries]
 # Kotlin
@@ -66,6 +70,10 @@ coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", v
 # Testing
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "compose-test" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "compose-test" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -77,3 +85,4 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

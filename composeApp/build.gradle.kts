@@ -104,6 +104,14 @@ kotlin {
             implementation(libs.sqldelight.android.driver)
         }
 
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.androidx.test.junit)
+                implementation(libs.espresso.core)
+                implementation(libs.androidx.compose.ui.test.junit4)
+            }
+        }
+
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.sqldelight.native.driver)
@@ -123,6 +131,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Inject API key and model from local.properties
         buildConfigField(
@@ -173,4 +183,8 @@ sqldelight {
             packageName.set("com.dailybliss.app.data.local")
         }
     }
+}
+
+dependencies {
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

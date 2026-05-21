@@ -26,7 +26,8 @@ Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen b
 - 🎭 **AI Mood Analysis** - Secara otomatis mendeteksi suasana hati dari setiap catatan jurnalmu.
 - 🏷️ **AI Smart Tagging** - Menghasilkan tag yang relevan secara otomatis berdasarkan konteks tulisanmu.
 - 💡 **Daily Reflections** - Dapatkan pertanyaan reflektif harian dari AI untuk membantumu mulai menulis.
-- 🎙️ **Voice-to-Text** - Malas mengetik? Gunakan fitur dikte suara untuk mencatat momenmu secara instan.
+- 📅 **Calendar View** - Lacak dan lihat memori harianmu berdasarkan tampilan kalender yang interaktif.
+- ⚙️ **Customizable Settings** - Atur preferensi aplikasi dan tampilan tema sesuai keinginan.
 - 🖼️ **Image Support** - Tambahkan foto ke momen berhargamu untuk kenangan yang lebih visual.
 - 📱 **Cross-Platform** - Pengalaman yang konsisten di Android & iOS dari satu codebase Kotlin Multiplatform.
 - 🌙 **Modern UI** - Desain bersih dan minimalis menggunakan Material 3 dengan dukungan Dark Mode.

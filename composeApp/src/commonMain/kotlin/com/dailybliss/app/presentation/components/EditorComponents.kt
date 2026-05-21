@@ -29,7 +29,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.presentation.util.HtmlConverter
 
 @Composable
@@ -362,12 +364,43 @@ fun ImageGroupBlockItem(
             modifier = Modifier.fillMaxSize(),
             pageSpacing = 8.dp,
         ) { page ->
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = urls[page],
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-            )
+            ) {
+                when (painter.state) {
+                    is AsyncImagePainter.State.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                strokeWidth = 3.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    is AsyncImagePainter.State.Error -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Image,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    else -> {
+                        SubcomposeAsyncImageContent()
+                    }
+                }
+            }
         }
 
         if (urls.size > 1) {

@@ -9,11 +9,13 @@ plugins {
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kover)
 }
 
 subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
     apply(plugin = "com.diffplug.spotless")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
     
     spotless {
         kotlin {
