@@ -30,7 +30,7 @@ Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen b
 - ⚙️ **Customizable Settings** - Atur preferensi aplikasi dan tampilan tema sesuai keinginan.
 - 🖼️ **Image Support** - Tambahkan foto ke momen berhargamu untuk kenangan yang lebih visual.
 - 📱 **Cross-Platform** - Pengalaman yang konsisten di Android & iOS dari satu codebase Kotlin Multiplatform.
-- 🌙 **Modern UI** - Desain bersih dan minimalis menggunakan Material 3 dengan dukungan Dark Mode.
+- 🌙 **Modern UI** - Desain bersih dan minimalis menggunakan Material 3.
 
 ## 🏗️ Arsitektur & Teknologi
 

@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onNodeWithText
 import com.dailybliss.app.presentation.components.EmptyState
 import com.dailybliss.app.presentation.theme.DailyBlissTheme
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import org.junit.Rule
 import org.junit.Test
 
@@ -20,7 +19,7 @@ class ExampleUiTest {
             DailyBlissTheme {
                 EmptyState(
                     title = "Tidak Ditemukan",
-                    message = "Coba kata kunci lain"
+                    message = "Coba kata kunci lain",
                 )
             }
         }
@@ -28,7 +27,7 @@ class ExampleUiTest {
         composeTestRule.onNodeWithText("Tidak Ditemukan").assertIsDisplayed()
         composeTestRule.onNodeWithText("Coba kata kunci lain").assertIsDisplayed()
     }
-    
+
     @Test
     fun momentCard_displaysTitleAndPreview() {
         val now = Clock.System.now()
@@ -37,14 +36,14 @@ class ExampleUiTest {
             title = "Momen Tes",
             content = "Isi momen tes yang cukup panjang untuk preview",
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
-        
+
         composeTestRule.setContent {
             DailyBlissTheme {
                 com.dailybliss.app.presentation.components.MomentCard(
                     moment = testMoment,
-                    onClick = {}
+                    onClick = {},
                 )
             }
         }

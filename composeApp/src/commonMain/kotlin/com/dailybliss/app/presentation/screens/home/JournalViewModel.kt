@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
 import com.dailybliss.app.domain.usecase.MomentSortBy
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.FlowPreview
 
 @OptIn(FlowPreview::class)
 class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) : ViewModel() {

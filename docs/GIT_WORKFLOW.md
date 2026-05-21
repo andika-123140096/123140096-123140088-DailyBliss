@@ -246,7 +246,7 @@ refactor/[nama-refactor]
 ```
 
 Contoh:
-- `feature/dark-mode`
+- `feature/ai-chat`
 - `feature/export-pdf`
 - `fix/login-crash`
 - `refactor/clean-architecture`
