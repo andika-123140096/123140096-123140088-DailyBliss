@@ -155,32 +155,11 @@ class AIRepositoryImpl(
         } ?: emptyList()
     }
 
-    override suspend fun generateDailyPrompt(): String? {
-        val result =
-            geminiService
-                .generateContent(
-                    parts = listOf(GeminiPart(text = SystemPrompts.DAILY_PROMPT_REQUEST)),
-                    systemPrompt = SystemPrompts.DAILY_PROMPT_GENERATION,
-                ).getOrNull()
-
-        return result?.let {
-            try {
-                val jsonStr = it.replace("```json", "").replace("```", "").trim()
-                json.decodeFromString<PromptResponse>(jsonStr).prompt
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
     @Serializable
     private data class MoodResponse(val mood: String, val emoji: String)
 
     @Serializable
     private data class TagsResponse(val tags: List<String>)
-
-    @Serializable
-    private data class PromptResponse(val prompt: String)
 
     private suspend fun getDynamicSystemPrompt(): String {
         val nickname = userPreferences.nickname.first()

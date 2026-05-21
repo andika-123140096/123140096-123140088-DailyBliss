@@ -27,22 +27,4 @@ object SystemPrompts {
         Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
         Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
         """
-
-    const val DAILY_PROMPT_GENERATION = """
-        Berikan satu pertanyaan reflektif harian yang menarik untuk pengguna aplikasi jurnal.
-        Pertanyaan harus mendalam namun tetap hangat, membantu pengguna untuk mulai menulis.
-        Contoh: "Apa satu hal kecil yang membuatmu tersenyum hari ini?"
-        Berikan jawaban dalam format JSON: {"prompt": "Pertanyaan di sini"}.
-        """
-
-    const val DAILY_PROMPT_REQUEST = "Berikan aku satu pertanyaan hari ini."
-
-    fun getGreetingPrompt(nickname: String, style: String) = """
-        Berikan sapaan singkat, hangat, dan puitis untuk pengguna bernama '$nickname' di aplikasi jurnal 'DailyBliss'. 
-        Gunakan gaya bahasa: '$style'.
-        Maksimal 2 kalimat. 
-        Berikan kesan tenang dan blissful. 
-        Sapa pengguna dengan namanya. 
-        Jangan gunakan markdown.
-    """.trimIndent()
 }

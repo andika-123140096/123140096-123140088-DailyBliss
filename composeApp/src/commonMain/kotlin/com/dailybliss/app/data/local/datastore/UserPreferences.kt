@@ -29,8 +29,6 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
         val NICKNAME = stringPreferencesKey("nickname")
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
         val COLOR_THEME = stringPreferencesKey("color_theme")
-        val AI_GREETING_CACHE = stringPreferencesKey("ai_greeting_cache")
-        val AI_DAILY_PROMPT_CACHE = stringPreferencesKey("ai_daily_prompt_cache")
         val AI_CACHE_TIMESTAMP = stringPreferencesKey("ai_cache_timestamp")
     }
 
@@ -73,30 +71,6 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
     }
 
     // ==================== AI CACHE ====================
-
-    /**
-     * Observe AI Greeting Cache
-     */
-    val aiGreetingCache: Flow<String?> = dataStore.data.map { it[Keys.AI_GREETING_CACHE] }
-
-    /**
-     * Set AI Greeting Cache
-     */
-    suspend fun setAiGreetingCache(greeting: String) {
-        dataStore.edit { it[Keys.AI_GREETING_CACHE] = greeting }
-    }
-
-    /**
-     * Observe AI Daily Prompt Cache
-     */
-    val aiDailyPromptCache: Flow<String?> = dataStore.data.map { it[Keys.AI_DAILY_PROMPT_CACHE] }
-
-    /**
-     * Set AI Daily Prompt Cache
-     */
-    suspend fun setAiDailyPromptCache(prompt: String) {
-        dataStore.edit { it[Keys.AI_DAILY_PROMPT_CACHE] = prompt }
-    }
 
     /**
      * Observe AI Cache Timestamp

@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml/badge.svg)](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml)
 
-Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen berharga. Dilengkapi dengan asisten AI yang empatik, analisis suasana hati otomatis, dan dukungan input suara.
+Aplikasi jurnal harian cerdas yang membantu pengguna mencatat momen berharga dengan dukungan asisten AI empatik (Blissie), analisis suasana hati otomatis, dan integrasi data real-time. Dibangun menggunakan Kotlin Multiplatform untuk pengalaman cross-platform yang konsisten.
 
 ## 👥 Kelompok DailyBliss
 
@@ -11,145 +11,142 @@ Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen b
 | Andika Dinata | 123140096 |
 | Satria Lemana Putra | 123140088 |
 
-## ✨ Fitur Utama
+## 📱 Daftar Layar (Screens)
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| **Rich Journaling** | Catat momen dengan judul, konten, gambar, dan tag yang terorganisir. |
-| **AI Assistant (Blissie)** | Ngobrol dengan Blissie, asisten AI empatik untuk refleksi bermakna. |
-| **AI Mood Analysis** | Deteksi suasana hati otomatis dari setiap catatan jurnal. |
-| **AI Smart Tagging** | Generate tag relevan secara otomatis berdasarkan konteks tulisan. |
-| **Daily Reflections** | Pertanyaan reflektif harian dari AI untuk memicu kreativitas menulis. |
-| **Calendar View** | Lacak dan lihat memori harian melalui tampilan kalender interaktif. |
-| **Image Support** | Tambahkan foto ke momen berharga untuk kenangan visual. |
-| **Cross-Platform** | Satu codebase untuk Android & iOS menggunakan Kotlin Multiplatform. |
+| Layar | Deskripsi | Route Name |
+|-------|-----------|------------|
+| **Dashboard** | Layar utama dengan widget cuaca, berita, dan kurs mata uang. | `Home` |
+| **Journal Feed** | Daftar kronologis memori dengan fitur pencarian dan filter pin. | `Journal` |
+| **Editor Momen** | Form input untuk membuat atau mengedit catatan jurnal. | `CreateMoment` |
+| **Detail Momen** | Review lengkap sebuah memori termasuk media dan analisis AI. | `MomentDetail` |
+| **Blissie AI** | Chat interface untuk berinteraksi dengan asisten AI. | `AIAssistant` |
+| **Kalender** | Visualisasi histori penulisan dalam format kalender bulanan. | `Calendar` |
+| **Momen Harian** | Daftar memori pada tanggal spesifik yang dipilih dari kalender. | `DailyMoments` |
+| **Pengaturan** | Konfigurasi aplikasi, tema, dan preferensi pengguna. | `Settings` |
 
-## 🛠️ Teknologi
+## ✨ Fitur Unggulan (Data-Driven)
 
-| Komponen | Teknologi |
-|----------|-----------|
-| **UI Framework** | Compose Multiplatform |
-| **Design System** | Material 3 |
-| **Language** | Kotlin |
-| **DI** | Koin |
-| **Networking** | Ktor Client |
-| **Local Database** | SQLDelight |
-| **Storage** | DataStore |
-| **Image Loading** | Coil |
-| **Navigation** | Compose Navigation |
-| **State Management** | StateFlow, ViewModel |
+| Fitur | Implementasi Teknis |
+|-------|---------------------|
+| **Rich Journaling** | Mendukung `title`, `content`, dan `media_url` (foto). |
+| **AI Insights** | Analisis `mood` otomatis dan `smart tagging` via Gemini AI. |
+| **Flashback** | Fitur "On This Day" untuk melihat memori di tanggal yang sama di tahun lalu. |
+| **Organisasi** | Sistem `pinning` (is_pinned) untuk menandai momen penting. |
+| **Real-time Data** | Integrasi Weather, News, Geolocation, dan Currency exchange. |
+
+## 🛠️ Tech Stack & Versi
+
+| Komponen | Teknologi | Versi |
+|----------|-----------|-------|
+| **Language** | Kotlin | `2.0.21` |
+| **UI Framework** | Compose Multiplatform | `1.7.0` |
+| **Navigation** | Navigation Compose | `2.8.0-alpha10` |
+| **Dependency Injection** | Koin | `4.0.0` |
+| **Networking** | Ktor Client | `3.0.1` |
+| **Local Database** | SQLDelight | `2.0.2` |
+| **Storage** | DataStore Preferences | `1.1.1` |
+| **Image Loading** | Coil | `3.0.4` |
+| **Concurrency** | Kotlinx Coroutines | `1.9.0` |
 
 ## 🌐 Integrasi API
 
-Aplikasi ini mengintegrasikan beberapa layanan API untuk menghadirkan fitur-fitur cerdas dan informasi real-time:
+Aplikasi ini menggunakan beberapa endpoint eksternal untuk memperkaya informasi:
 
-| API | Deskripsi | Kegunaan |
-|-----|-----------|----------|
-| **Gemini AI** | Google Generative AI | Fitur asisten chat, analisis mood, tagging otomatis, dan refleksi harian. |
-| **Open-Meteo** | Weather API | Menampilkan informasi cuaca (suhu & angin) sesuai lokasi pengguna. |
-| **IPAPI** | Geolocation API | Mendapatkan koordinat dan lokasi pengguna berdasarkan alamat IP. |
-| **Berita Indo** | News Feed API | Menampilkan ringkasan berita terbaru dari CNN Indonesia. |
-| **Frankfurter** | Currency API | Melacak nilai tukar mata uang (USD & SGD ke IDR). |
+| Layanan | Endpoint Utama | Fungsi |
+|---------|----------------|--------|
+| **Gemini AI** | `generativelanguage.googleapis.com` | AI Chat, Mood & Tag analysis. |
+| **Open-Meteo** | `api.open-meteo.com` | Data cuaca (suhu & angin) real-time. |
+| **IPAPI** | `ipapi.co` | Deteksi lokasi otomatis via IP. |
+| **Berita Indo** | `berita-indo-api-next.vercel.app` | Feed berita terkini (CNN Indonesia). |
+| **Frankfurter** | `api.frankfurter.dev` | Kurs mata uang USD/SGD ke IDR. |
 
 ---
 
-### 🔍 Detail API & Contoh Data
+### 🔍 Contoh Data API (JSON)
 
 <details>
-<summary><b>1. Google Gemini API (Generative AI)</b></summary>
+<summary><b>1. Gemini AI Response</b></summary>
 
-- **URL:** `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-- **Contoh Request:**
 ```json
 {
-  "contents": [
-    {
-      "parts": [{"text": "Hai Blissie, bagaimana kabarmu?"}],
-      "role": "user"
+  "candidates": [{
+    "content": {
+      "parts": [{"text": "Halo! Saya Blissie..."}],
+      "role": "model"
     }
-  ]
-}
-```
-- **Contoh Response:**
-```json
-{
-  "candidates": [
-    {
-      "content": {
-        "parts": [{"text": "Halo! Saya Blissie, asisten AI-mu. Kabar saya baik dan saya siap mendengarkan ceritamu."}],
-        "role": "model"
-      }
-    }
-  ]
+  }]
 }
 ```
 </details>
 
 <details>
-<summary><b>2. Open-Meteo API (Cuaca)</b></summary>
+<summary><b>2. SQLDelight Schema (MomentEntity)</b></summary>
 
-- **URL:** `GET https://api.open-meteo.com/v1/forecast?latitude=-5.4&longitude=105.2&current=temperature_2m,wind_speed_10m`
-- **Contoh Response:**
-```json
-{
-  "current": {
-    "temperature_2m": 30.5,
-    "wind_speed_10m": 12.3
-  }
-}
+```sql
+CREATE TABLE MomentEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    media_url TEXT,
+    mood TEXT,
+    tags TEXT,
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+```
+</details>
+
+## 💾 Sistem Caching
+
+DailyBliss menggunakan sistem caching berlapis untuk performa optimal dan penghematan data:
+
+| Tipe Cache | Teknologi | Kegunaan |
+|------------|-----------|----------|
+| **Local Cache** | SQLDelight (HomeCache) | Menyimpan respon API (Cuaca, Berita, Kurs) agar dashboard bisa dibuka instan tanpa koneksi internet. |
+| **Preference Cache** | DataStore | Menyimpan preferensi tema, nickname, dan metadata AI agar tidak hilang saat aplikasi ditutup. |
+| **Media Cache** | Coil | Melakukan caching gambar otomatis untuk foto-foto jurnal yang diunggah. |
+
+## 🤖 AI System Prompts
+
+Aplikasi ini menggunakan instruksi khusus (System Prompts) untuk mengatur perilaku AI (Blissie):
+
+<details>
+<summary><b>1. Blissie Personality (Chat)</b></summary>
+
+```text
+Kamu adalah "Blissie", pendamping setia di aplikasi jurnal DailyBliss. 
+Tugasmu adalah menjadi pendengar yang baik dan teman yang memberikan respon bermakna.
+
+ATURAN DASAR:
+1. Gunakan kata ganti "Aku" dan "Kamu". Hindari "Anda" atau "Saya" kecuali diminta gaya sangat formal.
+2. TULIS LANGSUNG respon seolah-olah sedang berbincang tulus. Jangan gunakan label teknis.
+3. Berikan empati yang tulus sesuai perasaan pengguna.
+4. Tetap singkat, padat, dan tidak bertele-tele.
+5. Gunakan emoji secukupnya agar terasa ramah namun tidak berlebihan.
+
+Tujuan: Menciptakan suasana yang tenang, nyaman, dan reflektif.
 ```
 </details>
 
 <details>
-<summary><b>3. IPAPI (Geolokasi)</b></summary>
+<summary><b>2. Mood Analysis</b></summary>
 
-- **URL:** `GET https://ipapi.co/json/`
-- **Contoh Response:**
-```json
-{
-  "latitude": -5.3971,
-  "longitude": 105.2667,
-  "city": "Bandar Lampung",
-  "country_name": "Indonesia"
-}
+```text
+Analisis suasana hati dari teks jurnal berikut. 
+Berikan jawaban dalam format JSON sederhana: {"mood": "NamaMood", "emoji": "😊"}.
+Pilihan mood: Bahagia, Sedih, Marah, Cemas, Tenang, Bersemangat, Lelah.
+Sesuaikan emoji dengan mood.
 ```
 </details>
 
 <details>
-<summary><b>4. Berita Indo API (News)</b></summary>
+<summary><b>3. Smart Tagging</b></summary>
 
-- **URL:** `GET https://berita-indo-api-next.vercel.app/api/cnn-news`
-- **Contoh Response:**
-```json
-{
-  "data": [
-    {
-      "title": "IHSG Berpeluang Menguat Hari Ini",
-      "contentSnippet": "Indeks Harga Saham Gabungan (IHSG) diprediksi akan bergerak menguat pada...",
-      "link": "https://www.cnnindonesia.com/ekonomi/...",
-      "image": {
-        "large": "https://akcdn.detik.net.id/visual/..."
-      }
-    }
-  ]
-}
-```
-</details>
-
-<details>
-<summary><b>5. Frankfurter API (Mata Uang)</b></summary>
-
-- **URL:** `GET https://api.frankfurter.dev/v1/latest?base=USD&symbols=IDR`
-- **Contoh Response:**
-```json
-{
-  "amount": 1.0,
-  "base": "USD",
-  "date": "2024-03-21",
-  "rates": {
-    "IDR": 15700.0
-  }
-}
+```text
+Berikan maksimal 3 tag yang relevan untuk teks jurnal berikut.
+Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
+Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
 ```
 </details>
 

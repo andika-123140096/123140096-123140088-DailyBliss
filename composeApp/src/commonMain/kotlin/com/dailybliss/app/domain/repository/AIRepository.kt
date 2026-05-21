@@ -44,11 +44,6 @@ interface AIRepository {
      * Generates relevant tags for a given journal content.
      */
     suspend fun generateTags(content: String, imageBytes: ByteArray? = null): List<String>
-
-    /**
-     * Generates a daily reflective prompt.
-     */
-    suspend fun generateDailyPrompt(): String?
 }
 
 data class MoodResult(val mood: String, val emoji: String)
