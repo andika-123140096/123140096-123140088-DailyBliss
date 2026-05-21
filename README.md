@@ -4,155 +4,154 @@
 
 Aplikasi jurnal harian yang membantu kamu mencatat dan merenungkan momen-momen berharga. Dilengkapi dengan asisten AI yang empatik, analisis suasana hati otomatis, dan dukungan input suara.
 
-**Kelompok DailyBliss:**
-- Andika Dinata (123140096)
-- Satria Lemana Putra (123140088)
+## 👥 Kelompok DailyBliss
 
-> **📚 Dokumentasi Lengkap**
-> 
-> | Dokumen | Deskripsi |
-> |---------|-----------|
-> | [🚀 Cara Menjalankan](./docs/CARA_MENJALANKAN.md) | **BACA INI DULU!** Panduan setup dan running aplikasi |
-> | [📋 Panduan Project](./docs/PANDUAN_PROJECT.md) | Informasi lengkap tentang project, timeline, dan penilaian |
-> | [🌿 Git Workflow](./docs/GIT_WORKFLOW.md) | Cara menggunakan Git dan branching strategy |
-> | [📜 Aturan Modifikasi](./docs/ATURAN_MODIFIKASI.md) | Apa yang boleh dan tidak boleh dimodifikasi |
-> | [🏗️ Struktur Kode](./docs/STRUKTUR_KODE.md) | Penjelasan arsitektur dan struktur folder |
-> | [🔧 Troubleshooting](./docs/TROUBLESHOOTING.md) | Solusi untuk masalah umum |
+| Nama | NIM |
+|------|-----|
+| Andika Dinata | 123140096 |
+| Satria Lemana Putra | 123140088 |
 
 ## ✨ Fitur Utama
 
-- 📝 **Rich Journaling** - Catat momen dengan judul, konten, gambar, dan tag yang terorganisir.
-- 🤖 **AI Assistant (Blissie)** - Ngobrol dengan Blissie, asisten AI yang dirancang untuk menjadi pendengar yang baik dan memberikan refleksi bermakna.
-- 🎭 **AI Mood Analysis** - Secara otomatis mendeteksi suasana hati dari setiap catatan jurnalmu.
-- 🏷️ **AI Smart Tagging** - Menghasilkan tag yang relevan secara otomatis berdasarkan konteks tulisanmu.
-- 💡 **Daily Reflections** - Dapatkan pertanyaan reflektif harian dari AI untuk membantumu mulai menulis.
-- 📅 **Calendar View** - Lacak dan lihat memori harianmu berdasarkan tampilan kalender yang interaktif.
-- ⚙️ **Customizable Settings** - Atur preferensi aplikasi dan tampilan tema sesuai keinginan.
-- 🖼️ **Image Support** - Tambahkan foto ke momen berhargamu untuk kenangan yang lebih visual.
-- 📱 **Cross-Platform** - Pengalaman yang konsisten di Android & iOS dari satu codebase Kotlin Multiplatform.
-- 🌙 **Modern UI** - Desain bersih dan minimalis menggunakan Material 3.
+| Fitur | Deskripsi |
+|-------|-----------|
+| **Rich Journaling** | Catat momen dengan judul, konten, gambar, dan tag yang terorganisir. |
+| **AI Assistant (Blissie)** | Ngobrol dengan Blissie, asisten AI empatik untuk refleksi bermakna. |
+| **AI Mood Analysis** | Deteksi suasana hati otomatis dari setiap catatan jurnal. |
+| **AI Smart Tagging** | Generate tag relevan secara otomatis berdasarkan konteks tulisan. |
+| **Daily Reflections** | Pertanyaan reflektif harian dari AI untuk memicu kreativitas menulis. |
+| **Calendar View** | Lacak dan lihat memori harian melalui tampilan kalender interaktif. |
+| **Image Support** | Tambahkan foto ke momen berharga untuk kenangan visual. |
+| **Cross-Platform** | Satu codebase untuk Android & iOS menggunakan Kotlin Multiplatform. |
 
-## 🏗️ Arsitektur & Teknologi
-
-### Clean Architecture + MVVM
-
-Aplikasi ini mengikuti prinsip **Clean Architecture** untuk memastikan kode tetap terorganisir, mudah diuji, dan skalabel.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER (Compose)              │
-│  ┌───────────────┐        ┌───────────────┐                 │
-│  │    Screen     │◄──────►│   ViewModel   │                 │
-│  │  (Composable) │ State  │  (StateFlow)  │                 │
-│  └───────────────┘        └───────┬───────┘                 │
-└───────────────────────────────────┼─────────────────────────┘
-                                    │
-┌───────────────────────────────────┼─────────────────────────┐
-│                      DOMAIN LAYER (Pure Kotlin)             │
-│                    ┌──────────────▼──────────────┐          │
-│                    │         Use Cases           │          │
-│                    │    (Business Logic)         │          │
-│                    └──────────────┬──────────────┘          │
-│                    ┌──────────────▼──────────────┐          │
-│                    │    Repository Interface     │          │
-│                    └──────────────┬──────────────┘          │
-└───────────────────────────────────┼─────────────────────────┘
-                                    │
-┌───────────────────────────────────┼─────────────────────────┐
-│                       DATA LAYER (Frameworks)                │
-│                    ┌──────────────▼──────────────┐          │
-│                    │   Repository Implementation │          │
-│                    └──────────────┬──────────────┘          │
-│              ┌────────────────────┼────────────────────┐    │
-│              │                    │                    │    │
-│        ┌─────▼─────┐        ┌─────▼─────┐       ┌─────▼────┐│
-│        │ SQLDelight│        │    Ktor   │       │ DataStore││
-│        │  (Local)  │        │  (Remote) │       │  (Prefs) ││
-│        └───────────┘        └───────────┘       └──────────┘│
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Tech Stack
+## 🛠️ Teknologi
 
 | Komponen | Teknologi |
 |----------|-----------|
-| **UI Framework** | Compose Multiplatform (1.7.0) |
+| **UI Framework** | Compose Multiplatform |
 | **Design System** | Material 3 |
-| **Language** | Kotlin (2.0.21) |
-| **DI** | Koin (4.0.0) |
-| **Networking** | Ktor Client (3.0.1) |
-| **Local Database** | SQLDelight (2.0.2) |
-| **Image Loading** | Coil (3.0.4) |
-| **Navigation** | Compose Navigation (Type-safe) |
-| **State Management** | StateFlow, ViewModel (KMP Lifecycle) |
-| **AI Integration** | Google Gemini API (1.5 Flash) |
+| **Language** | Kotlin |
+| **DI** | Koin |
+| **Networking** | Ktor Client |
+| **Local Database** | SQLDelight |
+| **Storage** | DataStore |
+| **Image Loading** | Coil |
+| **Navigation** | Compose Navigation |
+| **State Management** | StateFlow, ViewModel |
 
-## 📁 Struktur Project
+## 🌐 Integrasi API
 
+Aplikasi ini mengintegrasikan beberapa layanan API untuk menghadirkan fitur-fitur cerdas dan informasi real-time:
+
+| API | Deskripsi | Kegunaan |
+|-----|-----------|----------|
+| **Gemini AI** | Google Generative AI | Fitur asisten chat, analisis mood, tagging otomatis, dan refleksi harian. |
+| **Open-Meteo** | Weather API | Menampilkan informasi cuaca (suhu & angin) sesuai lokasi pengguna. |
+| **IPAPI** | Geolocation API | Mendapatkan koordinat dan lokasi pengguna berdasarkan alamat IP. |
+| **Berita Indo** | News Feed API | Menampilkan ringkasan berita terbaru dari CNN Indonesia. |
+| **Frankfurter** | Currency API | Melacak nilai tukar mata uang (USD & SGD ke IDR). |
+
+---
+
+### 🔍 Detail API & Contoh Data
+
+<details>
+<summary><b>1. Google Gemini API (Generative AI)</b></summary>
+
+- **URL:** `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+- **Contoh Request:**
+```json
+{
+  "contents": [
+    {
+      "parts": [{"text": "Hai Blissie, bagaimana kabarmu?"}],
+      "role": "user"
+    }
+  ]
+}
 ```
-composeApp/src/
-├── commonMain/kotlin/com/dailybliss/app/
-│   ├── core/                      # Core utilities (DI, Network, Util)
-│   ├── data/                      # Data layer (Local, Remote, Repo Impl)
-│   │   ├── local/                 # SQLDelight DAOs & DataStore
-│   │   ├── remote/                # Gemini Service & API DTOs
-│   │   └── repository/            # Repository Implementations
-│   ├── domain/                    # Domain layer (Models, Interfaces, Use Cases)
-│   │   ├── model/                 # Moment & Content models
-│   │   ├── repository/            # Repository Interfaces
-│   │   └── usecase/               # Business logic / Use Cases
-│   └── presentation/              # Presentation layer (UI & ViewModel)
-│       ├── navigation/            # Type-safe Navigation
-│       ├── screens/               # Screen composables + ViewModels
-│       ├── components/            # Reusable UI components
-│       └── theme/                 # Material 3 Theme
-│
-├── commonMain/sqldelight/         # SQLDelight schema (.sq files)
-├── androidMain/kotlin/            # Android-specific implementations
-└── iosMain/kotlin/                # iOS-specific implementations
+- **Contoh Response:**
+```json
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [{"text": "Halo! Saya Blissie, asisten AI-mu. Kabar saya baik dan saya siap mendengarkan ceritamu."}],
+        "role": "model"
+      }
+    }
+  ]
+}
 ```
+</details>
 
-## 🚀 Getting Started
+<details>
+<summary><b>2. Open-Meteo API (Cuaca)</b></summary>
 
-### Prasyarat
-
-- **Android Studio Ladybug (2024.2.1)** atau lebih baru
-- **JDK 17** atau 21
-- **Xcode 15+** (khusus untuk build iOS di macOS)
-
-### Setup
-
-1. **Clone repository**
-   ```bash
-   git clone git@github.com:andika-123140096/123140096-123140088-DailyBliss.git
-   cd 123140096-123140088-DailyBliss
-   ```
-
-2. **Konfigurasi API Key**
-
-   Aplikasi membutuhkan API key Google Gemini. Salin template file dan isi API key kamu:
-   ```bash
-   cp local.properties.example local.properties
-   # Edit local.properties dan isi:
-   # GEMINI_API_KEY=AIza...
-   ```
-   Dapatkan API key gratis di [Google AI Studio](https://aistudio.google.com/).
-
-3. **Build & Run**
-   - **Android**: Pilih konfigurasi `composeApp` dan klik **Run** (▶️).
-   - **iOS**: Folder `iosApp/` saat ini belum disertakan, namun framework Kotlin tetap bisa di-build untuk target iOS.
-
-## 🧪 Testing
-
-Kami menggunakan `kotlin.test`, `coroutines-test`, dan `turbine` untuk memastikan stabilitas aplikasi.
-
-```bash
-# Jalankan semua unit test
-./gradlew allTests
-
-# Jalankan test khusus Android
-./gradlew :composeApp:testDebugUnitTest
+- **URL:** `GET https://api.open-meteo.com/v1/forecast?latitude=-5.4&longitude=105.2&current=temperature_2m,wind_speed_10m`
+- **Contoh Response:**
+```json
+{
+  "current": {
+    "temperature_2m": 30.5,
+    "wind_speed_10m": 12.3
+  }
+}
 ```
+</details>
+
+<details>
+<summary><b>3. IPAPI (Geolokasi)</b></summary>
+
+- **URL:** `GET https://ipapi.co/json/`
+- **Contoh Response:**
+```json
+{
+  "latitude": -5.3971,
+  "longitude": 105.2667,
+  "city": "Bandar Lampung",
+  "country_name": "Indonesia"
+}
+```
+</details>
+
+<details>
+<summary><b>4. Berita Indo API (News)</b></summary>
+
+- **URL:** `GET https://berita-indo-api-next.vercel.app/api/cnn-news`
+- **Contoh Response:**
+```json
+{
+  "data": [
+    {
+      "title": "IHSG Berpeluang Menguat Hari Ini",
+      "contentSnippet": "Indeks Harga Saham Gabungan (IHSG) diprediksi akan bergerak menguat pada...",
+      "link": "https://www.cnnindonesia.com/ekonomi/...",
+      "image": {
+        "large": "https://akcdn.detik.net.id/visual/..."
+      }
+    }
+  ]
+}
+```
+</details>
+
+<details>
+<summary><b>5. Frankfurter API (Mata Uang)</b></summary>
+
+- **URL:** `GET https://api.frankfurter.dev/v1/latest?base=USD&symbols=IDR`
+- **Contoh Response:**
+```json
+{
+  "amount": 1.0,
+  "base": "USD",
+  "date": "2024-03-21",
+  "rates": {
+    "IDR": 15700.0
+  }
+}
+```
+</details>
 
 ## 📄 License
 
