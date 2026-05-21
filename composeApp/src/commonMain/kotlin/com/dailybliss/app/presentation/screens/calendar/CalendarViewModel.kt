@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
-import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
@@ -27,7 +26,6 @@ data class CalendarUiState(
 
 class CalendarViewModel(
     private val getAllMomentsUseCase: GetAllMomentsUseCase,
-    private val getMomentsFromSameDayUseCase: GetMomentsFromSameDayUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalendarUiState())

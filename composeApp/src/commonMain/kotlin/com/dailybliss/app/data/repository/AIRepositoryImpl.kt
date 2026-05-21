@@ -106,7 +106,7 @@ class AIRepositoryImpl(
     override suspend fun analyzeMood(content: String, imageBytes: ByteArray?): MoodResult? {
         val parts = mutableListOf<GeminiPart>()
         if (imageBytes != null) {
-            parts.add(GeminiPart(inline_data = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
+            parts.add(GeminiPart(inlineData = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
         }
         parts.add(GeminiPart(text = content))
 
@@ -124,7 +124,7 @@ class AIRepositoryImpl(
                 json.decodeFromString<MoodResponse>(jsonStr).let { response ->
                     MoodResult(response.mood, response.emoji)
                 }
-            } catch (e: Exception) {
+            } catch (ignore: Exception) {
                 null
             }
         }
@@ -133,7 +133,7 @@ class AIRepositoryImpl(
     override suspend fun generateTags(content: String, imageBytes: ByteArray?): List<String> {
         val parts = mutableListOf<GeminiPart>()
         if (imageBytes != null) {
-            parts.add(GeminiPart(inline_data = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
+            parts.add(GeminiPart(inlineData = GeminiInlineData("image/jpeg", imageBytes.toBase64())))
         }
         parts.add(GeminiPart(text = content))
 
@@ -190,9 +190,9 @@ class AIRepositoryImpl(
         chatMessage.imageBytes?.let { bytes ->
             parts.add(
                 GeminiPart(
-                    inline_data =
+                    inlineData =
                     GeminiInlineData(
-                        mime_type = "image/jpeg",
+                        mimeType = "image/jpeg",
                         data = bytes.toBase64(),
                     ),
                 ),

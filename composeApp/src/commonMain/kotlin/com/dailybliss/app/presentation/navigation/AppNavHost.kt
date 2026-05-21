@@ -193,8 +193,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
             ) {
                 composable<Route.Home> {
                     HomeScreen(
-                        onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
-                        onNavigateToDetail = { id -> actions.navigateToMomentDetail(id) },
                         onNavigateToSettings = { actions.navigateToSettings() },
                     )
                 }

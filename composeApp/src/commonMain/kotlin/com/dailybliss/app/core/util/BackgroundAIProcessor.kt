@@ -59,10 +59,10 @@ class BackgroundAIProcessor(
                                     )
                                 momentRepository.updateMoment(updatedMoment)
                             }
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
                         } catch (e: Exception) {
-                            if (e !is kotlinx.coroutines.CancellationException) {
-                                println("Error in BackgroundAIProcessor for moment $momentId: ${e.message}")
-                            }
+                            println("Error in BackgroundAIProcessor for moment $momentId: ${e.message}")
                         } finally {
                             jobMutex.withLock {
                                 if (activeJobs[momentId] == coroutineContext[Job]) {

@@ -13,8 +13,8 @@ import platform.Foundation.NSBundle
  *
  * Atau untuk development, bisa hardcode langsung (JANGAN untuk production!)
  */
-actual object ApiConfig {
-    actual val geminiApiKey: String
+class IosApiConfig : ApiConfig {
+    override val geminiApiKey: String
         get() {
             // Try to get from Info.plist
             val plistValue = NSBundle.mainBundle.objectForInfoDictionaryKey("GEMINI_API_KEY") as? String
@@ -22,7 +22,7 @@ actual object ApiConfig {
             return plistValue ?: ""
         }
 
-    actual val geminiModelName: String
+    override val geminiModelName: String
         get() {
             val plistValue = NSBundle.mainBundle.objectForInfoDictionaryKey("GEMINI_MODEL_NAME") as? String
             return plistValue ?: "gemini-1.5-flash"

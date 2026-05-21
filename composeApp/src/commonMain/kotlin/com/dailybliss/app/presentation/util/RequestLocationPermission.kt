@@ -7,5 +7,5 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect fun LocationPermissionEffect(
-    onPermissionResult: (Boolean) -> Unit
+    onPermissionResult: (Boolean) -> Unit,
 )

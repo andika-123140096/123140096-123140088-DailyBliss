@@ -9,11 +9,12 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 /**
  * Implementasi iOS untuk LocationTracker menggunakan CLLocationManager.
  */
-actual class LocationTracker actual constructor(private val context: PlatformContext) {
+class IosLocationTracker : LocationTracker {
+
     @OptIn(ExperimentalForeignApi::class)
-    actual suspend fun getCurrentLocation(): Location? {
+    override suspend fun getCurrentLocation(): Location? {
         val locationManager = CLLocationManager()
-        
+
         val status = locationManager.authorizationStatus
         if (status != kCLAuthorizationStatusAuthorizedWhenInUse && status != kCLAuthorizationStatusAuthorizedAlways) {
             return null

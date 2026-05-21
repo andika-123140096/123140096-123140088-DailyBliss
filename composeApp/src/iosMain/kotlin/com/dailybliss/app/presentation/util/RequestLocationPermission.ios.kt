@@ -12,17 +12,18 @@ import platform.darwin.NSObject
 
 @Composable
 actual fun LocationPermissionEffect(
-    onPermissionResult: (Boolean) -> Unit
+    onPermissionResult: (Boolean) -> Unit,
 ) {
     val locationManager = remember { CLLocationManager() }
-    
+
     val delegate = remember {
         object : NSObject(), CLLocationManagerDelegateProtocol {
             override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
                 val status = manager.authorizationStatus
                 when (status) {
-                    kCLAuthorizationStatusAuthorizedWhenInUse, 
-                    kCLAuthorizationStatusAuthorizedAlways -> {
+                    kCLAuthorizationStatusAuthorizedWhenInUse,
+                    kCLAuthorizationStatusAuthorizedAlways,
+                    -> {
                         onPermissionResult(true)
                     }
                     kCLAuthorizationStatusNotDetermined -> {
@@ -40,8 +41,9 @@ actual fun LocationPermissionEffect(
         locationManager.delegate = delegate
         val status = locationManager.authorizationStatus
         when (status) {
-            kCLAuthorizationStatusAuthorizedWhenInUse, 
-            kCLAuthorizationStatusAuthorizedAlways -> {
+            kCLAuthorizationStatusAuthorizedWhenInUse,
+            kCLAuthorizationStatusAuthorizedAlways,
+            -> {
                 onPermissionResult(true)
             }
             kCLAuthorizationStatusNotDetermined -> {

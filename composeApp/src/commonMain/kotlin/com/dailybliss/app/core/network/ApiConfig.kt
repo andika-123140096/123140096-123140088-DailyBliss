@@ -9,7 +9,7 @@ package com.dailybliss.app.core.network
  * expect: Deklarasi tanpa implementasi (di commonMain)
  * actual: Implementasi spesifik platform (di androidMain/iosMain)
  */
-expect object ApiConfig {
+interface ApiConfig {
     /**
      * Gemini API Key
      *

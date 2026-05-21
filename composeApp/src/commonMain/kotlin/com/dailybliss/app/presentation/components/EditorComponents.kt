@@ -33,6 +33,7 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.presentation.util.HtmlConverter
+import kotlin.text.*
 
 @Composable
 fun HtmlBlockItem(
@@ -314,7 +315,7 @@ private fun splitHtml(html: String): List<HtmlPart> {
     if (html.isEmpty()) return listOf(HtmlPart.Text(""))
 
     val parts = mutableListOf<HtmlPart>()
-    val imageGroupRegex = Regex("<div class=\"image-group\">(.*?)</div>", RegexOption.DOT_MATCHES_ALL)
+    val imageGroupRegex = kotlin.text.Regex("(?s)<div class=\"image-group\">(.*?)</div>")
 
     var lastIndex = 0
     imageGroupRegex.findAll(html).forEach { match ->
@@ -322,7 +323,7 @@ private fun splitHtml(html: String): List<HtmlPart> {
         parts.add(HtmlPart.Text(textBefore))
 
         val groupContent = match.groupValues[1]
-        val urls = Regex("<img src=\"(.*?)\" />").findAll(groupContent)
+        val urls = kotlin.text.Regex("<img src=\"(.*?)\" />").findAll(groupContent)
             .map { it.groupValues[1] }.toList()
         parts.add(HtmlPart.ImageGroup(urls))
 

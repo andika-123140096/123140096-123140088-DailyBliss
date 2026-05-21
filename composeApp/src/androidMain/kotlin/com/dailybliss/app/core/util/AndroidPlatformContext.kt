@@ -8,4 +8,4 @@ import android.content.Context
  * Membungkus android.content.Context agar
  * PlatformContext dapat digunakan di shared code.
  */
-actual class PlatformContext(val androidContext: Context)
+class AndroidPlatformContext(val androidContext: Context) : PlatformContext

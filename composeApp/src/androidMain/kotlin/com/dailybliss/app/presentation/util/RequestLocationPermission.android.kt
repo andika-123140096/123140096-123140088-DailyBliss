@@ -11,12 +11,12 @@ import androidx.core.content.ContextCompat
 
 @Composable
 actual fun LocationPermissionEffect(
-    onPermissionResult: (Boolean) -> Unit
+    onPermissionResult: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    
+
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
+        contract = ActivityResultContracts.RequestPermission(),
     ) { isGranted ->
         onPermissionResult(isGranted)
     }
@@ -24,12 +24,12 @@ actual fun LocationPermissionEffect(
     LaunchedEffect(Unit) {
         val coarsePermission = ContextCompat.checkSelfPermission(
             context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-        
+
         val finePermission = ContextCompat.checkSelfPermission(
             context,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
 
         if (coarsePermission || finePermission) {

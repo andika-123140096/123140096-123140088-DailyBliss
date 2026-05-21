@@ -47,5 +47,5 @@ data class FrankfurterResponse(
     val amount: Double,
     val base: String,
     val date: String,
-    val rates: Map<String, Double>
+    val rates: Map<String, Double>,
 )

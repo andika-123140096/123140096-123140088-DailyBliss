@@ -44,14 +44,14 @@ class HomeViewModel(
                         weather = weather,
                         news = news,
                         currencyRates = currency,
-                        isLoading = false
+                        isLoading = false,
                     )
                 }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Gagal memuat data: ${e.message}"
+                        error = "Gagal memuat data: ${e.message}",
                     )
                 }
             }

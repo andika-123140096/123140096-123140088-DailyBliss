@@ -3,7 +3,6 @@ package com.dailybliss.app.core.di
 import com.dailybliss.app.core.network.HttpClientFactory
 import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.core.util.DatabaseDriverFactory
-import com.dailybliss.app.core.util.LocationTracker
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
 import com.dailybliss.app.data.local.datastore.UserPreferences
@@ -24,7 +23,6 @@ import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
-import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,8 +39,6 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
-    single { FileStorage(get()) }
-    single { LocationTracker(get()) }
     singleOf(::BackgroundAIProcessor)
 }
 

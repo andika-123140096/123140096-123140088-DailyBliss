@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import com.dailybliss.app.core.util.AndroidPlatformContext
 import com.dailybliss.app.core.util.PlatformContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +32,7 @@ actual fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): Ima
                                 }
                             }
                             onResult(bytesList)
-                        } catch (e: Exception) {
+                        } catch (ignore: Exception) {
                             onResult(emptyList())
                         }
                     }
@@ -50,22 +51,24 @@ actual fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): Ima
     }
 }
 
-actual class FileStorage actual constructor(private val context: PlatformContext) {
-    actual suspend fun saveImage(bytes: ByteArray): String? = withContext(Dispatchers.IO) {
+class AndroidFileStorage(private val context: PlatformContext) : FileStorage {
+    private val androidContext = (context as AndroidPlatformContext).androidContext
+
+    override suspend fun saveImage(bytes: ByteArray): String? = withContext(Dispatchers.IO) {
         try {
             val fileName = "moment_${UUID.randomUUID()}.jpg"
-            val file = File(context.androidContext.filesDir, fileName)
+            val file = File(androidContext.filesDir, fileName)
             file.writeBytes(bytes)
             file.absolutePath
-        } catch (e: Exception) {
+        } catch (ignore: Exception) {
             null
         }
     }
 
-    actual suspend fun loadImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
+    override suspend fun loadImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
         try {
             File(path).readBytes()
-        } catch (e: Exception) {
+        } catch (ignore: Exception) {
             null
         }
     }

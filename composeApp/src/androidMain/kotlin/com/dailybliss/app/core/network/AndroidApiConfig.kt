@@ -13,7 +13,7 @@ import com.dailybliss.app.BuildConfig
  * 2. Tambahkan: GEMINI_API_KEY=your_api_key_here
  * 3. Build project (API key akan di-inject ke BuildConfig)
  */
-actual object ApiConfig {
-    actual val geminiApiKey: String = BuildConfig.GEMINI_API_KEY
-    actual val geminiModelName: String = BuildConfig.GEMINI_MODEL_NAME
+class AndroidApiConfig : ApiConfig {
+    override val geminiApiKey: String = BuildConfig.GEMINI_API_KEY
+    override val geminiModelName: String = BuildConfig.GEMINI_MODEL_NAME
 }

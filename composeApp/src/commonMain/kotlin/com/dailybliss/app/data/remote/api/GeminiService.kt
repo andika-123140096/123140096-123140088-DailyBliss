@@ -16,7 +16,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
-class GeminiService(private val client: HttpClient) {
+class GeminiService(
+    private val httpClient: HttpClient,
+    private val apiConfig: ApiConfig,
+) {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -45,14 +48,14 @@ class GeminiService(private val client: HttpClient) {
     }
 
     suspend fun streamContent(contents: List<GeminiContent>, systemPrompt: String? = null): Flow<String> = flow {
-        val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+        val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
 
         // Use streamGenerateContent for streaming
         val url = "$BASE_URL/models/$modelName:streamGenerateContent?alt=sse"
 
         val request = GeminiRequest(
             contents = contents,
-            system_instruction = systemPrompt?.let {
+            systemInstruction = systemPrompt?.let {
                 GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
             },
             generationConfig = GenerationConfig(
@@ -62,8 +65,8 @@ class GeminiService(private val client: HttpClient) {
         )
 
         retryWithBackoff {
-            client.preparePost(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            httpClient.preparePost(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
                 timeout {
@@ -103,7 +106,7 @@ class GeminiService(private val client: HttpClient) {
 
     suspend fun generateContent(parts: List<GeminiPart>, systemPrompt: String? = null): Result<String> = runCatching {
         retryWithBackoff {
-            val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+            val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
 
             val contents = listOf(
                 GeminiContent(
@@ -116,13 +119,13 @@ class GeminiService(private val client: HttpClient) {
 
             val request = GeminiRequest(
                 contents = contents,
-                system_instruction = systemPrompt?.let {
+                systemInstruction = systemPrompt?.let {
                     GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
                 },
             )
 
-            val response: HttpResponse = client.post(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            val response: HttpResponse = httpClient.post(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -140,12 +143,12 @@ class GeminiService(private val client: HttpClient) {
 
     suspend fun generateChat(contents: List<GeminiContent>, systemPrompt: String? = null): Result<String> = runCatching {
         retryWithBackoff {
-            val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+            val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
             val url = "$BASE_URL/models/$modelName:generateContent"
 
             val request = GeminiRequest(
                 contents = contents,
-                system_instruction = systemPrompt?.let {
+                systemInstruction = systemPrompt?.let {
                     GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
                 },
                 generationConfig = GenerationConfig(
@@ -154,8 +157,8 @@ class GeminiService(private val client: HttpClient) {
                 ),
             )
 
-            val response: HttpResponse = client.post(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            val response: HttpResponse = httpClient.post(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }

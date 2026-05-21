@@ -1,5 +1,6 @@
 package com.dailybliss.app.data.remote.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 // ==================== REQUEST ====================
@@ -9,7 +10,8 @@ data class GeminiRequest(
     val contents: List<GeminiContent>,
     val generationConfig: GenerationConfig? = null,
     val safetySettings: List<SafetySetting>? = null,
-    val system_instruction: GeminiSystemInstruction? = null,
+    @SerialName("system_instruction")
+    val systemInstruction: GeminiSystemInstruction? = null,
 )
 
 @Serializable
@@ -19,11 +21,17 @@ data class GeminiSystemInstruction(val parts: List<GeminiPart>)
 data class GeminiContent(val parts: List<GeminiPart>, val role: String = "user")
 
 @Serializable
-data class GeminiPart(val text: String? = null, val inline_data: GeminiInlineData? = null, val thought: Boolean? = null)
+data class GeminiPart(
+    val text: String? = null,
+    @SerialName("inline_data")
+    val inlineData: GeminiInlineData? = null,
+    val thought: Boolean? = null,
+)
 
 @Serializable
 data class GeminiInlineData(
-    val mime_type: String,
+    @SerialName("mime_type")
+    val mimeType: String,
     val data: String, // Base64
 )
 
