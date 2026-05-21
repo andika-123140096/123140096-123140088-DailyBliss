@@ -2,135 +2,58 @@ package com.dailybliss.app.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.data.local.datastore.UserPreferences
-import com.dailybliss.app.data.remote.api.SystemPrompts
-import com.dailybliss.app.domain.model.ChatMessage
-import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
-import com.dailybliss.app.domain.usecase.GetMomentsFromSameDayUseCase
-import kotlinx.coroutines.flow.*
+import com.dailybliss.app.domain.model.NewsArticle
+import com.dailybliss.app.domain.model.WeatherInfo
+import com.dailybliss.app.domain.repository.HomeRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 data class HomeUiState(
-    val greeting: String = "",
-    val pinnedMoments: List<Moment> = emptyList(),
-    val memoryLaneMoments: List<Moment> = emptyList(),
-    val dailyPrompt: String? = null,
-    val isLoading: Boolean = true,
+    val weather: WeatherInfo? = null,
+    val news: List<NewsArticle> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
 )
 
 class HomeViewModel(
-    private val aiRepository: AIRepository,
-    private val userPreferences: UserPreferences,
-    private val getAllMomentsUseCase: GetAllMomentsUseCase,
-    private val getMomentsFromSameDayUseCase: GetMomentsFromSameDayUseCase,
+    private val homeRepository: HomeRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        observeSettings()
-        observePinnedMoments()
-        loadMemoryLane()
-        loadDailyPrompt()
+        loadHomeData()
     }
 
-    private fun observePinnedMoments() {
+    fun loadHomeData() {
         viewModelScope.launch {
-            getAllMomentsUseCase().map { moments ->
-                moments.filter { it.isPinned }
-            }.collect { pinned ->
-                _uiState.update { it.copy(pinnedMoments = pinned) }
-            }
-        }
-    }
-
-    private fun loadMemoryLane() {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val dayMonth = "${now.monthNumber.toString().padStart(2, '0')}-${now.dayOfMonth.toString().padStart(2, '0')}"
-
-        viewModelScope.launch {
-            getMomentsFromSameDayUseCase(dayMonth).collect { moments ->
-                _uiState.update { it.copy(memoryLaneMoments = moments) }
-            }
-        }
-    }
-
-    private fun loadDailyPrompt() {
-        viewModelScope.launch {
-            val lastTimestamp = userPreferences.aiCacheTimestamp.first()
-            val now = Clock.System.now().toEpochMilliseconds()
-            val cachedPrompt = userPreferences.aiDailyPromptCache.first()
-
-            if (cachedPrompt != null && (now - lastTimestamp) < CACHE_DURATION) {
-                _uiState.update { it.copy(dailyPrompt = cachedPrompt) }
-            } else {
-                val prompt = aiRepository.generateDailyPrompt()
-                if (prompt != null) {
-                    _uiState.update { it.copy(dailyPrompt = prompt) }
-                    userPreferences.setAiDailyPromptCache(prompt)
-                    userPreferences.updateAiCacheTimestamp(now)
-                }
-            }
-        }
-    }
-
-    private fun observeSettings() {
-        viewModelScope.launch {
-            kotlinx.coroutines.flow.combine(
-                userPreferences.nickname,
-                userPreferences.aiLanguageStyle,
-                userPreferences.aiGreetingCache,
-                userPreferences.aiCacheTimestamp,
-            ) { nickname, style, cachedGreeting, lastTimestamp ->
-                val now = Clock.System.now().toEpochMilliseconds()
-                val isCacheValid = cachedGreeting != null && (now - lastTimestamp) < CACHE_DURATION
-
-                GreetingParams(nickname, style, cachedGreeting, isCacheValid)
-            }.collectLatest { params ->
-                if (params.isCacheValid && params.cachedGreeting != null) {
-                    _uiState.update { it.copy(greeting = params.cachedGreeting, isLoading = false) }
-                } else {
-                    fetchGreeting(params.nickname, params.style)
-                }
-            }
-        }
-    }
-
-    private fun fetchGreeting(nickname: String, style: String) {
-        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                _uiState.update { it.copy(isLoading = true) }
-                val greeting = aiRepository.chat(
-                    listOf(
-                        ChatMessage(
-                            role = "user",
-                            text = SystemPrompts.getGreetingPrompt(nickname, style),
-                        ),
-                    ),
-                )
-                _uiState.update { it.copy(greeting = greeting, isLoading = false) }
-                userPreferences.setAiGreetingCache(greeting)
-                userPreferences.updateAiCacheTimestamp(Clock.System.now().toEpochMilliseconds())
+                val weatherDeferred = async { homeRepository.getWeather() }
+                val newsDeferred = async { homeRepository.getPrabowoNews() }
+
+                val weather = weatherDeferred.await()
+                val news = newsDeferred.await()
+
+                _uiState.update {
+                    it.copy(
+                        weather = weather,
+                        news = news,
+                        isLoading = false
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(greeting = "Selamat datang kembali, $nickname.", isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Gagal memuat data: ${e.message}"
+                    )
+                }
             }
         }
-    }
-
-    private data class GreetingParams(
-        val nickname: String,
-        val style: String,
-        val cachedGreeting: String?,
-        val isCacheValid: Boolean,
-    )
-
-    companion object {
-        private const val CACHE_DURATION = 24 * 60 * 60 * 1000L // 24 jam dalam ms
     }
 }

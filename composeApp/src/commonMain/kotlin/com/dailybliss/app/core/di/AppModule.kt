@@ -9,8 +9,10 @@ import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.local.datastore.create
 import com.dailybliss.app.data.remote.api.GeminiService
 import com.dailybliss.app.data.repository.AIRepositoryImpl
+import com.dailybliss.app.data.repository.HomeRepositoryImpl
 import com.dailybliss.app.data.repository.MomentRepositoryImpl
 import com.dailybliss.app.domain.repository.AIRepository
+import com.dailybliss.app.domain.repository.HomeRepository
 import com.dailybliss.app.domain.repository.MomentRepository
 import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
@@ -70,6 +72,7 @@ val preferencesModule = module {
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
     single { AIRepositoryImpl(get(), get(), get()) } bind AIRepository::class
+    single { HomeRepositoryImpl(get(), get()) } bind HomeRepository::class
 }
 
 // ==================== USE CASE MODULE ====================

@@ -10,68 +10,72 @@ CREATE TABLE MomentEntity (
     updated_at INTEGER NOT NULL
 );
 
--- Get all moments ordered by updated_at descending
+CREATE TABLE HomeCache (
+    key TEXT PRIMARY KEY,
+    data_ TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Moment Queries --
 getAllMoments:
 SELECT * FROM MomentEntity
 ORDER BY is_pinned DESC, updated_at DESC;
 
--- Get pinned moments
 getPinnedMoments:
 SELECT * FROM MomentEntity
 WHERE is_pinned = 1
 ORDER BY updated_at DESC;
 
--- Search moments by title or content
 searchMoments:
 SELECT * FROM MomentEntity
 WHERE title LIKE '%' || ? || '%' OR content LIKE '%' || ? || '%'
 ORDER BY is_pinned DESC, updated_at DESC;
 
--- Get single moment by ID
 getMomentById:
 SELECT * FROM MomentEntity
 WHERE id = ?;
 
--- Get moments from the same month and day but different year (Memory Lane)
--- Parameter: formatted date as 'MM-DD'
 getMomentsFromSameDay:
 SELECT * FROM MomentEntity
 WHERE strftime('%m-%d', datetime(created_at / 1000, 'unixepoch')) = ?
 AND strftime('%Y', datetime(created_at / 1000, 'unixepoch')) < strftime('%Y', 'now')
 ORDER BY created_at DESC;
 
--- Get moments within a date range (for calendar)
 getMomentsByDateRange:
 SELECT * FROM MomentEntity
 WHERE created_at >= ? AND created_at < ?
 ORDER BY created_at DESC;
 
--- Insert new moment
 insertMoment:
 INSERT INTO MomentEntity (title, content, media_url, mood, tags, is_pinned, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
--- Get last inserted ID
 lastInsertId:
 SELECT last_insert_rowid();
 
--- Update existing moment
 updateMoment:
 UPDATE MomentEntity
 SET title = ?, content = ?, media_url = ?, mood = ?, tags = ?, is_pinned = ?, updated_at = ?
 WHERE id = ?;
 
--- Delete moment by ID
 deleteMoment:
 DELETE FROM MomentEntity
 WHERE id = ?;
 
--- Delete multiple moments
 deleteMomentsByIds:
 DELETE FROM MomentEntity
 WHERE id IN ?;
 
--- Count all moments
 countMoments:
 SELECT COUNT(*) FROM MomentEntity;
 
+-- Cache Queries --
+getCache:
+SELECT * FROM HomeCache WHERE key = ?;
+
+insertCache:
+INSERT OR REPLACE INTO HomeCache (key, data_, updated_at)
+VALUES (?, ?, ?);
+
+deleteCache:
+DELETE FROM HomeCache WHERE key = ?;
