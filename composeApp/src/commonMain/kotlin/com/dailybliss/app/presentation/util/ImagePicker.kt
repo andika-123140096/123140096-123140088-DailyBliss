@@ -2,17 +2,14 @@ package com.dailybliss.app.presentation.util
 
 import androidx.compose.runtime.Composable
 
-import com.dailybliss.app.core.util.PlatformContext
-
 @Composable
-expect fun rememberImagePickerLauncher(
-    onResult: (ByteArray?) -> Unit
-): ImagePickerLauncher
+expect fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): ImagePickerLauncher
 
 interface ImagePickerLauncher {
     fun launch()
 }
 
-expect class FileStorage(context: PlatformContext) {
+interface FileStorage {
     suspend fun saveImage(bytes: ByteArray): String?
+    suspend fun loadImage(path: String): ByteArray?
 }

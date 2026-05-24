@@ -16,10 +16,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
-class GeminiService(private val client: HttpClient) {
-    
+class GeminiService(
+    private val httpClient: HttpClient,
+    private val apiConfig: ApiConfig,
+) {
+
     private val json = Json { ignoreUnknownKeys = true }
-    
+
     companion object {
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
         private const val MAX_RETRIES = 5
@@ -29,7 +32,7 @@ class GeminiService(private val client: HttpClient) {
     private suspend fun <T> retryWithBackoff(
         maxRetries: Int = MAX_RETRIES,
         initialDelay: Long = INITIAL_DELAY_MS,
-        block: suspend () -> T
+        block: suspend () -> T,
     ): T {
         var currentDelay = initialDelay
         repeat(maxRetries) { attempt ->
@@ -43,30 +46,27 @@ class GeminiService(private val client: HttpClient) {
         }
         throw Exception("Gagal setelah beberapa percobaan")
     }
-    
-    suspend fun streamContent(
-        contents: List<GeminiContent>,
-        systemInstruction: String? = null
-    ): Flow<String> = flow {
-        val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
-        
+
+    suspend fun streamContent(contents: List<GeminiContent>, systemPrompt: String? = null): Flow<String> = flow {
+        val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+
         // Use streamGenerateContent for streaming
         val url = "$BASE_URL/models/$modelName:streamGenerateContent?alt=sse"
-        
+
         val request = GeminiRequest(
             contents = contents,
-            system_instruction = systemInstruction?.let { 
-                GeminiSystemInstruction(parts = listOf(GeminiPart(text = it))) 
+            systemInstruction = systemPrompt?.let {
+                GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
             },
             generationConfig = GenerationConfig(
                 temperature = 0.8,
-                maxOutputTokens = 2000
-            )
+                maxOutputTokens = 2000,
+            ),
         )
-        
+
         retryWithBackoff {
-            client.preparePost(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            httpClient.preparePost(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
                 timeout {
@@ -81,94 +81,93 @@ class GeminiService(private val client: HttpClient) {
 
                 val channel = response.bodyAsChannel()
                 while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line() ?: break
+                    val line = channel.readUTF8Line()
+                    if (line == null) {
+                        break
+                    }
                     if (line.startsWith("data: ")) {
                         val data = line.substring(6).trim()
-                        if (data.isEmpty()) continue
-                        
-                        try {
-                            val geminiResponse = json.decodeFromString<GeminiResponse>(data)
-                            val text = geminiResponse.getTextContent()
-                            if (text != null) {
-                                emit(text)
+                        if (data.isNotEmpty()) {
+                            try {
+                                val geminiResponse = json.decodeFromString<GeminiResponse>(data)
+                                val text = geminiResponse.getTextContent()
+                                if (text != null) {
+                                    emit(text)
+                                }
+                            } catch (e: Exception) {
+                                println("GeminiService: SSE stream parse error: ${e.message}")
                             }
-                        } catch (e: Exception) { }
+                        }
                     }
                 }
             }
         }
     }
 
-    suspend fun generateContent(
-        prompt: String,
-        systemPrompt: String? = null
-    ): Result<String> = runCatching {
+    suspend fun generateContent(parts: List<GeminiPart>, systemPrompt: String? = null): Result<String> = runCatching {
         retryWithBackoff {
-            val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
-            
+            val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+
             val contents = listOf(
                 GeminiContent(
-                    parts = listOf(GeminiPart(text = prompt)),
-                    role = "user"
-                )
-            )
-            
-            val url = "$BASE_URL/models/$modelName:generateContent"
-            
-            val request = GeminiRequest(
-                contents = contents,
-                system_instruction = systemPrompt?.let { 
-                    GeminiSystemInstruction(parts = listOf(GeminiPart(text = it))) 
-                }
+                    parts = parts,
+                    role = "user",
+                ),
             )
 
-            val response: HttpResponse = client.post(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            val url = "$BASE_URL/models/$modelName:generateContent"
+
+            val request = GeminiRequest(
+                contents = contents,
+                systemInstruction = systemPrompt?.let {
+                    GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
+                },
+            )
+
+            val response: HttpResponse = httpClient.post(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            
+
             if (response.status != HttpStatusCode.OK) {
                 val errorBody = response.bodyAsText()
                 throw Exception("API Error (${response.status.value}): $errorBody")
             }
-            
+
             val geminiResponse = response.body<GeminiResponse>()
             geminiResponse.getErrorMessage()?.let { throw Exception(it) }
             geminiResponse.getTextContent() ?: throw Exception("Respons kosong")
         }
     }
 
-    suspend fun generateChat(
-        contents: List<GeminiContent>,
-        systemInstruction: String? = null
-    ): Result<String> = runCatching {
+    suspend fun generateChat(contents: List<GeminiContent>, systemPrompt: String? = null): Result<String> = runCatching {
         retryWithBackoff {
-            val modelName = ApiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+            val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
             val url = "$BASE_URL/models/$modelName:generateContent"
-            
+
             val request = GeminiRequest(
                 contents = contents,
-                system_instruction = systemInstruction?.let { 
-                    GeminiSystemInstruction(parts = listOf(GeminiPart(text = it))) 
+                systemInstruction = systemPrompt?.let {
+                    GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
                 },
                 generationConfig = GenerationConfig(
                     temperature = 0.85, // Slightly higher for more natural flow
-                    maxOutputTokens = 2000
-                )
+                    maxOutputTokens = 2000,
+                ),
             )
 
-            val response: HttpResponse = client.post(url) {
-                header("x-goog-api-key", ApiConfig.geminiApiKey)
+            val response: HttpResponse = httpClient.post(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            
+
             if (response.status != HttpStatusCode.OK) {
                 val errorBody = response.bodyAsText()
                 throw Exception("API Error (${response.status.value}): $errorBody")
             }
-            
+
             val geminiResponse = response.body<GeminiResponse>()
             geminiResponse.getErrorMessage()?.let { throw Exception(it) }
             geminiResponse.getTextContent() ?: throw Exception("Respons kosong")

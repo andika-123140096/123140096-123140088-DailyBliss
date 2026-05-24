@@ -22,21 +22,16 @@ Dokumen ini menjelaskan cara menggunakan Git untuk project ini, termasuk strateg
 │                                                              │
 │  main ─────────────────────────────────────────────────────  │
 │    │                                                         │
-│    ├── project/121140001-TodoMaster (individu) ──────────────│
+│    ├── project/121140001-DailyBliss (individu) ──────────────│
 │    │        │                                                │
-│    │        ├── feature/add-task-screen                      │
+│    │        ├── feature/add-moment-screen                    │
 │    │        └── fix/database-crash                           │
 │    │                                                         │
-│    ├── project/121140003-121140004-FitnessApp (2 orang) ─────│
+│    ├── project/123140096-123140088-DailyBliss (2 orang) ─────│
 │    │        │                                                │
-│    │        ├── feature/workout-tracker                      │
-│    │        └── feature/progress-chart                       │
+│    │        ├── feature/ai-assistant                         │
+│    │        └── feature/mood-analysis                        │
 │    │                                                         │
-│    └── project/121140007-121140008-121140009-StudyPlanner ───│
-│             │            (3 orang)                           │
-│             ├── feature/schedule-view                        │
-│             └── feature/reminder                             │
-│                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -62,20 +57,12 @@ project/[Kelompok]-[NamaAplikasi]
 **Kelompok 1 Orang (Individu):**
 | NIM | Nama Aplikasi | Branch Name |
 |-----|---------------|-------------|
-| 121140001 | Todo Master | `project/121140001-TodoMaster` |
-| 121140002 | Expense Tracker | `project/121140002-ExpenseTracker` |
+| 121140001 | Daily Bliss | `project/121140001-DailyBliss` |
 
 **Kelompok 2 Orang:**
 | NIM Anggota | Nama Aplikasi | Branch Name |
 |-------------|---------------|-------------|
-| 121140003, 121140004 | Fitness App | `project/121140003-121140004-FitnessApp` |
-| 121140005, 121140006 | Recipe Book | `project/121140005-121140006-RecipeBook` |
-
-**Kelompok 3 Orang:**
-| NIM Anggota | Nama Aplikasi | Branch Name |
-|-------------|---------------|-------------|
-| 121140007, 121140008, 121140009 | Study Planner | `project/121140007-121140008-121140009-StudyPlanner` |
-| 121140010, 121140011, 121140012 | Health Tracker | `project/121140010-121140011-121140012-HealthTracker` |
+| 123140096, 123140088 | Daily Bliss | `project/123140096-123140088-DailyBliss` |
 
 ### Aturan Penamaan
 - Gunakan **NIM lengkap** semua anggota (tanpa spasi)
@@ -102,31 +89,31 @@ project/[Kelompok]-[NamaAplikasi]
 
 ```bash
 # Clone ke komputer lokal
-git clone https://github.com/USERNAME_ANDA/NoteAI-KMP.git
+git clone git@github.com:andika-123140096/123140096-123140088-DailyBliss.git
 
 # Masuk ke folder
-cd NoteAI-KMP
+cd 123140096-123140088-DailyBliss
 
 # Cek remote
 git remote -v
 # Output:
-# origin  https://github.com/USERNAME_ANDA/NoteAI-KMP.git (fetch)
-# origin  https://github.com/USERNAME_ANDA/NoteAI-KMP.git (push)
+# origin  git@github.com:andika-123140096/123140096-123140088-DailyBliss.git (fetch)
+# origin  git@github.com:andika-123140096/123140096-123140088-DailyBliss.git (push)
 ```
 
 ### 3. Tambahkan Upstream Remote
 
 ```bash
 # Tambahkan remote ke repository template (untuk sync update)
-git remote add upstream https://github.com/DOSEN/NoteAI-KMP-Template.git
+git remote add upstream https://github.com/informatika-itera/Proyek-Pengembangan-Aplikasi-Mobile.git
 
 # Verifikasi
 git remote -v
 # Output:
-# origin    https://github.com/USERNAME_ANDA/NoteAI-KMP.git (fetch)
-# origin    https://github.com/USERNAME_ANDA/NoteAI-KMP.git (push)
-# upstream  https://github.com/DOSEN/NoteAI-KMP-Template.git (fetch)
-# upstream  https://github.com/DOSEN/NoteAI-KMP-Template.git (push)
+# origin    git@github.com:andika-123140096/123140096-123140088-DailyBliss.git (fetch)
+# origin    git@github.com:andika-123140096/123140096-123140088-DailyBliss.git (push)
+# upstream  https://github.com/informatika-itera/Proyek-Pengembangan-Aplikasi-Mobile.git (fetch)
+# upstream  https://github.com/informatika-itera/Proyek-Pengembangan-Aplikasi-Mobile.git (push)
 ```
 
 ### 4. Buat Branch Project
@@ -259,7 +246,7 @@ refactor/[nama-refactor]
 ```
 
 Contoh:
-- `feature/dark-mode`
+- `feature/ai-chat`
 - `feature/export-pdf`
 - `fix/login-crash`
 - `refactor/clean-architecture`

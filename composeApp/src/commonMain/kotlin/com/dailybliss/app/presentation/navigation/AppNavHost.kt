@@ -1,14 +1,18 @@
 package com.dailybliss.app.presentation.navigation
 
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,37 +20,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.dailybliss.app.presentation.screens.settings.SettingsScreen
-import com.dailybliss.app.presentation.screens.ai.AIAssistantScreen
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentScreen
+import com.dailybliss.app.presentation.screens.ai.AIAssistantScreen
+import com.dailybliss.app.presentation.screens.calendar.CalendarScreen
+import com.dailybliss.app.presentation.screens.calendar.DailyMomentsScreen
 import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
-import com.dailybliss.app.presentation.screens.home.JournalScreen
 import com.dailybliss.app.presentation.screens.home.HomeScreen
+import com.dailybliss.app.presentation.screens.home.JournalScreen
+import com.dailybliss.app.presentation.screens.settings.SettingsScreen
 
 @Composable
-fun AppNavHost(
-    navController: NavHostController = rememberNavController(),
-    modifier: Modifier = Modifier
-) {
+fun AppNavHost(navController: NavHostController = rememberNavController(), modifier: Modifier = Modifier) {
     val actions = remember(navController) { NavigationActionsImpl(navController) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    
+
     val hideBottomBarScreens = listOf(
         Route.CreateMoment::class,
         Route.MomentDetail::class,
-        Route.Settings::class
+        Route.Settings::class,
+        Route.DailyMoments::class,
     )
-    
+
     val isAIAssistant = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true
-    
+
     val showBottomBar = hideBottomBarScreens.none { route ->
         currentDestination?.hierarchy?.any { it.hasRoute(route) } == true
     }
@@ -58,16 +61,22 @@ fun AppNavHost(
                 NavigationBar(
                     containerColor = Color.White,
                     contentColor = Color.Gray,
-                    tonalElevation = 0.dp
+                    tonalElevation = 0.dp,
                 ) {
                     NavigationBarItem(
                         selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.Home::class) } == true,
                         onClick = { actions.navigateToHome() },
-                        icon = { 
+                        icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Home::class) } == true) Icons.Filled.Home else Icons.Outlined.Home,
-                                contentDescription = "Home"
-                            ) 
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Home::class) } ==
+                                    true
+                                ) {
+                                    Icons.Filled.Home
+                                } else {
+                                    Icons.Outlined.Home
+                                },
+                                contentDescription = "Home",
+                            )
                         },
                         label = { Text("Beranda") },
                         colors = NavigationBarItemDefaults.colors(
@@ -75,18 +84,24 @@ fun AppNavHost(
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                             unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
-                        )
+                            unselectedTextColor = Color.Gray,
+                        ),
                     )
 
                     NavigationBarItem(
                         selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.Journal::class) } == true,
                         onClick = { actions.navigateToJournal() },
-                        icon = { 
+                        icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Journal::class) } == true) Icons.AutoMirrored.Filled.MenuBook else Icons.AutoMirrored.Outlined.MenuBook,
-                                contentDescription = "Journal"
-                            ) 
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Journal::class) } ==
+                                    true
+                                ) {
+                                    Icons.AutoMirrored.Filled.MenuBook
+                                } else {
+                                    Icons.AutoMirrored.Outlined.MenuBook
+                                },
+                                contentDescription = "Journal",
+                            )
                         },
                         label = { Text("Jurnal") },
                         colors = NavigationBarItemDefaults.colors(
@@ -94,18 +109,43 @@ fun AppNavHost(
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                             unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
-                        )
+                            unselectedTextColor = Color.Gray,
+                        ),
                     )
-                    
+
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } == true,
+                        onClick = { actions.navigateToCalendar() },
+                        icon = {
+                            Icon(
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } ==
+                                    true
+                                ) {
+                                    Icons.Default.DateRange
+                                } else {
+                                    Icons.Outlined.DateRange
+                                },
+                                contentDescription = "Calendar",
+                            )
+                        },
+                        label = { Text("Kalender") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                        ),
+                    )
+
                     NavigationBarItem(
                         selected = isAIAssistant,
                         onClick = { actions.navigateToAIAssistant() },
-                        icon = { 
+                        icon = {
                             Icon(
                                 if (isAIAssistant) Icons.Filled.AutoAwesome else Icons.Outlined.AutoAwesome,
-                                contentDescription = "AI Assistant"
-                            ) 
+                                contentDescription = "AI Assistant",
+                            )
                         },
                         label = { Text("Asisten AI") },
                         colors = NavigationBarItemDefaults.colors(
@@ -113,66 +153,100 @@ fun AppNavHost(
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                             unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
-                        )
+                            unselectedTextColor = Color.Gray,
+                        ),
                     )
                 }
             }
-        }
-    ) { paddingValues ->
-        // AIAssistant manages its own bottom padding dynamically to stay flush with the keyboard
-        val navHostPadding = if (isAIAssistant) {
-            PaddingValues(top = paddingValues.calculateTopPadding(), bottom = 0.dp)
-        } else {
-            paddingValues
-        }
+        },
+        content = { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = Route.Home,
+                modifier = modifier
+                    .padding(paddingValues)
+                    .consumeWindowInsets(paddingValues),
+                enterTransition = {
+                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(300),
+                    )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(300),
+                    )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(300),
+                    )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(300),
+                    )
+                },
+            ) {
+                composable<Route.Home> {
+                    HomeScreen(
+                        onNavigateToSettings = { actions.navigateToSettings() },
+                    )
+                }
 
-        NavHost(
-            navController = navController,
-            startDestination = Route.Home,
-            modifier = modifier.padding(navHostPadding)
-        ) {
-            composable<Route.Home> {
-                HomeScreen(
-                    onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
-                    onNavigateToSettings = { actions.navigateToSettings() }
-                )
-            }
+                composable<Route.Journal> {
+                    JournalScreen(
+                        onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
+                        onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
+                    )
+                }
 
-            composable<Route.Journal> {
-                JournalScreen(
-                    onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
-                    onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) }
-                )
-            }
+                composable<Route.Calendar> {
+                    CalendarScreen(
+                        onNavigateToDailyMoments = { dateStr -> actions.navigateToDailyMoments(dateStr) },
+                    )
+                }
 
-            composable<Route.CreateMoment> {
-                CreateMomentScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
+                composable<Route.DailyMoments> { backStackEntry ->
+                    val route: Route.DailyMoments = backStackEntry.toRoute()
+                    DailyMomentsScreen(
+                        dateStr = route.dateStr,
+                        onNavigateBack = { actions.navigateBack() },
+                        onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
+                    )
+                }
 
-            composable<Route.MomentDetail> { backStackEntry ->
-                val route: Route.MomentDetail = backStackEntry.toRoute()
-                MomentDetailScreen(
-                    momentId = route.momentId,
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
+                composable<Route.CreateMoment> {
+                    CreateMomentScreen(
+                        onNavigateBack = { actions.navigateBack() },
+                    )
+                }
 
-            composable<Route.AIAssistant> {
-                AIAssistantScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
+                composable<Route.MomentDetail> { backStackEntry ->
+                    val route: Route.MomentDetail = backStackEntry.toRoute()
+                    MomentDetailScreen(
+                        momentId = route.momentId,
+                        onNavigateBack = { actions.navigateBack() },
+                    )
+                }
+
+                composable<Route.AIAssistant> {
+                    AIAssistantScreen(
+                        onNavigateBack = { actions.navigateBack() },
+                    )
+                }
+
+                composable<Route.Settings> {
+                    SettingsScreen(
+                        onNavigateBack = { actions.navigateBack() },
+                    )
+                }
             }
-            
-            composable<Route.Settings> {
-                SettingsScreen(
-                    onNavigateBack = { actions.navigateBack() }
-                )
-            }
-        }
-    }
+        },
+    )
 }
 
 private class NavigationActionsImpl(private val navController: NavHostController) : NavigationActions {
@@ -194,6 +268,20 @@ private class NavigationActionsImpl(private val navController: NavHostController
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    override fun navigateToCalendar() {
+        navController.navigate(Route.Calendar) {
+            popUpTo(Route.Home) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    override fun navigateToDailyMoments(dateStr: String) {
+        navController.navigate(Route.DailyMoments(dateStr))
     }
 
     override fun navigateToCreateMoment(momentId: Long?) {

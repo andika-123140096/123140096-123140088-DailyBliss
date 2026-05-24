@@ -2,68 +2,58 @@ package com.dailybliss.app.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.data.local.datastore.UserPreferences
-import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.presentation.screens.ai.ChatMessage
+import com.dailybliss.app.domain.model.CurrencyRates
+import com.dailybliss.app.domain.model.NewsArticle
+import com.dailybliss.app.domain.model.WeatherInfo
+import com.dailybliss.app.domain.repository.HomeRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-sealed interface HomeUiState {
-    data object Loading : HomeUiState
-    data class Success(val greeting: String) : HomeUiState
-    data class Error(val message: String) : HomeUiState
-}
+data class HomeUiState(
+    val weather: WeatherInfo? = null,
+    val news: List<NewsArticle> = emptyList(),
+    val currencyRates: CurrencyRates? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+)
 
 class HomeViewModel(
-    private val aiRepository: AIRepository,
-    private val userPreferences: UserPreferences
+    private val homeRepository: HomeRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        observeSettings()
-    }
-
-    private fun observeSettings() {
+    fun loadHomeData() {
         viewModelScope.launch {
-            kotlinx.coroutines.flow.combine(
-                userPreferences.nickname,
-                userPreferences.aiLanguageStyle
-            ) { nickname, style ->
-                nickname to style
-            }.collectLatest { (nickname, style) ->
-                fetchGreeting(nickname, style)
-            }
-        }
-    }
-
-    private fun fetchGreeting(nickname: String, style: String) {
-        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                _uiState.value = HomeUiState.Loading
-                val greeting = aiRepository.chat(
-                    listOf(
-                        ChatMessage(
-                            role = "user",
-                            text = """
-                                Berikan sapaan singkat, hangat, dan puitis untuk pengguna bernama '$nickname' di aplikasi jurnal 'DailyBliss'. 
-                                Gunakan gaya bahasa: '$style'.
-                                Maksimal 2 kalimat. 
-                                Berikan kesan tenang dan blissful. 
-                                Sapa pengguna dengan namanya. 
-                                Jangan gunakan markdown.
-                            """.trimIndent()
-                        )
+                val weatherDeferred = async { homeRepository.getWeather() }
+                val newsDeferred = async { homeRepository.getPrabowoNews() }
+                val currencyDeferred = async { homeRepository.getCurrencyRates() }
+
+                val weather = weatherDeferred.await()
+                val news = newsDeferred.await()
+                val currency = currencyDeferred.await()
+
+                _uiState.update {
+                    it.copy(
+                        weather = weather,
+                        news = news,
+                        currencyRates = currency,
+                        isLoading = false,
                     )
-                )
-                _uiState.value = HomeUiState.Success(greeting)
+                }
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Success("Selamat datang kembali, $nickname. Semoga harimu menyenangkan.")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Gagal memuat data: ${e.message}",
+                    )
+                }
             }
         }
     }

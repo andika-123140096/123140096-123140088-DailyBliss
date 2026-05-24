@@ -14,10 +14,9 @@ fun App() {
     KoinContext {
         val userPreferences: UserPreferences = koinInject()
         val colorTheme by userPreferences.colorTheme.collectAsState(initial = "Sage Green")
-        
+
         DailyBlissTheme(themeName = colorTheme) {
             AppNavHost()
         }
     }
 }
-

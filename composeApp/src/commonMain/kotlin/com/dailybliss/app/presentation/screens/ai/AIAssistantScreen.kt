@@ -5,188 +5,322 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.presentation.components.LoadingIndicator
+import coil3.compose.AsyncImagePainter.State.Error
+import coil3.compose.AsyncImagePainter.State.Loading
+import coil3.compose.AsyncImagePainter.State.Success
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
+import com.dailybliss.app.domain.model.ChatMessage
+import com.dailybliss.app.presentation.components.EmptyState
 import com.dailybliss.app.presentation.components.TypingIndicator
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
 import org.koin.compose.viewmodel.koinViewModel
-import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AIAssistantScreen(
-    onNavigateBack: () -> Unit,
-    viewModel: AIAssistantViewModel = koinViewModel()
-) {
+fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
-    val density = LocalDensity.current
-    
+
     val imagePicker = rememberImagePickerLauncher(
-        onResult = { bytes -> viewModel.onImageSelected(bytes) }
+        onResult = { bytesList -> viewModel.onImageSelected(bytesList.firstOrNull()) },
     )
-    
+
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
             listState.animateScrollToItem(uiState.messages.size - 1)
         }
     }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Simple Header aligned at the very top
-        CenterAlignedTopAppBar(
-            title = { 
-                Text(
-                    "Asisten AI", 
-                    color = MaterialTheme.colorScheme.primary, 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    letterSpacing = (-0.5).sp
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.primary)
-                }
-            },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
-            windowInsets = WindowInsets(0, 0, 0, 0)
-        )
 
-        // Chat messages area
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (uiState.messages.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Halo! Bagikan hal baikmu hari ini dan saya akan meresponnya.",
-                            color = MaterialTheme.colorScheme.secondary,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
+                            "Asisten Bliss",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = (-0.5).sp,
+                            ),
                         )
                     }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .imePadding(),
+        ) {
+            // Chat Messages
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.messages.isEmpty()) {
+                    EmptyState(
+                        title = "Halo! Saya Bliss",
+                        message = "Butuh teman ngobrol atau ingin menganalisis harimu? Saya di sini untuk membantu.",
+                    )
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        items(uiState.messages) { message ->
+                            ChatBubble(message)
+                        }
+
+                        if (uiState.isLoading) {
+                            item {
+                                TypingBubble()
+                            }
+                        }
+                    }
                 }
-            } else {
-                items(uiState.messages) { message ->
-                    ChatBubble(message)
+            }
+
+            // Input Area
+            Surface(
+                tonalElevation = 2.dp,
+                color = MaterialTheme.colorScheme.surface,
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    uiState.selectedImageBytes?.let { bytes ->
+                        Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                            SubcomposeAsyncImage(
+                                model = bytes,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop,
+                            ) {
+                                when (val s = painter.state) {
+                                    is Loading -> {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                strokeWidth = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                            )
+                                        }
+                                    }
+                                    is Error -> {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Image,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                            )
+                                        }
+                                    }
+                                    else -> {
+                                        SubcomposeAsyncImageContent()
+                                    }
+                                }
+                            }
+                            IconButton(
+                                onClick = { viewModel.onImageSelected(null) },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .size(24.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove Image",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    ) {
+                        IconButton(onClick = { imagePicker.launch() }, modifier = Modifier.size(40.dp)) {
+                            Icon(
+                                Icons.Default.AutoAwesome,
+                                "Add Image",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = uiState.input,
+                            onValueChange = viewModel::onInputChange,
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    RoundedCornerShape(20.dp),
+                                )
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                            decorationBox = { innerTextField ->
+                                if (uiState.input.isEmpty()) {
+                                    Text(
+                                        "Ketik pesan...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                                    )
+                                }
+                                innerTextField()
+                            },
+                            maxLines = 4,
+                        )
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        IconButton(
+                            onClick = { viewModel.sendMessage() },
+                            enabled = uiState.input.isNotBlank() || uiState.selectedImageBytes != null,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Send,
+                                "Send",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (uiState.input.isNotBlank() || uiState.selectedImageBytes != null) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    Color.Gray
+                                },
+                            )
+                        }
+                    }
                 }
             }
         }
-        
-        // Chat Input
-        ChatInput(
-            message = uiState.input,
-            selectedImage = uiState.selectedImageBytes,
-            onMessageChange = viewModel::onInputChange,
-            onSend = viewModel::sendMessage,
-            onPickImage = { imagePicker.launch() },
-            onRemoveImage = { viewModel.onImageSelected(null) },
-            enabled = !uiState.isLoading
-        )
-
-        // DYNAMIC SPACER: This is the critical fix.
-        // It calculates the exact space needed for EITHER the Navigation Bar (when keyboard is closed)
-        // OR the Keyboard (when open), but never both simultaneously.
-        val imeBottom = WindowInsets.ime.getBottom(density)
-        val navBarBottom = WindowInsets.navigationBars.getBottom(density)
-        // 80.dp is the fixed height of the NavigationBar composable used in AppNavHost
-        val bottomBarHeightPx = with(density) { 80.dp.roundToPx() }
-        val totalNavBarHeight = navBarBottom + bottomBarHeightPx
-
-        val spacerHeightPx = maxOf(imeBottom, totalNavBarHeight)
-        val spacerHeightDp = with(density) { spacerHeightPx.toDp() }
-
-        Spacer(Modifier.height(spacerHeightDp))
     }
 }
 
 @Composable
 fun ChatBubble(message: ChatMessage) {
     val isUser = message.role == "user"
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        contentAlignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
-    ) {
-        Surface(
-            color = when {
-                isUser -> MaterialTheme.colorScheme.primary
-                message.isError -> MaterialTheme.colorScheme.errorContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            },
-            shape = RoundedCornerShape(
-                topStart = 20.dp,
-                topEnd = 20.dp,
-                bottomStart = if (isUser) 20.dp else 4.dp,
-                bottomEnd = if (isUser) 4.dp else 20.dp
-            ),
-            modifier = Modifier.widthIn(max = 300.dp),
-            shadowElevation = if (isUser) 2.dp else 0.dp
+    val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+    val bubbleColor = if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = if (isUser) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
+    } else {
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = alignment) {
+        Column(
+            modifier = Modifier.widthIn(max = 280.dp),
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                if (message.imageBytes != null) {
-                    AsyncImage(
-                        model = message.imageBytes,
-                        contentDescription = "User Attachment",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .padding(bottom = 8.dp),
-                        contentScale = ContentScale.Crop
-                    )
+            message.imageBytes?.let { bytes ->
+                SubcomposeAsyncImage(
+                    model = bytes,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(bottom = 4.dp)
+                        .size(200.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop,
+                ) {
+                    when (val state = painter.state) {
+                        is Success -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                        is Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 3.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
+                        is Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
                 }
-                
-                if (message.text.isNotBlank()) {
+            }
+
+            if (message.text.isNotBlank()) {
+                Surface(
+                    color = bubbleColor,
+                    shape = shape,
+                ) {
                     Text(
                         text = message.text,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            lineHeight = 24.sp
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = textColor,
+                            lineHeight = 20.sp,
                         ),
-                        color = when {
-                            isUser -> MaterialTheme.colorScheme.onPrimary
-                            message.isError -> MaterialTheme.colorScheme.onErrorContainer
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-                
-                if (message.role == "model" && (message.text.isBlank() || message.isError)) {
-                    TypingIndicator(
-                        modifier = Modifier.padding(
-                            top = if (message.text.isNotBlank()) 8.dp else 4.dp, 
-                            bottom = 4.dp
-                        )
                     )
                 }
             }
@@ -195,94 +329,13 @@ fun ChatBubble(message: ChatMessage) {
 }
 
 @Composable
-fun ChatInput(
-    message: String,
-    selectedImage: ByteArray?,
-    onMessageChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onPickImage: () -> Unit,
-    onRemoveImage: () -> Unit,
-    enabled: Boolean
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            if (selectedImage != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 16.dp, top = 16.dp, end = 16.dp)
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    AsyncImage(
-                        model = selectedImage,
-                        contentDescription = "Selected Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    IconButton(
-                        onClick = onRemoveImage, 
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                            .size(20.dp)
-                            .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-                    ) {
-                        Icon(
-                            Icons.Default.Close, 
-                            null, 
-                            tint = Color.White, 
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
-                }
-            }
-            
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onPickImage, enabled = enabled, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.AddAPhoto, "Add Media", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                BasicTextField(
-                    value = message,
-                    onValueChange = onMessageChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    decorationBox = { innerTextField ->
-                        if (message.isEmpty()) {
-                            Text("Bagikan syukurmu...", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.bodyLarge)
-                        }
-                        innerTextField()
-                    },
-                    enabled = enabled
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                IconButton(
-                    onClick = onSend,
-                    enabled = enabled && (message.isNotBlank() || selectedImage != null),
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, "Send", tint = if (enabled && (message.isNotBlank() || selectedImage != null)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
-                }
-            }
+fun TypingBubble() {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp),
+        ) {
+            TypingIndicator(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
         }
     }
 }

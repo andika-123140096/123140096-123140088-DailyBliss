@@ -2,189 +2,150 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.domain.model.ContentBlock
-import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.model.MomentContent
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
 import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.serialization.json.Json
 
 class MomentDetailViewModel(
+    private val momentId: Long,
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
-    private val saveMomentUseCase: SaveMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
-    private val fileStorage: FileStorage
+    private val saveMomentUseCase: SaveMomentUseCase,
+    private val backgroundAIProcessor: BackgroundAIProcessor,
+    private val fileStorage: FileStorage,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<MomentDetailUiState>(MomentDetailUiState.Loading)
+    private val _uiState = MutableStateFlow(MomentDetailUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<MomentDetailEvent>()
-    val events = _events.asSharedFlow()
+    private var originalMoment: com.dailybliss.app.domain.model.Moment? = null
 
-    private var currentMomentId: Long? = null
-    private val json = Json { ignoreUnknownKeys = true }
+    init {
+        loadMoment()
+    }
 
-    fun loadMoment(id: Long) {
-        if (currentMomentId == id) return
-        currentMomentId = id
-        
+    private fun loadMoment() {
         viewModelScope.launch {
-            val moment = getMomentByIdUseCase(id).first()
+            _uiState.update { it.copy(isLoading = true) }
+            val moment = getMomentByIdUseCase(momentId).first()
             if (moment != null) {
-                val parsedContent = try {
-                    if (moment.content.startsWith("{\"blocks\":")) {
-                        json.decodeFromString<MomentContent>(moment.content)
-                    } else {
-                        MomentContent(listOf(ContentBlock.Text(moment.content)))
-                    }
-                } catch (e: Exception) {
-                    MomentContent(listOf(ContentBlock.Text(moment.content)))
-                }
-
-                _uiState.update { 
-                    MomentDetailUiState.Success(
-                        moment = moment,
-                        title = moment.title,
-                        contentBlocks = if (parsedContent.blocks.isEmpty()) listOf(ContentBlock.Text("")) else parsedContent.blocks,
-                        requestedFocusIndex = null
-                    )
-                }
+                originalMoment = moment
+                _uiState.update { it.copy(moment = moment, isLoading = false) }
             } else {
-                _uiState.value = MomentDetailUiState.NotFound
+                _uiState.update { it.copy(isLoading = false, error = "Momen tidak ditemukan") }
             }
         }
     }
 
-    fun onTitleChange(newTitle: String) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            _uiState.value = currentState.copy(title = newTitle)
-            saveChangesInternal()
-        }
+    fun updateTitle(newTitle: String) {
+        val currentMoment = _uiState.value.moment ?: return
+        if (currentMoment.title == newTitle) return
+
+        val updated = currentMoment.copy(title = newTitle)
+        _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
     }
 
-    fun onBlockChange(index: Int, block: ContentBlock) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            val newBlocks = currentState.contentBlocks.toMutableList()
-            if (index in newBlocks.indices) {
-                newBlocks[index] = block
-                _uiState.value = currentState.copy(contentBlocks = newBlocks)
-                saveChangesInternal()
-            }
-        }
+    fun updateContent(newContent: String) {
+        val currentMoment = _uiState.value.moment ?: return
+        if (currentMoment.content == newContent) return
+
+        val updated = currentMoment.copy(
+            content = newContent,
+            imageUrl = extractFirstImage(newContent),
+        )
+        _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
     }
 
-    fun addTextBlock(afterIndex: Int) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            val newBlocks = currentState.contentBlocks.toMutableList()
-            val newIndex = afterIndex + 1
-            newBlocks.add(newIndex, ContentBlock.Text(""))
-            _uiState.value = currentState.copy(
-                contentBlocks = newBlocks,
-                requestedFocusIndex = newIndex
-            )
-            saveChangesInternal()
-        }
-    }
-
-    fun addImageBlock(bytes: ByteArray, afterIndex: Int) {
+    fun addImage(bytesList: List<ByteArray>, insertionIndex: Int = -1) {
         viewModelScope.launch {
-            val localPath = fileStorage.saveImage(bytes)
-            if (localPath != null) {
-                val currentState = _uiState.value
-                if (currentState is MomentDetailUiState.Success) {
-                    val newBlocks = currentState.contentBlocks.toMutableList()
-                    val newIndex = afterIndex + 1
-                    newBlocks.add(newIndex, ContentBlock.Image(localPath))
-                    _uiState.value = currentState.copy(
-                        contentBlocks = newBlocks,
-                        requestedFocusIndex = null
-                    )
-                    saveChangesInternal()
+            val urls = bytesList.mapNotNull { fileStorage.saveImage(it) }
+            if (urls.isEmpty()) return@launch
+
+            val currentMoment = _uiState.value.moment ?: return@launch
+            val imagesHtml = "<div class=\"image-group\">" +
+                urls.joinToString("") { "<img src=\"$it\" />" } +
+                "</div>"
+
+            val currentContent = currentMoment.content
+            val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
+                currentContent + imagesHtml
+            } else {
+                // Find actual HTML index corresponding to text index
+                var htmlIdx = 0
+                var textCount = 0
+                while (htmlIdx < currentContent.length && textCount < insertionIndex) {
+                    if (currentContent[htmlIdx] == '<') {
+                        val end = currentContent.indexOf('>', htmlIdx)
+                        if (end != -1) {
+                            htmlIdx = end + 1
+                            continue
+                        }
+                    }
+                    htmlIdx++
+                    textCount++
                 }
+                currentContent.substring(0, htmlIdx) + imagesHtml + currentContent.substring(htmlIdx)
             }
+
+            val updated = currentMoment.copy(
+                content = newContent,
+                imageUrl = extractFirstImage(newContent),
+            )
+            _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
         }
     }
 
-    fun clearFocusRequest() {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            _uiState.value = currentState.copy(requestedFocusIndex = null)
-        }
-    }
-
-    fun removeBlock(index: Int) {
-        val currentState = _uiState.value
-        if (currentState is MomentDetailUiState.Success) {
-            if (currentState.contentBlocks.size > 1) {
-                val newBlocks = currentState.contentBlocks.toMutableList()
-                newBlocks.removeAt(index)
-                val focusBackIndex = if (index > 0) index - 1 else 0
-                _uiState.value = currentState.copy(
-                    contentBlocks = newBlocks,
-                    requestedFocusIndex = focusBackIndex
-                )
-                saveChangesInternal()
-            }
-        }
-    }
-
-    private fun saveChangesInternal() {
-        val state = _uiState.value
-        if (state is MomentDetailUiState.Success) {
-            viewModelScope.launch {
-                val serializedContent = json.encodeToString(MomentContent.serializer(), MomentContent(state.contentBlocks))
-                val mainImageUrl = state.contentBlocks.filterIsInstance<ContentBlock.Image>().firstOrNull()?.url
-                
-                val updatedMoment = state.moment.copy(
-                    title = state.title.trim(),
-                    content = serializedContent,
-                    imageUrl = mainImageUrl ?: state.moment.imageUrl,
-                    updatedAt = Clock.System.now()
-                )
-                saveMomentUseCase(updatedMoment)
-            }
-        }
+    private fun checkIfDirty(current: com.dailybliss.app.domain.model.Moment): Boolean {
+        val original = originalMoment ?: return false
+        return current.title != original.title || current.content != original.content
     }
 
     fun saveChanges() {
-        saveChangesInternal()
+        val current = _uiState.value.moment ?: return
         viewModelScope.launch {
-            _events.emit(MomentDetailEvent.MomentSaved)
+            _uiState.update { it.copy(isSaving = true) }
+            saveMomentUseCase(current)
+            originalMoment = current
+            backgroundAIProcessor.processMoment(momentId)
+            _uiState.update { it.copy(isSaving = false, isDirty = false) }
         }
     }
 
-    fun deleteMoment() {
-        val id = currentMomentId ?: return
+    private fun extractFirstImage(html: String): String? {
+        val match = Regex("<img src=\"(.*?)\" />").find(html)
+        return match?.groupValues?.get(1)
+    }
+
+    fun togglePin() {
+        val currentMoment = _uiState.value.moment ?: return
         viewModelScope.launch {
-            deleteMomentUseCase(id)
-            _events.emit(MomentDetailEvent.MomentDeleted)
+            val updated = currentMoment.copy(isPinned = !currentMoment.isPinned)
+            saveMomentUseCase(updated)
+            originalMoment = updated
+            _uiState.update { it.copy(moment = updated) }
         }
+    }
+
+    fun deleteMoment(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            deleteMomentUseCase(momentId)
+            onDeleted()
+        }
+    }
+
+    fun refreshAIAnalysis() {
+        backgroundAIProcessor.processMoment(momentId, force = true)
     }
 }
 
-sealed interface MomentDetailUiState {
-    data object Loading : MomentDetailUiState
-    data class Success(
-        val moment: Moment,
-        val title: String,
-        val contentBlocks: List<ContentBlock>,
-        val requestedFocusIndex: Int? = null
-    ) : MomentDetailUiState
-    data object NotFound : MomentDetailUiState
-}
-
-sealed interface MomentDetailEvent {
-    data object MomentDeleted : MomentDetailEvent
-    data object MomentSaved : MomentDetailEvent
-    data class Error(val message: String) : MomentDetailEvent
-}
+data class MomentDetailUiState(
+    val moment: com.dailybliss.app.domain.model.Moment? = null,
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val isDirty: Boolean = false,
+    val error: String? = null,
+)

@@ -1,8 +1,9 @@
 package com.dailybliss.app.presentation.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -18,109 +19,76 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
+import com.dailybliss.app.presentation.util.HtmlConverter
+import kotlin.text.*
 
 @Composable
-fun TextBlockItem(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onRemove: () -> Unit,
-    onEnterPressed: () -> Unit,
-    onAttachMedia: () -> Unit,
-    focusRequester: FocusRequester,
-    modifier: Modifier = Modifier
+fun HtmlBlockItem(
+    html: String,
+    onHtmlChange: (String) -> Unit = { _ -> },
+    activeStyles: Set<String> = emptySet(),
+    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit, Int) -> Unit = { _, _, _, _ -> },
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        // Media Action Button - Top Aligned
-        Box(
-            modifier = Modifier.size(28.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            if (isFocused || text.isEmpty()) {
-                IconButton(
-                    onClick = onAttachMedia,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Image, // Replaced + with Image icon
-                        contentDescription = "Attach Image",
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+    val parts = remember(html) { splitHtml(html) }
+    val textOffsets = remember(parts) {
+        val offsets = mutableListOf<Int>()
+        var currentOffset = 0
+        parts.forEach { part ->
+            offsets.add(currentOffset)
+            if (part is HtmlPart.Text) {
+                currentOffset += HtmlConverter.toAnnotatedString(part.content).length
             }
         }
-        
-        Spacer(modifier = Modifier.width(8.dp))
+        offsets
+    }
 
-        BasicTextField(
-            value = text,
-            onValueChange = {
-                if (it.endsWith("\n")) {
-                    onEnterPressed()
-                } else {
-                    onTextChange(it)
-                }
-            },
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = 2.dp) // Align text baseline better with top icons
-                .focusRequester(focusRequester)
-                .onFocusChanged { isFocused = it.isFocused }
-                .onKeyEvent { keyEvent ->
-                    if (keyEvent.type == KeyEventType.KeyDown && 
-                        keyEvent.key == Key.Backspace && 
-                        text.isEmpty()) {
-                        onRemove()
-                        true
-                    } else {
-                        false
-                    }
-                },
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onBackground,
-                lineHeight = 28.sp,
-                letterSpacing = 0.2.sp
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            decorationBox = { innerTextField ->
-                if (text.isEmpty()) {
-                    Text(
-                        text = "Tulis cerita...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+    Column(modifier = modifier.fillMaxWidth()) {
+        parts.forEachIndexed { index, part ->
+            when (part) {
+                is HtmlPart.Text -> {
+                    HtmlTextPart(
+                        htmlPart = part,
+                        onPartChange = { newTextHtml ->
+                            val newParts = parts.toMutableList()
+                            newParts[index] = HtmlPart.Text(newTextHtml)
+                            onHtmlChange(joinParts(newParts))
+                        },
+                        parentActiveStyles = activeStyles,
+                        onFocusValueChange = { value, styles, update ->
+                            onFocusValueChange(value, styles, update, textOffsets[index])
+                        },
+                        focusRequester = if (index == 0) focusRequester else remember { FocusRequester() },
+                        isPlaceholderVisible = index == 0 && parts.size == 1,
+                        enabled = enabled,
                     )
                 }
-                innerTextField()
-            }
-        )
-
-        // Remove Action Button - Top Aligned
-        Box(
-            modifier = Modifier.size(28.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            if (isFocused) {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Remove",
-                        tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                        modifier = Modifier.size(16.dp)
+                is HtmlPart.ImageGroup -> {
+                    ImageGroupBlockItem(
+                        urls = part.urls,
+                        onRemove = {
+                            if (enabled) {
+                                val newParts = parts.toMutableList()
+                                newParts.removeAt(index)
+                                onHtmlChange(joinParts(newParts))
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
             }
@@ -129,76 +97,411 @@ fun TextBlockItem(
 }
 
 @Composable
-fun ImageBlockItem(
-    url: String,
-    showAddBlockButton: Boolean,
-    onRemove: () -> Unit,
-    onAddBlockBelow: () -> Unit,
-    modifier: Modifier = Modifier
+private fun HtmlTextPart(
+    htmlPart: HtmlPart.Text,
+    onPartChange: (String) -> Unit,
+    parentActiveStyles: Set<String>,
+    onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit) -> Unit,
+    focusRequester: FocusRequester,
+    isPlaceholderVisible: Boolean,
+    enabled: Boolean = true,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-        ) {
-            AsyncImage(
-                model = url,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 400.dp),
-                contentScale = ContentScale.FillWidth
-            )
-            
-            IconButton(
-                onClick = onRemove,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-                    .size(28.dp)
-            ) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = "Remove",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+    var isFocused by remember { mutableStateOf(false) }
+
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                annotatedString = HtmlConverter.toAnnotatedString(htmlPart.content),
+                selection = TextRange(HtmlConverter.toAnnotatedString(htmlPart.content).length),
+            ),
+        )
+    }
+
+    LaunchedEffect(htmlPart.content) {
+        val converted = HtmlConverter.toAnnotatedString(htmlPart.content)
+        if (converted != textFieldValue.annotatedString) {
+            textFieldValue = textFieldValue.copy(annotatedString = converted)
+        }
+    }
+
+    BasicTextField(
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            if (!enabled) return@BasicTextField
+            var finalValue = newValue
+
+            // Text was added (typing)
+            if (newValue.text.length > textFieldValue.text.length) {
+                val diff = newValue.text.length - textFieldValue.text.length
+                val cursorPosition = newValue.selection.start
+                val startOfNewText = cursorPosition - diff
+
+                finalValue = newValue.copy(
+                    annotatedString = buildAnnotatedString {
+                        append(newValue.text)
+
+                        // Re-apply and extend previous styles
+                        textFieldValue.annotatedString.spanStyles.forEach { span ->
+                            var newStart = span.start
+                            var newEnd = span.end
+
+                            val isStyleActive = when {
+                                span.item.fontWeight == FontWeight.Bold -> parentActiveStyles.contains("b")
+                                span.item.fontStyle == FontStyle.Italic -> parentActiveStyles.contains("i")
+                                span.item.textDecoration?.contains(TextDecoration.Underline) == true -> parentActiveStyles.contains("u")
+                                else -> false
+                            }
+
+                            if (startOfNewText < span.start) {
+                                newStart += diff
+                                newEnd += diff
+                            } else if (startOfNewText == span.start) {
+                                if (isStyleActive) {
+                                    newEnd += diff
+                                } else {
+                                    newStart += diff
+                                    newEnd += diff
+                                }
+                            } else if (startOfNewText < span.end) {
+                                newEnd += diff
+                            } else if (startOfNewText == span.end) {
+                                if (isStyleActive) {
+                                    newEnd += diff
+                                }
+                            }
+
+                            if (newStart < newEnd && newStart <= newValue.text.length) {
+                                addStyle(span.item, newStart, minOf(newEnd, newValue.text.length))
+                            }
+                        }
+
+                        // Apply NEW active styles from parent (toolbar) for any range not already covered
+                        parentActiveStyles.forEach { styleKey ->
+                            val style = when (styleKey) {
+                                "b" -> SpanStyle(fontWeight = FontWeight.Bold)
+                                "i" -> SpanStyle(fontStyle = FontStyle.Italic)
+                                "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
+                                else -> null
+                            }
+                            style?.let {
+                                // Only add if not already covered by existing (extended) style
+                                val alreadyCovered = finalValue.annotatedString.spanStyles.any { s ->
+                                    s.start <= startOfNewText &&
+                                        s.end >= cursorPosition &&
+                                        (
+                                            (styleKey == "b" && s.item.fontWeight == FontWeight.Bold) ||
+                                                (styleKey == "i" && s.item.fontStyle == FontStyle.Italic) ||
+                                                (styleKey == "u" && s.item.textDecoration?.contains(TextDecoration.Underline) == true)
+                                            )
+                                }
+                                if (!alreadyCovered) {
+                                    addStyle(it, startOfNewText, cursorPosition)
+                                }
+                            }
+                        }
+                    },
                 )
             }
+            // Text was deleted
+            else if (newValue.text.length < textFieldValue.text.length) {
+                val diff = textFieldValue.text.length - newValue.text.length
+                val cursorPosition = newValue.selection.start
+
+                finalValue = newValue.copy(
+                    annotatedString = buildAnnotatedString {
+                        append(newValue.text)
+                        textFieldValue.annotatedString.spanStyles.forEach { span ->
+                            var newStart = span.start
+                            var newEnd = span.end
+
+                            if (cursorPosition <= span.start) {
+                                newStart = maxOf(0, newStart - diff)
+                                newEnd = maxOf(0, newEnd - diff)
+                            } else if (cursorPosition < span.end) {
+                                newEnd = maxOf(newStart, newEnd - diff)
+                            }
+
+                            if (newStart < newEnd && newStart < newValue.text.length) {
+                                addStyle(span.item, newStart, minOf(newEnd, newValue.text.length))
+                            }
+                        }
+                    },
+                )
+            } else {
+                // Selection or composition change - keep spans from previous state
+                finalValue = newValue.copy(annotatedString = textFieldValue.annotatedString)
+            }
+
+            textFieldValue = finalValue
+
+            val newHtml = HtmlConverter.fromAnnotatedString(finalValue.annotatedString)
+            if (newHtml != htmlPart.content) {
+                onPartChange(newHtml)
+            }
+
+            if (isFocused) {
+                val currentStyles = getActiveStylesAt(finalValue)
+                onFocusValueChange(finalValue, currentStyles) { updatedFromParent ->
+                    if (updatedFromParent.annotatedString != textFieldValue.annotatedString) {
+                        textFieldValue = updatedFromParent
+                        onPartChange(HtmlConverter.fromAnnotatedString(updatedFromParent.annotatedString))
+                    }
+                }
+            }
+        },
+        readOnly = !enabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .focusRequester(focusRequester)
+            .onFocusChanged {
+                isFocused = it.isFocused
+                if (it.isFocused) {
+                    onFocusValueChange(textFieldValue, getActiveStylesAt(textFieldValue)) { newValue ->
+                        textFieldValue = newValue
+                    }
+                }
+            },
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 16.sp,
+            lineHeight = 22.sp,
+            letterSpacing = 0.2.sp,
+        ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        decorationBox = { innerTextField ->
+            if (isPlaceholderVisible && textFieldValue.text.isEmpty()) {
+                Text(
+                    text = "Mulai menulis...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                )
+            }
+            innerTextField()
+        },
+    )
+}
+
+private fun getActiveStylesAt(value: TextFieldValue): Set<String> {
+    val selection = value.selection
+    val spans = value.annotatedString.spanStyles
+    val active = mutableSetOf<String>()
+
+    // Check style at cursor or within selection
+    val checkPos = if (selection.collapsed) maxOf(0, selection.start - 1) else selection.start
+
+    spans.filter {
+        if (selection.collapsed) {
+            it.start <= checkPos && it.end > checkPos
+        } else {
+            it.start < selection.max && it.end > selection.min
         }
-        
-        if (showAddBlockButton) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
-                    .clickable { onAddBlockBelow() },
-                contentAlignment = Alignment.Center
+    }.forEach { span ->
+        when {
+            span.item.fontWeight == FontWeight.Bold -> active.add("b")
+            span.item.fontStyle == FontStyle.Italic -> active.add("i")
+            span.item.textDecoration?.contains(TextDecoration.Underline) == true -> active.add("u")
+        }
+    }
+    return active
+}
+
+private sealed class HtmlPart {
+    data class Text(val content: String) : HtmlPart()
+    data class ImageGroup(val urls: List<String>) : HtmlPart()
+}
+
+private fun splitHtml(html: String): List<HtmlPart> {
+    if (html.isEmpty()) return listOf(HtmlPart.Text(""))
+
+    val parts = mutableListOf<HtmlPart>()
+    val imageGroupRegex = kotlin.text.Regex("(?s)<div class=\"image-group\">(.*?)</div>")
+
+    var lastIndex = 0
+    imageGroupRegex.findAll(html).forEach { match ->
+        val textBefore = html.substring(lastIndex, match.range.first)
+        parts.add(HtmlPart.Text(textBefore))
+
+        val groupContent = match.groupValues[1]
+        val urls = kotlin.text.Regex("<img src=\"(.*?)\" />").findAll(groupContent)
+            .map { it.groupValues[1] }.toList()
+        parts.add(HtmlPart.ImageGroup(urls))
+
+        lastIndex = match.range.last + 1
+    }
+
+    val textAfter = html.substring(lastIndex)
+    parts.add(HtmlPart.Text(textAfter))
+
+    return parts
+}
+
+private fun joinParts(parts: List<HtmlPart>): String = parts.joinToString("") { part ->
+    when (part) {
+        is HtmlPart.Text -> part.content
+        is HtmlPart.ImageGroup -> {
+            "<div class=\"image-group\">" + part.urls.joinToString("") { "<img src=\"$it\" />" } + "</div>"
+        }
+    }
+}
+
+@Composable
+fun ImageGroupBlockItem(
+    urls: List<String>,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pagerState = rememberPagerState(pageCount = { urls.size })
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            pageSpacing = 8.dp,
+        ) { page ->
+            SubcomposeAsyncImage(
+                model = urls[page],
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Add,
-                        null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Tambah tulisan di bawah gambar",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                when (val state = painter.state) {
+                    is AsyncImagePainter.State.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                strokeWidth = 3.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
+                    is AsyncImagePainter.State.Error -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Image,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
+                    else -> {
+                        SubcomposeAsyncImageContent()
+                    }
                 }
             }
         }
+
+        if (urls.size > 1) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    "${pagerState.currentPage + 1} / ${urls.size}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
+
+        IconButton(
+            onClick = onRemove,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+                .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                .size(24.dp),
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Remove",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+fun FormattingToolbar(
+    activeStyles: Set<String>,
+    onStyleClick: (String) -> Unit,
+    onGalleryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        tonalElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 0.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .height(40.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
+        ) {
+            StyleToggleButton(activeStyles.contains("b"), Icons.Default.FormatBold, "Bold") { onStyleClick("b") }
+            StyleToggleButton(activeStyles.contains("i"), Icons.Default.FormatItalic, "Italic") { onStyleClick("i") }
+            StyleToggleButton(activeStyles.contains("u"), Icons.Default.FormatUnderlined, "Underline") { onStyleClick("u") }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(
+                onClick = onGalleryClick,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    Icons.Default.Collections,
+                    "Gallery",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StyleToggleButton(
+    isActive: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(36.dp),
+        colors = if (isActive) {
+            IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            IconButtonDefaults.iconButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    ) {
+        Icon(icon, contentDescription, modifier = Modifier.size(20.dp))
     }
 }

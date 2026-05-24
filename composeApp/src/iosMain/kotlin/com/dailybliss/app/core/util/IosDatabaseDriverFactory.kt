@@ -6,18 +6,13 @@ import com.dailybliss.app.data.local.BlissDatabase
 
 /**
  * iOS implementation of DatabaseDriverFactory
- * 
+ *
  * Menggunakan NativeSqliteDriver yang membungkus SQLite native iOS.
  * Database disimpan di Documents directory aplikasi.
  */
-actual class DatabaseDriverFactory actual constructor(
-    context: PlatformContext
-) {
-    actual fun createDriver(): SqlDriver {
-        return NativeSqliteDriver(
-            schema = BlissDatabase.Schema,
-            name = "dailybliss_final.db"
-        )
-    }
+class IosDatabaseDriverFactory : DatabaseDriverFactory {
+    override fun createDriver(): SqlDriver = NativeSqliteDriver(
+        schema = BlissDatabase.Schema,
+        name = "bliss.db",
+    )
 }
-

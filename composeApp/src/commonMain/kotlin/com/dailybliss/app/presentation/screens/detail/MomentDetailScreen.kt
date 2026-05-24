@@ -2,208 +2,286 @@ package com.dailybliss.app.presentation.screens.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.domain.model.ContentBlock
-import com.dailybliss.app.presentation.components.*
+import com.dailybliss.app.presentation.components.FormattingToolbar
+import com.dailybliss.app.presentation.components.HtmlBlockItem
+import com.dailybliss.app.presentation.components.LoadingIndicator
+import com.dailybliss.app.presentation.util.HtmlConverter
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
-import kotlinx.coroutines.launch
+import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MomentDetailScreen(
     momentId: Long,
     onNavigateBack: () -> Unit,
-    viewModel: MomentDetailViewModel = koinViewModel()
+    viewModel: MomentDetailViewModel = koinViewModel { parametersOf(momentId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
-    var activeBlockIndex by remember { mutableStateOf<Int?>(null) }
-    
-    // Unified Focus Management
-    val blocksSize = (uiState as? MomentDetailUiState.Success)?.contentBlocks?.size ?: 0
-    val focusRequesters = remember(blocksSize) {
-        List(blocksSize) { FocusRequester() }
-    }
-    
-    LaunchedEffect(uiState) {
-        val state = uiState
-        if (state is MomentDetailUiState.Success) {
-            state.requestedFocusIndex?.let { index ->
-                if (index in focusRequesters.indices) {
-                    try {
-                        focusRequesters[index].requestFocus()
-                        viewModel.clearFocusRequest()
-                    } catch (e: Exception) {}
-                }
+    var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
+    var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
+    var activeStyles by remember { mutableStateOf(setOf<String>()) }
+    var currentBlockOffset by remember { mutableStateOf(0) }
+    var lastCursorPosition by remember { mutableStateOf(-1) }
+
+    val imagePicker = rememberImagePickerLauncher(
+        onResult = { bytesList ->
+            if (bytesList.isNotEmpty()) {
+                viewModel.addImage(bytesList, lastCursorPosition)
             }
-        }
-    }
-    
-    val singleImagePicker = rememberImagePickerLauncher(
-        onResult = { uri ->
-            uri?.let { 
-                activeBlockIndex?.let { index ->
-                    viewModel.addImageBlock(it, index)
-                }
-            }
-        }
+        },
     )
-    
-    LaunchedEffect(momentId) {
-        viewModel.loadMoment(momentId)
-    }
-    
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is MomentDetailEvent.MomentDeleted -> onNavigateBack()
-                else -> {}
-            }
-        }
-    }
-    
-    if (showDeleteDialog) {
-        DeleteConfirmationDialog(
-            onConfirm = {
-                showDeleteDialog = false
-                viewModel.deleteMoment()
-            },
-            onDismiss = { showDeleteDialog = false }
-        )
-    }
-    
+
     Scaffold(
-        containerColor = Color.White
-    ) { paddingValues ->
-        when (val state = uiState) {
-            is MomentDetailUiState.Loading -> LoadingIndicator()
-            is MomentDetailUiState.Success -> {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentPadding = PaddingValues(bottom = 120.dp)
-                ) {
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp, bottom = 8.dp, start = 8.dp, end = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Detail Jurnal",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = (-0.5).sp,
+                        ),
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    if (uiState.isDirty) {
+                        TextButton(
+                            onClick = { viewModel.saveChanges() },
+                            enabled = !uiState.isSaving,
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         ) {
-                            IconButton(
-                                onClick = onNavigateBack
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.Gray)
+                            if (uiState.isSaving) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text(
+                                    "Simpan",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                    ),
+                                )
                             }
-                            
-                            BasicTextField(
-                                value = state.title,
-                                onValueChange = viewModel::onTitleChange,
-                                textStyle = MaterialTheme.typography.headlineMedium.copy(
-                                    color = Color.Black,
+                        }
+                    } else {
+                        TextButton(
+                            onClick = { showDeleteDialog = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        ) {
+                            Text(
+                                "Hapus",
+                                style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    lineHeight = 34.sp
+                                ),
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            LoadingIndicator()
+        } else if (uiState.error != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            uiState.moment?.let { moment ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .imePadding(),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            BasicTextField(
+                                value = moment.title,
+                                onValueChange = viewModel::updateTitle,
+                                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 24.sp,
+                                    lineHeight = 30.sp,
                                 ),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 decorationBox = { innerTextField ->
-                                    if (state.title.isEmpty()) {
+                                    if (moment.title.isEmpty()) {
                                         Text(
-                                            text = "Judul...",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            color = Color.LightGray,
-                                            fontWeight = FontWeight.Bold
+                                            text = "Judul Cerita",
+                                            style = MaterialTheme.typography.headlineMedium.copy(
+                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                                fontWeight = FontWeight.Bold,
+                                            ),
                                         )
                                     }
                                     innerTextField()
                                 },
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
                             )
-                            
-                            IconButton(
-                                onClick = { showDeleteDialog = true }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val dateText = moment.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.let {
+                                "${it.dayOfMonth} ${it.month.name.lowercase().replaceFirstChar { c -> c.uppercase() }} ${it.year}"
+                            }
+                            Text(
+                                text = dateText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Mood & Tags
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Icon(Icons.Outlined.Delete, "Delete", tint = Color.Gray)
+                                moment.mood?.let { mood ->
+                                    SuggestionChip(
+                                        onClick = {},
+                                        label = { Text(mood) },
+                                        shape = RoundedCornerShape(12.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    moment.tags.forEach { tag ->
+                                        AssistChip(
+                                            onClick = {},
+                                            label = { Text("#$tag") },
+                                            colors = AssistChipDefaults.assistChipColors(
+                                                labelColor = MaterialTheme.colorScheme.secondary,
+                                            ),
+                                            border = null,
+                                            shape = RoundedCornerShape(12.dp),
+                                        )
+                                    }
+                                }
                             }
                         }
+
+                        Box(modifier = Modifier.padding(horizontal = 0.dp)) {
+                            HtmlBlockItem(
+                                html = moment.content,
+                                onHtmlChange = viewModel::updateContent,
+                                activeStyles = activeStyles,
+                                onFocusValueChange = { value, styles, update, offset ->
+                                    focusedValue = value
+                                    activeStyles = styles
+                                    updateFocusedValue = update
+                                    currentBlockOffset = offset
+                                },
+                                enabled = true,
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
 
-                    itemsIndexed(state.contentBlocks) { index, block ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            when (block) {
-                                is ContentBlock.Text -> {
-                                    TextBlockItem(
-                                        text = block.text,
-                                        onTextChange = { viewModel.onBlockChange(index, block.copy(text = it)) },
-                                        onRemove = { viewModel.removeBlock(index) },
-                                        onEnterPressed = { viewModel.addTextBlock(index) },
-                                        onAttachMedia = { 
-                                            activeBlockIndex = index
-                                            singleImagePicker.launch()
-                                        },
-                                        focusRequester = if (index < focusRequesters.size) focusRequesters[index] else FocusRequester()
-                                    )
+                    if (focusedValue != null) {
+                        FormattingToolbar(
+                            activeStyles = activeStyles,
+                            onStyleClick = { style ->
+                                activeStyles = if (activeStyles.contains(style)) {
+                                    activeStyles - style
+                                } else {
+                                    activeStyles + style
                                 }
-                                is ContentBlock.Image -> {
-                                    val isLast = index == state.contentBlocks.lastIndex
-                                    val noTextBelow = state.contentBlocks.getOrNull(index + 1) !is ContentBlock.Text
-                                    ImageBlockItem(
-                                        url = block.url,
-                                        showAddBlockButton = isLast || noTextBelow,
-                                        onRemove = { viewModel.removeBlock(index) },
-                                        onAddBlockBelow = { viewModel.addTextBlock(index) }
-                                    )
+
+                                focusedValue?.let { value ->
+                                    if (!value.selection.collapsed) {
+                                        val spanStyle = when (style) {
+                                            "b" -> SpanStyle(fontWeight = FontWeight.Bold)
+                                            "i" -> SpanStyle(fontStyle = FontStyle.Italic)
+                                            "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
+                                            else -> SpanStyle()
+                                        }
+                                        val newValue = HtmlConverter.toggleStyle(value, spanStyle)
+                                        updateFocusedValue?.invoke(newValue)
+                                    }
                                 }
-                            }
-                        }
+                            },
+                            onGalleryClick = {
+                                lastCursorPosition = if (focusedValue != null) {
+                                    currentBlockOffset + focusedValue!!.selection.start
+                                } else {
+                                    -1
+                                }
+                                imagePicker.launch()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
             }
-            is MomentDetailUiState.NotFound -> {
-                EmptyState("Tidak Ditemukan", "Momen mungkin telah dihapus.")
-            }
         }
     }
-}
 
-@Composable
-private fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Hapus Momen?") },
-        text = { Text("Tindakan ini tidak dapat dibatalkan.") },
-        confirmButton = {
-            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                Text("HAPUS")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray)) {
-                Text("BATAL")
-            }
-        },
-        containerColor = Color.White
-    )
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Hapus Jurnal") },
+            text = { Text("Apakah kamu yakin ingin menghapus jurnal ini? Tindakan ini tidak dapat dibatalkan.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMoment {
+                            onNavigateBack()
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            },
+        )
+    }
 }

@@ -79,7 +79,7 @@ Database version mismatch
 val driver = AndroidSqliteDriver(
     schema = NoteDatabase.Schema,
     context = context,
-    name = "noteai.db",
+    name = "dailybliss.db",
     callback = object : AndroidSqliteDriver.Callback(NoteDatabase.Schema) {
         override fun onUpgrade(
             db: SupportSQLiteDatabase,
@@ -110,7 +110,7 @@ Preview tidak muncul
 @Preview
 @Composable
 fun NoteCardPreview() {
-    DailyBlissTheme {
+    NoteAITheme {
         NoteCard(
             note = Note(title = "Preview", content = "Test"),
             onClick = {},

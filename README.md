@@ -2,239 +2,174 @@
 
 [![CI](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml/badge.svg)](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml)
 
-Aplikasi yang membantu seseorang untuk mencatat kejadian yang membuat mereka bersyukur. Dilengkapi dengan fitur reminder dan integrasi dengan AI untuk memberikan motivasi. 
+Aplikasi jurnal harian cerdas yang membantu pengguna mencatat momen berharga dengan dukungan asisten AI empatik (Blissie), analisis suasana hati otomatis, dan integrasi data real-time. Dibangun menggunakan Kotlin Multiplatform untuk pengalaman cross-platform yang konsisten.
 
-**Kelompok DailyBliss:**
-- Andika Dinata (123140096)
-- Satria Lemana Putra (123140088)
+## 👥 Kelompok DailyBliss
 
-> **📚 Dokumentasi Lengkap**
-> 
-> | Dokumen | Deskripsi |
-> |---------|-----------|
-> | [🚀 Cara Menjalankan](./docs/CARA_MENJALANKAN.md) | **BACA INI DULU!** Panduan setup dan running aplikasi |
-> | [📋 Panduan Project](./docs/PANDUAN_PROJECT.md) | Informasi lengkap tentang project, timeline, dan penilaian |
-> | [🌿 Git Workflow](./docs/GIT_WORKFLOW.md) | Cara menggunakan Git dan branching strategy |
-> | [📜 Aturan Modifikasi](./docs/ATURAN_MODIFIKASI.md) | Apa yang boleh dan tidak boleh dimodifikasi |
-> | [🏗️ Struktur Kode](./docs/STRUKTUR_KODE.md) | Penjelasan arsitektur dan struktur folder |
-> | [🔧 Troubleshooting](./docs/TROUBLESHOOTING.md) | Solusi untuk masalah umum |
+| Nama | NIM |
+|------|-----|
+| Andika Dinata | 123140096 |
+| Satria Lemana Putra | 123140088 |
 
-## ✨ Fitur Aplikasi
+## 📱 Daftar Layar (Screens)
 
-- 📝 **CRUD Notes** - Tambah, edit, hapus, dan lihat catatan
-- 🔍 **Search & Filter** - Cari dan filter notes berdasarkan kategori
-- 🤖 **AI Assistant** - Summarize, generate ideas, improve writing
-- 🌙 **Dark Mode** - Tema gelap/terang
-- 📱 **Cross-Platform** - Android & iOS dari satu codebase
+| Layar | Deskripsi | Route Name |
+|-------|-----------|------------|
+| **Dashboard** | Layar utama dengan widget cuaca, berita, dan kurs mata uang. | `Home` |
+| **Journal Feed** | Daftar kronologis memori dengan fitur pencarian dan filter pin. | `Journal` |
+| **Editor Momen** | Form input untuk membuat atau mengedit catatan jurnal. | `CreateMoment` |
+| **Detail Momen** | Review lengkap sebuah memori termasuk media dan analisis AI. | `MomentDetail` |
+| **Blissie AI** | Chat interface untuk berinteraksi dengan asisten AI. | `AIAssistant` |
+| **Kalender** | Visualisasi histori penulisan dalam format kalender bulanan. | `Calendar` |
+| **Momen Harian** | Daftar memori pada tanggal spesifik yang dipilih dari kalender. | `DailyMoments` |
+| **Pengaturan** | Konfigurasi aplikasi, tema, dan preferensi pengguna. | `Settings` |
 
-## 🏗️ Arsitektur & Teknologi
+## ✨ Fitur Unggulan (Data-Driven)
 
-### Clean Architecture + MVVM
+| Fitur | Implementasi Teknis |
+|-------|---------------------|
+| **Rich Journaling** | Mendukung `title`, `content`, dan `media_url` (foto). |
+| **AI Insights** | Analisis `mood` otomatis dan `smart tagging` via Gemini AI. |
+| **Long-term Memory** | Blissie memiliki memori naratif dari histori jurnal pengguna untuk respon yang lebih personal. |
+| **Flashback** | Fitur "On This Day" untuk melihat memori di tanggal yang sama di tahun lalu. |
+| **Organisasi** | Sistem `pinning` (is_pinned) untuk menandai momen penting. |
+| **Real-time Data** | Integrasi Weather, News, Geolocation, dan Currency exchange. |
 
+## 🛠️ Tech Stack & Versi
+
+| Komponen | Teknologi | Versi |
+|----------|-----------|-------|
+| **Language** | Kotlin | `2.0.21` |
+| **UI Framework** | Compose Multiplatform | `1.7.0` |
+| **Navigation** | Navigation Compose | `2.8.0-alpha10` |
+| **Dependency Injection** | Koin | `4.0.0` |
+| **Networking** | Ktor Client | `3.0.1` |
+| **Local Database** | SQLDelight | `2.0.2` |
+| **Storage** | DataStore Preferences | `1.1.1` |
+| **Image Loading** | Coil | `3.0.4` |
+| **Concurrency** | Kotlinx Coroutines | `1.9.0` |
+
+## 🌐 Integrasi API
+
+Aplikasi ini menggunakan beberapa endpoint eksternal untuk memperkaya informasi:
+
+| Layanan | Endpoint Utama | Fungsi |
+|---------|----------------|--------|
+| **Gemini AI** | `generativelanguage.googleapis.com` | AI Chat, Mood & Tag analysis. |
+| **Open-Meteo** | `api.open-meteo.com` | Data cuaca (suhu & angin) real-time. |
+| **IPAPI** | `ipapi.co` | Deteksi lokasi otomatis via IP. |
+| **Berita Indo** | `berita-indo-api-next.vercel.app` | Feed berita terkini (CNN Indonesia). |
+| **Frankfurter** | `api.frankfurter.dev` | Kurs mata uang USD/SGD ke IDR. |
+
+---
+
+### 🔍 Contoh Data API (JSON)
+
+<details>
+<summary><b>1. Gemini AI Response</b></summary>
+
+```json
+{
+  "candidates": [{
+    "content": {
+      "parts": [{"text": "Halo! Saya Blissie..."}],
+      "role": "model"
+    }
+  }]
+}
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                        │
-│  ┌───────────────┐        ┌───────────────┐                 │
-│  │    Screen     │◄──────►│   ViewModel   │                 │
-│  │  (Composable) │ State  │  (StateFlow)  │                 │
-│  └───────────────┘        └───────┬───────┘                 │
-└───────────────────────────────────┼─────────────────────────┘
-                                    │
-┌───────────────────────────────────┼─────────────────────────┐
-│                      DOMAIN LAYER │                          │
-│                    ┌──────────────▼──────────────┐          │
-│                    │         Use Cases           │          │
-│                    │    (Business Logic)         │          │
-│                    └──────────────┬──────────────┘          │
-│                    ┌──────────────▼──────────────┐          │
-│                    │    Repository Interface     │          │
-│                    └──────────────┬──────────────┘          │
-└───────────────────────────────────┼─────────────────────────┘
-                                    │
-┌───────────────────────────────────┼─────────────────────────┐
-│                       DATA LAYER  │                          │
-│                    ┌──────────────▼──────────────┐          │
-│                    │   Repository Implementation │          │
-│                    └──────────────┬──────────────┘          │
-│              ┌────────────────────┼────────────────────┐    │
-│              │                    │                    │    │
-│        ┌─────▼─────┐        ┌─────▼─────┐       ┌─────▼────┐│
-│        │  SQLDelight│        │   Ktor   │       │ DataStore││
-│        │  (Local)  │        │ (Remote) │       │  (Prefs) ││
-│        └───────────┘        └──────────┘       └──────────┘│
-└─────────────────────────────────────────────────────────────┘
+</details>
+
+<details>
+<summary><b>2. SQLDelight Schema (MomentEntity)</b></summary>
+
+```sql
+CREATE TABLE MomentEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    media_url TEXT,
+    mood TEXT,
+    tags TEXT,
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
 ```
+</details>
 
-### Tech Stack
+## 💾 Sistem Caching
 
-| Layer | Technology |
-|-------|------------|
-| **UI** | Compose Multiplatform, Material 3 |
-| **State** | StateFlow, ViewModel |
-| **Navigation** | Compose Navigation (Type-safe) |
-| **Networking** | Ktor Client |
-| **Local DB** | SQLDelight |
-| **Preferences** | DataStore |
-| **DI** | Koin |
-| **AI** | Google Gemini API |
-| **Testing** | Kotlin Test, Turbine |
+DailyBliss menggunakan sistem caching berlapis untuk performa optimal dan penghematan data:
 
-## 📁 Struktur Project
+| Tipe Cache | Teknologi | Kegunaan |
+|------------|-----------|----------|
+| **Local Cache** | SQLDelight (HomeCache) | Menyimpan respon API (Cuaca, Berita, Kurs) agar dashboard bisa dibuka instan tanpa koneksi internet. |
+| **Preference Cache** | DataStore | Menyimpan preferensi tema, nickname, dan metadata AI agar tidak hilang saat aplikasi ditutup. |
+| **Media Cache** | Coil | Melakukan caching gambar otomatis untuk foto-foto jurnal yang diunggah. |
 
+## 🤖 AI System Prompts
+
+Aplikasi ini menggunakan instruksi khusus (System Prompts) untuk mengatur perilaku AI (Blissie):
+
+<details>
+<summary><b>1. Blissie Personality (Chat)</b></summary>
+
+```text
+Kamu adalah "Blissie", pendamping setia di aplikasi jurnal DailyBliss. 
+Tugasmu adalah menjadi pendengar yang baik dan teman yang memberikan respon bermakna.
+
+ATURAN DASAR:
+1. Gunakan kata ganti "Aku" dan "Kamu". Hindari "Anda" atau "Saya" kecuali diminta gaya sangat formal.
+2. TULIS LANGSUNG respon seolah-olah sedang berbincang tulus. Jangan gunakan label teknis.
+3. Berikan empati yang tulus sesuai perasaan pengguna.
+4. Tetap singkat, padat, dan tidak bertele-tele.
+5. Gunakan emoji secukupnya agar terasa ramah namun tidak berlebihan.
+
+Tujuan: Menciptakan suasana yang tenang, nyaman, dan reflektif.
 ```
-composeApp/src/
-├── commonMain/kotlin/com/example/noteai/
-│   ├── core/                      # Core utilities
-│   │   ├── di/                    # Koin modules
-│   │   ├── network/               # Network config, error handling
-│   │   └── util/                  # Extensions, helpers
-│   │
-│   ├── data/                      # Data layer
-│   │   ├── local/
-│   │   │   ├── dao/               # SQLDelight DAOs
-│   │   │   ├── entity/            # Database entities
-│   │   │   └── datastore/         # DataStore preferences
-│   │   ├── remote/
-│   │   │   ├── api/               # API services (Ktor)
-│   │   │   └── dto/               # Data Transfer Objects
-│   │   └── repository/            # Repository implementations
-│   │
-│   ├── domain/                    # Domain layer (pure Kotlin)
-│   │   ├── model/                 # Domain models
-│   │   ├── repository/            # Repository interfaces
-│   │   └── usecase/               # Business logic
-│   │
-│   └── presentation/              # Presentation layer
-│       ├── navigation/            # Navigation setup
-│       ├── screens/               # Screen composables + ViewModels
-│       │   ├── home/
-│       │   ├── addnote/
-│       │   ├── detail/
-│       │   └── ai/
-│       ├── components/            # Reusable UI components
-│       └── theme/                 # Material theme
-│
-├── commonMain/sqldelight/         # SQLDelight schema
-│
-├── androidMain/kotlin/            # Android-specific (expect/actual)
-└── iosMain/kotlin/                # iOS-specific (expect/actual)
+</details>
+
+<details>
+<summary><b>2. Mood Analysis</b></summary>
+
+```text
+Analisis suasana hati dari teks jurnal berikut. 
+Berikan jawaban dalam format JSON sederhana: {"mood": "NamaMood", "emoji": "😊"}.
+Pilihan mood: Bahagia, Sedih, Marah, Cemas, Tenang, Bersemangat, Lelah.
+Sesuaikan emoji dengan mood.
 ```
+</details>
 
-## 🚀 Getting Started
+<details>
+<summary><b>3. Smart Tagging</b></summary>
 
-### Prerequisites
-
-- Android Studio Ladybug (2024.2.1) atau lebih baru
-- Xcode 15+ (untuk iOS)
-- JDK 17+
-
-### 👥 Ketentuan Kelompok
-
-| Ketentuan | Detail |
-|-----------|--------|
-| Jumlah Anggota | **1 - 3 mahasiswa** per kelompok |
-| Format Branch | `project/[NIM-NIM-...]-[NamaAplikasi]` |
-
-**Contoh Branch:**
-- Individu: `project/121140001-TodoMaster`
-- 2 orang: `project/121140003-121140004-FitnessApp`
-- 3 orang: `project/121140007-121140008-121140009-StudyPlanner`
-
-### Setup
-
-1. **Fork & Clone repository**
-   ```bash
-   git clone git@github.com:andika-123140096/123140096-123140088-DailyBliss.git
-   cd 123140096-123140088-DailyBliss
-
-   git checkout -b project/123140096-123140088-DailyBliss
-   ```
-
-2. **Setup `local.properties`**
-
-   Salin template, lalu isi API key:
-   ```bash
-   cp local.properties.example local.properties
-   # edit local.properties dan isi GEMINI_API_KEY=...
-   ```
-
-   Dapatkan API key gratis di: https://aistudio.google.com/
-
-3. **Sync & Build**
-   ```bash
-   ./gradlew build              # build semua target
-   ./gradlew :composeApp:assembleDebug   # build APK debug saja (lebih cepat)
-   ```
-
-4. **Run**
-   - **Android**: pilih run configuration `composeApp` di Android Studio, atau
-     `./gradlew :composeApp:installDebug` ke emulator/device aktif.
-   - **iOS** (opsional): folder `iosApp/` belum disertakan di template ini —
-     lihat panduan di [`docs/CARA_MENJALANKAN.md`](./docs/CARA_MENJALANKAN.md#8-menjalankan-ios-lanjutan-opsional).
-
-## 📚 Materi yang Dicakup
-
-| Pertemuan | Topik | File/Folder Reference |
-|-----------|-------|----------------------|
-| 1 | Setup Environment | Root project setup |
-| 2 | Kotlin Lanjutan | `core/util/`, coroutines, Flow |
-| 3 | Compose Basics | `presentation/components/` |
-| 4 | MVVM & State | `presentation/screens/*/ViewModel.kt` |
-| 5 | Navigation | `presentation/navigation/` |
-| 6 | Networking | `data/remote/`, Ktor setup |
-| 7 | Local Storage | `data/local/`, SQLDelight |
-| 8 | Platform Code | `androidMain/`, `iosMain/`, expect/actual |
-| 9 | AI Integration | `data/remote/api/GeminiService.kt` |
-| 10 | Testing | `commonTest/` |
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-./gradlew allTests
-
-# Run common tests only
-./gradlew :composeApp:testDebugUnitTest
+```text
+Berikan maksimal 3 tag yang relevan untuk teks jurnal berikut.
+Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
+Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
 ```
+</details>
 
-## 📝 Tugas Mahasiswa
+<details>
+<summary><b>4. Global Journal Summary (Long-term Memory)</b></summary>
 
-### Sprint 1: Foundation
-- [x] Clone dan setup project
-- [x] Pahami struktur folder
-- [x] Modifikasi tema/warna
+```text
+Buatlah ringkasan singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
+Fokus pada:
+1. Topik atau kejadian utama yang sering muncul.
+2. Perkembangan emosi atau suasana hati secara umum.
+3. Hal-hal penting yang perlu ingat tentang kehidupan pengguna.
 
-### Sprint 2: Core Features
-- [ ] Tambahkan field baru di Note (misal: priority, dueDate)
-- [ ] Implementasi fitur kategori/tags
-- [ ] Tambahkan validasi input
-
-### Sprint 3: Advanced Features
-- [ ] Implementasi search dengan debounce
-- [ ] Tambahkan filter dan sort
-- [ ] Implementasi offline-first
-
-### Sprint 4: AI & Polish
-- [ ] Integrasikan fitur AI baru
-- [ ] UI polish dan animasi
-- [ ] Tambahkan unit tests
-
-### Sprint 5: Final
-- [ ] Bug fixes
-- [ ] Dokumentasi
-- [ ] Prepare demo
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Buat branch fitur (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buat Pull Request
+Tujuan ringkasan ini adalah sebagai 'memori jangka panjang' bagi asisten AI agar bisa memberikan respon yang lebih personal.
+Jangan gunakan format poin-poin yang kaku. Tulis dalam 2-3 paragraf singkat yang naratif.
+Maksimal 300 kata.
+```
+</details>
 
 ## 📄 License
 
-MIT License - silakan gunakan untuk pembelajaran.
+MIT License
 
 ## 👨‍🏫 Dosen Pengampu
 ### Pak Habib
@@ -242,7 +177,3 @@ MIT License - silakan gunakan untuk pembelajaran.
 
 **Program Studi Teknik Informatika**  
 Institut Teknologi Sumatera (ITERA)
-
----
-
-*Template ini dibuat untuk mendukung pembelajaran Pengembangan Aplikasi Mobile dengan Kotlin Multiplatform.*
