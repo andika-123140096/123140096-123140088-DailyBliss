@@ -44,6 +44,11 @@ interface AIRepository {
      * Generates relevant tags for a given journal content.
      */
     suspend fun generateTags(content: String, imageBytes: ByteArray? = null): List<String>
+
+    /**
+     * Generates a global summary of multiple journal entries.
+     */
+    suspend fun generateGlobalSummary(momentsText: String): String?
 }
 
 data class MoodResult(val mood: String, val emoji: String)

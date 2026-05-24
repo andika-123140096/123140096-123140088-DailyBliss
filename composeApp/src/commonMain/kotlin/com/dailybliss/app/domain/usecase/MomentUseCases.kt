@@ -1,5 +1,6 @@
 package com.dailybliss.app.domain.usecase
 
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.repository.MomentRepository
 import kotlinx.coroutines.flow.Flow
@@ -22,17 +23,30 @@ class SearchMomentsUseCase(private val repository: MomentRepository) {
     operator fun invoke(query: String): Flow<List<Moment>> = repository.searchMoments(query)
 }
 
-class SaveMomentUseCase(private val repository: MomentRepository) {
-    suspend operator fun invoke(moment: Moment): Long = if (moment.id == 0L) {
-        repository.insertMoment(moment)
-    } else {
-        repository.updateMoment(moment)
-        moment.id
+class SaveMomentUseCase(
+    private val repository: MomentRepository,
+    private val aiProcessor: BackgroundAIProcessor,
+) {
+    suspend operator fun invoke(moment: Moment): Long {
+        val id = if (moment.id == 0L) {
+            repository.insertMoment(moment)
+        } else {
+            repository.updateMoment(moment)
+            moment.id
+        }
+        aiProcessor.updateGlobalSummary()
+        return id
     }
 }
 
-class DeleteMomentUseCase(private val repository: MomentRepository) {
-    suspend operator fun invoke(id: Long) = repository.deleteMoment(id)
+class DeleteMomentUseCase(
+    private val repository: MomentRepository,
+    private val aiProcessor: BackgroundAIProcessor,
+) {
+    suspend operator fun invoke(id: Long) {
+        repository.deleteMoment(id)
+        aiProcessor.updateGlobalSummary()
+    }
 }
 
 class GetMomentByIdUseCase(private val repository: MomentRepository) {

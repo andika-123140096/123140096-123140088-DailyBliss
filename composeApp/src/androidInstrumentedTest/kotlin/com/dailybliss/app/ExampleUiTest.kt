@@ -51,4 +51,24 @@ class ExampleUiTest {
         composeTestRule.onNodeWithText("Momen Tes").assertIsDisplayed()
         composeTestRule.onNodeWithText("Isi momen tes yang cukup panjang untuk preview").assertIsDisplayed()
     }
+
+    @Test
+    fun weatherCard_displaysCityAndTemp() {
+        val testWeather = com.dailybliss.app.domain.model.WeatherInfo(
+            temperature = "25°C",
+            windSpeed = "10 km/h",
+            city = "Bandar Lampung",
+        )
+
+        composeTestRule.setContent {
+            DailyBlissTheme {
+                com.dailybliss.app.presentation.screens.home.WeatherCard(
+                    weather = testWeather
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Bandar Lampung").assertIsDisplayed()
+        composeTestRule.onNodeWithText("25°C").assertIsDisplayed()
+    }
 }

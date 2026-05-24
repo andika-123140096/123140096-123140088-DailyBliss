@@ -27,4 +27,16 @@ object SystemPrompts {
         Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
         Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
         """
+
+    const val JOURNAL_SUMMARY_PROMPT = """
+        Buatlah ringkasan singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
+        Fokus pada:
+        1. Topik atau kejadian utama yang sering muncul.
+        2. Perkembangan emosi atau suasana hati secara umum.
+        3. Hal-hal penting yang perlu diingat tentang kehidupan pengguna.
+        
+        Tujuan ringkasan ini adalah sebagai 'memori jangka panjang' bagi asisten AI agar bisa memberikan respon yang lebih personal.
+        Jangan gunakan format poin-poin yang kaku. Tulis dalam 2-3 paragraf singkat yang naratif.
+        Maksimal 300 kata.
+        """
 }

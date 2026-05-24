@@ -8,10 +8,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImagePainter.State.Loading
+import coil3.compose.AsyncImagePainter.State.Error
+import coil3.compose.AsyncImagePainter.State.Success
 import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
@@ -131,8 +134,8 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                     .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
                             ) {
-                                when (painter.state) {
-                                    is AsyncImagePainter.State.Loading -> {
+                                when (val s = painter.state) {
+                                    is Loading -> {
                                         Box(
                                             modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                                             contentAlignment = Alignment.Center,
@@ -144,7 +147,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                             )
                                         }
                                     }
-                                    is AsyncImagePainter.State.Error -> {
+                                    is Error -> {
                                         Box(
                                             modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                                             contentAlignment = Alignment.Center,
@@ -227,7 +230,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                             modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
-                                Icons.Default.Send,
+                                Icons.AutoMirrored.Filled.Send,
                                 "Send",
                                 modifier = Modifier.size(20.dp),
                                 tint = if (uiState.input.isNotBlank() || uiState.selectedImageBytes != null) {
@@ -271,8 +274,11 @@ fun ChatBubble(message: ChatMessage) {
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop,
                 ) {
-                    when (painter.state) {
-                        is AsyncImagePainter.State.Loading -> {
+                    when (val state = painter.state) {
+                        is Success -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                        is Loading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                                 contentAlignment = Alignment.Center,
@@ -284,7 +290,7 @@ fun ChatBubble(message: ChatMessage) {
                                 )
                             }
                         }
-                        is AsyncImagePainter.State.Error -> {
+                        is Error -> {
                             Box(
                                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                                 contentAlignment = Alignment.Center,

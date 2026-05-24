@@ -2,6 +2,7 @@ package com.dailybliss.app.core.util
 
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MomentRepository
+import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -9,14 +10,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.dailybliss.app.core.util.dateStr
 
 class BackgroundAIProcessor(
     private val aiRepository: AIRepository,
     private val momentRepository: MomentRepository,
+    private val userPreferences: UserPreferences,
     private val fileStorage: FileStorage,
     private val applicationScope: CoroutineScope,
 ) {
     private val activeJobs = mutableMapOf<Long, Job>()
+    private var globalSummaryJob: Job? = null
     private val jobMutex = Mutex()
 
     fun processMoment(momentId: Long, force: Boolean = false) {
@@ -72,6 +76,42 @@ class BackgroundAIProcessor(
                         }
                     }
                 activeJobs[momentId] = job
+            }
+        }
+    }
+
+    fun updateGlobalSummary() {
+        applicationScope.launch {
+            jobMutex.withLock {
+                globalSummaryJob?.cancel()
+                globalSummaryJob = applicationScope.launch {
+                    try {
+                        val allMoments = momentRepository.getAllMoments().first()
+                        if (allMoments.isEmpty()) {
+                            userPreferences.setJournalSummary("")
+                            return@launch
+                        }
+
+                        // Take last 50 moments to avoid context window issues and keep it relevant
+                        val recentMoments = allMoments.take(50)
+                        val combinedText = recentMoments.joinToString("\n---\n") { moment ->
+                            val cleanContent = moment.content
+                                .replace(Regex("<[^>]*>"), " ")
+                                .replace(Regex("\\s+"), " ")
+                                .trim()
+                            "Tanggal: ${moment.createdAt.dateStr}\nKonten: $cleanContent"
+                        }
+
+                        if (combinedText.isBlank()) return@launch
+
+                        val summary = aiRepository.generateGlobalSummary(combinedText)
+                        if (summary != null) {
+                            userPreferences.setJournalSummary(summary)
+                        }
+                    } catch (e: Exception) {
+                        println("Error updating global summary: ${e.message}")
+                    }
+                }
             }
         }
     }

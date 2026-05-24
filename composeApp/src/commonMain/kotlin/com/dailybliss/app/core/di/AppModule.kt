@@ -39,7 +39,7 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
-    singleOf(::BackgroundAIProcessor)
+    single { BackgroundAIProcessor(get(), get(), get(), get(), get()) }
 }
 
 // ==================== NETWORK MODULE ====================

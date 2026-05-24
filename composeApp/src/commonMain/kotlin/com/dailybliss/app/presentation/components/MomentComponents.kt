@@ -52,7 +52,7 @@ fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifie
                         .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop,
                 ) {
-                    when (painter.state) {
+                    when (val state = painter.state) {
                         is AsyncImagePainter.State.Loading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
@@ -155,7 +155,7 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
                         .height(160.dp),
                     contentScale = ContentScale.Crop,
                 ) {
-                    when (painter.state) {
+                    when (val state = painter.state) {
                         is AsyncImagePainter.State.Loading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),

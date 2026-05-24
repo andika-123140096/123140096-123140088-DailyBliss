@@ -30,6 +30,7 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
         val COLOR_THEME = stringPreferencesKey("color_theme")
         val AI_CACHE_TIMESTAMP = stringPreferencesKey("ai_cache_timestamp")
+        val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
     }
 
     // ==================== USER PROFILE ====================
@@ -85,6 +86,23 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
      */
     suspend fun updateAiCacheTimestamp(timestamp: Long) {
         dataStore.edit { it[Keys.AI_CACHE_TIMESTAMP] = timestamp.toString() }
+    }
+
+    // ==================== JOURNAL SUMMARY ====================
+
+    /**
+     * Observe Global Journal Summary
+     */
+    val journalSummary: Flow<String> =
+        dataStore.data.map {
+            it[Keys.JOURNAL_SUMMARY] ?: ""
+        }
+
+    /**
+     * Update Global Journal Summary
+     */
+    suspend fun setJournalSummary(summary: String) {
+        dataStore.edit { it[Keys.JOURNAL_SUMMARY] = summary }
     }
 
     // ==================== THEME ====================

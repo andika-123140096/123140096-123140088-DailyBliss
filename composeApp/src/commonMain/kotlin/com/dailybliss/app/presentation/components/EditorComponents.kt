@@ -371,7 +371,7 @@ fun ImageGroupBlockItem(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             ) {
-                when (painter.state) {
+                when (val state = painter.state) {
                     is AsyncImagePainter.State.Loading -> {
                         Box(
                             modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
@@ -401,6 +401,7 @@ fun ImageGroupBlockItem(
                         SubcomposeAsyncImageContent()
                     }
                 }
+
             }
         }
 

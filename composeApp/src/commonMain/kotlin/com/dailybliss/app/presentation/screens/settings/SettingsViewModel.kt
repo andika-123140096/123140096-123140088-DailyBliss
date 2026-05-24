@@ -10,6 +10,7 @@ data class SettingsUiState(
     val nickname: String = "User",
     val aiLanguageStyle: String = "Santai/Kasual",
     val themeName: String = "Sage Green",
+    val journalSummary: String = "",
 )
 
 class SettingsViewModel(private val userPreferences: UserPreferences) : ViewModel() {
@@ -18,8 +19,9 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
         userPreferences.nickname,
         userPreferences.aiLanguageStyle,
         userPreferences.colorTheme,
-    ) { nickname, aiStyle, theme ->
-        SettingsUiState(nickname, aiStyle, theme)
+        userPreferences.journalSummary,
+    ) { nickname, aiStyle, theme, summary ->
+        SettingsUiState(nickname, aiStyle, theme, summary)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun updateNickname(name: String) {

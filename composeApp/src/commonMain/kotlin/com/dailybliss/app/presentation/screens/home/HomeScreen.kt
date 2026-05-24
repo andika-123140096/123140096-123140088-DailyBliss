@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.dailybliss.app.core.util.formatCurrency
 import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
@@ -203,7 +204,7 @@ fun CurrencyCard(rates: CurrencyRates) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
-                    text = formatCurrency(rates.usdToIdr),
+                    text = rates.usdToIdr.formatCurrency(),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -222,7 +223,7 @@ fun CurrencyCard(rates: CurrencyRates) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
-                    text = formatCurrency(rates.sgdToIdr),
+                    text = rates.sgdToIdr.formatCurrency(),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -230,11 +231,6 @@ fun CurrencyCard(rates: CurrencyRates) {
             }
         }
     }
-}
-
-private fun formatCurrency(amount: Double): String {
-    val integerPart = amount.toLong().toString()
-    return integerPart.reversed().chunked(3).joinToString(".").reversed()
 }
 
 @Composable

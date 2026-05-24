@@ -155,6 +155,15 @@ class AIRepositoryImpl(
         } ?: emptyList()
     }
 
+    override suspend fun generateGlobalSummary(momentsText: String): String? {
+        val parts = listOf(GeminiPart(text = momentsText))
+        return geminiService
+            .generateContent(
+                parts = parts,
+                systemPrompt = SystemPrompts.JOURNAL_SUMMARY_PROMPT,
+            ).getOrNull()
+    }
+
     @Serializable
     private data class MoodResponse(val mood: String, val emoji: String)
 
@@ -164,9 +173,21 @@ class AIRepositoryImpl(
     private suspend fun getDynamicSystemPrompt(): String {
         val nickname = userPreferences.nickname.first()
         val style = userPreferences.aiLanguageStyle.first()
+        val journalSummary = userPreferences.journalSummary.first()
+
+        val summaryContext = if (journalSummary.isNotBlank()) {
+            """
+            RINGKASAN JURNAL PENGGUNA (Gunakan ini sebagai konteks memori):
+            $journalSummary
+            """
+        } else {
+            ""
+        }
 
         return """
             ${SystemPrompts.CHAT_SYSTEM_PROMPT}
+            
+            $summaryContext
             
             PANDUAN KHUSUS UNTUK $nickname:
             - Kamu sedang berbicara dengan: $nickname.

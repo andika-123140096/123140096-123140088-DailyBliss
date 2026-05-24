@@ -63,7 +63,8 @@ class HomeRepositoryImpl(
 
             momentQueries.insertCache(KEY_CURRENCY, json.encodeToString(rates), now)
             rates
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("HomeRepository: Gagal mengambil data currency: ${e.message}")
             cached?.let {
                 try {
                     json.decodeFromString<CurrencyRates>(it.data_)
@@ -84,7 +85,8 @@ class HomeRepositoryImpl(
 
         try {
             fetchAndCacheWeather(now)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("HomeRepository: Gagal mengambil data weather: ${e.message}")
             cached?.let {
                 try {
                     return@withContext json.decodeFromString<WeatherInfo>(it.data_)
@@ -173,7 +175,8 @@ class HomeRepositoryImpl(
             }
 
             return@withContext filteredNews
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("HomeRepository: Gagal mengambil data news: ${e.message}")
             momentQueries.getCache(KEY_NEWS_FINAL).executeAsOneOrNull()?.let {
                 try {
                     return@withContext json.decodeFromString<List<NewsArticle>>(it.data_)
