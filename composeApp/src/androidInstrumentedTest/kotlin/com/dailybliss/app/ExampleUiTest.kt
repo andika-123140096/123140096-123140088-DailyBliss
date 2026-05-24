@@ -63,7 +63,7 @@ class ExampleUiTest {
         composeTestRule.setContent {
             DailyBlissTheme {
                 com.dailybliss.app.presentation.screens.home.WeatherCard(
-                    weather = testWeather
+                    weather = testWeather,
                 )
             }
         }

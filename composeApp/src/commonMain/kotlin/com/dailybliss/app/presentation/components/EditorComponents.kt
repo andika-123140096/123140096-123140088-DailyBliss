@@ -401,7 +401,6 @@ fun ImageGroupBlockItem(
                         SubcomposeAsyncImageContent()
                     }
                 }
-
             }
         }
 
