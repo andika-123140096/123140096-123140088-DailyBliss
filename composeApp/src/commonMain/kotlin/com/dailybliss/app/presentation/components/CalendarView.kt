@@ -36,7 +36,7 @@ fun CalendarView(
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -64,7 +64,7 @@ private fun CalendarDayItem(day: CalendarDay, isSelected: Boolean, onClick: () -
     val contentColor = when {
         isSelected -> MaterialTheme.colorScheme.onPrimary
         day.isToday -> MaterialTheme.colorScheme.primary
-        !day.isCurrentMonth -> Color.LightGray
+        !day.isCurrentMonth -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
         else -> MaterialTheme.colorScheme.onSurface
     }
 

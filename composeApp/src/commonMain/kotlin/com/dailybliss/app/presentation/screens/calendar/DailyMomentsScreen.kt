@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.presentation.components.LoadingIndicator
-import com.dailybliss.app.presentation.components.MomentItem
+import com.dailybliss.app.presentation.components.BlissCard
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -75,7 +75,7 @@ fun DailyMomentsScreen(
                     Text(
                         "Kamu belum menulis apapun di tanggal ini.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -83,10 +83,10 @@ fun DailyMomentsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(uiState.moments) { moment ->
-                        MomentItem(
+                        BlissCard(
                             moment = moment,
                             onClick = { onNavigateToMomentDetail(moment.id) },
                         )

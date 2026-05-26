@@ -18,9 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dailybliss.app.presentation.components.BlissCard
 import com.dailybliss.app.presentation.components.EmptyState
 import com.dailybliss.app.presentation.components.LoadingIndicator
-import com.dailybliss.app.presentation.components.PremiumBlissCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,7 +109,7 @@ fun JournalScreen(
                                 items = state.moments,
                                 key = { it.id },
                             ) { moment ->
-                                PremiumBlissCard(
+                                BlissCard(
                                     moment = moment,
                                     onClick = { onNavigateToMomentDetail(moment.id) },
                                 )

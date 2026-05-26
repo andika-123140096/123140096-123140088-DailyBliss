@@ -1,6 +1,7 @@
 package com.dailybliss.app.presentation.screens.ai
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -200,8 +201,13 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                             modifier = Modifier
                                 .weight(1f)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    MaterialTheme.colorScheme.surfaceVariant,
                                     RoundedCornerShape(20.dp),
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(20.dp)
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -213,7 +219,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                     Text(
                                         "Ketik pesan...",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                                 innerTextField()
@@ -235,7 +241,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 tint = if (uiState.input.isNotBlank() || uiState.selectedImageBytes != null) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
-                                    Color.Gray
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                 },
                             )
                         }

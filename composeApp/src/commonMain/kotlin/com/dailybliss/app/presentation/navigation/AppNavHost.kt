@@ -56,12 +56,11 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
     }
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = Color.White,
-                    contentColor = Color.Gray,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 0.dp,
                 ) {
                     NavigationBarItem(
@@ -84,8 +83,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                     )
 
@@ -109,8 +108,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                     )
 
@@ -134,8 +133,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                     )
 
@@ -159,8 +158,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                     )
 
@@ -178,8 +177,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
                             indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         ),
                     )
                 }

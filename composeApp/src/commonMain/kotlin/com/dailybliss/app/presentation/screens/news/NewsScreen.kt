@@ -61,13 +61,7 @@ fun NewsScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+                    // Settings button removed as per user request (only on home page)
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
@@ -170,7 +164,7 @@ fun WeatherCard(weather: WeatherInfo) {
                 Text(
                     text = "Angin: ${weather.windSpeed}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             Icon(
@@ -246,25 +240,25 @@ fun NewsItemCard(article: NewsArticle) {
             },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
-                .padding(8.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
                 model = article.imageUrl,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(80.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surface),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop,
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center,
@@ -273,13 +267,13 @@ fun NewsItemCard(article: NewsArticle) {
                     text = article.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = article.summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )

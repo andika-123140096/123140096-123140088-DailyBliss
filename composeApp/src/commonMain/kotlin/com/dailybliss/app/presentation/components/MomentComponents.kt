@@ -99,7 +99,7 @@ fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifie
                 Text(
                     text = moment.preview,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -133,7 +133,7 @@ fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifie
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun BlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -141,9 +141,9 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column {
             if (!moment.imageUrl.isNullOrBlank()) {
@@ -221,7 +221,7 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
                     Text(
                         text = previewText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray, // Grey text as requested
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -319,7 +319,7 @@ fun EmptyState(title: String, message: String) {
         Text(
             text = message,
             textAlign = TextAlign.Center,
-            color = Color.Gray, // Grey text as requested
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
         )
     }

@@ -3,6 +3,7 @@ package com.dailybliss.app.data.local.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,7 +24,7 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
     private object Keys {
         val NICKNAME = stringPreferencesKey("nickname")
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
-        val COLOR_THEME = stringPreferencesKey("color_theme")
+        val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
     }
 
@@ -83,19 +84,19 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
     // ==================== THEME ====================
 
     /**
-     * Observe color theme
+     * Observe dark mode
      */
-    val colorTheme: Flow<String> =
+    val isDarkMode: Flow<Boolean> =
         dataStore.data.map { prefs ->
-            prefs[Keys.COLOR_THEME] ?: "Sage Green"
+            prefs[Keys.IS_DARK_MODE] ?: false
         }
 
     /**
-     * Set color theme
+     * Set dark mode
      */
-    suspend fun setColorTheme(themeName: String) {
+    suspend fun setDarkMode(isDark: Boolean) {
         dataStore.edit { prefs ->
-            prefs[Keys.COLOR_THEME] = themeName
+            prefs[Keys.IS_DARK_MODE] = isDark
         }
     }
 }

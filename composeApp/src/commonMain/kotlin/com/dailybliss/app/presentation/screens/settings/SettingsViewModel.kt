@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val nickname: String = "User",
     val aiLanguageStyle: String = "Santai/Kasual",
-    val themeName: String = "Sage Green",
+    val isDarkMode: Boolean = false,
     val journalSummary: String = "",
 )
 
@@ -18,10 +18,10 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferences.nickname,
         userPreferences.aiLanguageStyle,
-        userPreferences.colorTheme,
+        userPreferences.isDarkMode,
         userPreferences.journalSummary,
-    ) { nickname, aiStyle, theme, summary ->
-        SettingsUiState(nickname, aiStyle, theme, summary)
+    ) { nickname, aiStyle, isDark, summary ->
+        SettingsUiState(nickname, aiStyle, isDark, summary)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun updateNickname(name: String) {
@@ -36,13 +36,11 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
         }
     }
 
-    fun updateTheme(theme: String) {
+    fun toggleDarkMode(isDark: Boolean) {
         viewModelScope.launch {
-            userPreferences.setColorTheme(theme)
+            userPreferences.setDarkMode(isDark)
         }
     }
 
     val languageStyles = listOf("Santai/Kasual", "Formal/Baku", "Puitis/Puitik")
-
-    val themes = listOf("Sage Green", "Ocean Blue", "Rose Pink", "Lavender", "Monochrome")
 }

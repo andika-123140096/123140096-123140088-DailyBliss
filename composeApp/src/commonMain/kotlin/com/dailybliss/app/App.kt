@@ -13,9 +13,9 @@ import org.koin.compose.koinInject
 fun App() {
     KoinContext {
         val userPreferences: UserPreferences = koinInject()
-        val colorTheme by userPreferences.colorTheme.collectAsState(initial = "Sage Green")
+        val isDarkMode by userPreferences.isDarkMode.collectAsState(initial = false)
 
-        DailyBlissTheme(themeName = colorTheme) {
+        DailyBlissTheme(darkTheme = isDarkMode) {
             AppNavHost()
         }
     }

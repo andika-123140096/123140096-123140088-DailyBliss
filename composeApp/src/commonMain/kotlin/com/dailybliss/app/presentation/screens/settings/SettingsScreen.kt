@@ -30,14 +30,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val themes = listOf(
-        ThemeOption("Sage Green", Color(0xFF6B8E23)),
-        ThemeOption("Ocean Blue", Color(0xFF0277BD)),
-        ThemeOption("Rose Pink", Color(0xFFD81B60)),
-        ThemeOption("Lavender", Color(0xFF7E57C2)),
-        ThemeOption("Monochrome", Color(0xFF333333)),
-    )
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -90,25 +82,44 @@ fun SettingsScreen(
                 )
             }
 
-            // Theme Section
+            // Theme Section (Dark Mode Toggle)
             item {
                 Text(
-                    "Tema Aplikasi",
+                    "Tampilan",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                 ) {
-                    themes.forEach { theme ->
-                        ThemeCircle(
-                            option = theme,
-                            isSelected = uiState.themeName == theme.name,
-                            onClick = { viewModel.updateTheme(theme.name) },
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            "Mode Gelap (Dark Mode)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+
+                        Switch(
+                            checked = uiState.isDarkMode,
+                            onCheckedChange = { viewModel.toggleDarkMode(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                uncheckedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         )
                     }
                 }
@@ -161,7 +172,7 @@ fun SettingsScreen(
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     ),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -169,7 +180,7 @@ fun SettingsScreen(
                         Text(
                             text = uiState.journalSummary.ifBlank { "Belum ada memori yang tersimpan. Mulailah menulis jurnal agar Blissie bisa mengenalmu lebih baik." },
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (uiState.journalSummary.isBlank()) Color.Gray else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 22.sp,
                         )
 
@@ -178,7 +189,7 @@ fun SettingsScreen(
                             Text(
                                 "Ringkasan ini diperbarui otomatis setiap kali Anda mencatat momen baru.",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                color = MaterialTheme.colorScheme.primary,
                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                             )
                         }
@@ -193,41 +204,6 @@ fun SettingsScreen(
     }
 }
 
-data class ThemeOption(val name: String, val color: Color)
-
-@Composable
-fun ThemeCircle(
-    option: ThemeOption,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() },
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(option.color)
-                .then(
-                    if (isSelected) Modifier.padding(12.dp) else Modifier,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (isSelected) {
-                Icon(Icons.Default.Check, null, tint = Color.White)
-            }
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            option.name.split(" ").first(),
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
-        )
-    }
-}
-
 @Composable
 fun StyleItem(
     name: String,
@@ -237,7 +213,7 @@ fun StyleItem(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         border = if (isSelected) null else null,
     ) {
         Row(
