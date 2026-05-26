@@ -19,10 +19,6 @@ class GetAllMomentsUseCase(private val repository: MomentRepository) {
     operator fun invoke(): Flow<List<Moment>> = repository.getAllMoments()
 }
 
-class SearchMomentsUseCase(private val repository: MomentRepository) {
-    operator fun invoke(query: String): Flow<List<Moment>> = repository.searchMoments(query)
-}
-
 class SaveMomentUseCase(
     private val repository: MomentRepository,
     private val aiProcessor: BackgroundAIProcessor,
@@ -53,10 +49,6 @@ class GetMomentByIdUseCase(private val repository: MomentRepository) {
     operator fun invoke(id: Long): Flow<Moment?> = repository.getMomentById(id)
 }
 
-class GetMomentsFromSameDayUseCase(private val repository: MomentRepository) {
-    operator fun invoke(dayMonth: String): Flow<List<Moment>> = repository.getMomentsFromSameDay(dayMonth)
-}
-
 class GetMomentsForDateUseCase(private val repository: MomentRepository) {
     operator fun invoke(date: kotlinx.datetime.LocalDate): Flow<List<Moment>> {
         val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
@@ -66,8 +58,4 @@ class GetMomentsForDateUseCase(private val repository: MomentRepository) {
             .toInstant(tz).toEpochMilliseconds()
         return repository.getMomentsByDateRange(startOfDay, endOfDay)
     }
-}
-
-class GetMomentsByDateRangeUseCase(private val repository: MomentRepository) {
-    operator fun invoke(start: Long, end: Long): Flow<List<Moment>> = repository.getMomentsByDateRange(start, end)
 }

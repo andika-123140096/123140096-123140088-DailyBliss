@@ -10,9 +10,11 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -33,6 +35,7 @@ import com.dailybliss.app.presentation.screens.calendar.DailyMomentsScreen
 import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
 import com.dailybliss.app.presentation.screens.home.HomeScreen
 import com.dailybliss.app.presentation.screens.home.JournalScreen
+import com.dailybliss.app.presentation.screens.news.NewsScreen
 import com.dailybliss.app.presentation.screens.settings.SettingsScreen
 
 @Composable
@@ -47,8 +50,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
         Route.Settings::class,
         Route.DailyMoments::class,
     )
-
-    val isAIAssistant = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true
 
     val showBottomBar = hideBottomBarScreens.none { route ->
         currentDestination?.hierarchy?.any { it.hasRoute(route) } == true
@@ -114,6 +115,31 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                     )
 
                     NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.News::class) } == true,
+                        onClick = { actions.navigateToNews() },
+                        icon = {
+                            Icon(
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.News::class) } ==
+                                    true
+                                ) {
+                                    Icons.Filled.Public
+                                } else {
+                                    Icons.Outlined.Public
+                                },
+                                contentDescription = "News",
+                            )
+                        },
+                        label = { Text("Berita") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                        ),
+                    )
+
+                    NavigationBarItem(
                         selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } == true,
                         onClick = { actions.navigateToCalendar() },
                         icon = {
@@ -139,11 +165,11 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                     )
 
                     NavigationBarItem(
-                        selected = isAIAssistant,
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true,
                         onClick = { actions.navigateToAIAssistant() },
                         icon = {
                             Icon(
-                                if (isAIAssistant) Icons.Filled.AutoAwesome else Icons.Outlined.AutoAwesome,
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.AIAssistant::class) } == true) Icons.Filled.AutoAwesome else Icons.Outlined.AutoAwesome,
                                 contentDescription = "AI Assistant",
                             )
                         },
@@ -194,6 +220,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                 composable<Route.Home> {
                     HomeScreen(
                         onNavigateToSettings = { actions.navigateToSettings() },
+                        onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
                     )
                 }
 
@@ -201,6 +228,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                     JournalScreen(
                         onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
                         onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
+                    )
+                }
+
+                composable<Route.News> {
+                    NewsScreen(
+                        onNavigateToSettings = { actions.navigateToSettings() },
                     )
                 }
 
@@ -252,6 +285,16 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
 private class NavigationActionsImpl(private val navController: NavHostController) : NavigationActions {
     override fun navigateToHome() {
         navController.navigate(Route.Home) {
+            popUpTo(Route.Home) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    override fun navigateToNews() {
+        navController.navigate(Route.News) {
             popUpTo(Route.Home) {
                 saveState = true
             }

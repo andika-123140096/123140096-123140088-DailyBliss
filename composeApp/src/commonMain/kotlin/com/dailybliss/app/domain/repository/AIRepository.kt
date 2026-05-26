@@ -26,11 +26,6 @@ interface AIRepository {
     fun clearChat()
 
     /**
-     * Streams a chat response from the AI assistant.
-     */
-    suspend fun streamChat(messages: List<ChatMessage>): Flow<String>
-
-    /**
      * Gets a full chat response from the AI assistant.
      */
     suspend fun chat(messages: List<ChatMessage>): String

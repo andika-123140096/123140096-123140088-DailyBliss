@@ -28,10 +28,19 @@ class AndroidLocationTracker(private val context: PlatformContext) : LocationTra
             return null
         }
 
-        val locationManager = androidContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = try {
+            androidContext.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        } catch (e: Exception) {
+            null
+        } ?: return null
 
         // Ambil list provider yang aktif (gps, network, dll)
-        val providers = locationManager.getProviders(true)
+        val providers = try {
+            locationManager.getProviders(true)
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        
         var bestLocation: android.location.Location? = null
 
         for (provider in providers) {
@@ -47,6 +56,7 @@ class AndroidLocationTracker(private val context: PlatformContext) : LocationTra
         }
 
         return bestLocation?.let {
+            if (it.latitude.isNaN() || it.longitude.isNaN()) return@let null
             Location(latitude = it.latitude, longitude = it.longitude)
         }
     }

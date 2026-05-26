@@ -9,11 +9,11 @@ import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.local.datastore.create
 import com.dailybliss.app.data.remote.api.GeminiService
 import com.dailybliss.app.data.repository.AIRepositoryImpl
-import com.dailybliss.app.data.repository.HomeRepositoryImpl
 import com.dailybliss.app.data.repository.MomentRepositoryImpl
+import com.dailybliss.app.data.repository.NewsRepositoryImpl
 import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.domain.repository.HomeRepository
 import com.dailybliss.app.domain.repository.MomentRepository
+import com.dailybliss.app.domain.repository.NewsRepository
 import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
@@ -22,6 +22,7 @@ import com.dailybliss.app.presentation.screens.calendar.DailyMomentsViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
+import com.dailybliss.app.presentation.screens.news.NewsViewModel
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,21 +70,18 @@ val preferencesModule = module {
 
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
-    single { AIRepositoryImpl(get(), get(), get()) } bind AIRepository::class
-    single { HomeRepositoryImpl(get(), get(), get()) } bind HomeRepository::class
+    singleOf(::AIRepositoryImpl) bind AIRepository::class
+    singleOf(::NewsRepositoryImpl) bind NewsRepository::class
 }
 
 // ==================== USE CASE MODULE ====================
 
 val useCaseModule = module {
     singleOf(::GetAllMomentsUseCase)
-    singleOf(::SearchMomentsUseCase)
     singleOf(::SaveMomentUseCase)
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
-    singleOf(::GetMomentsFromSameDayUseCase)
     singleOf(::GetMomentsForDateUseCase)
-    singleOf(::GetMomentsByDateRangeUseCase)
 }
 
 // ==================== VIEWMODEL MODULE ====================
@@ -91,6 +89,7 @@ val useCaseModule = module {
 val viewModelModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::JournalViewModel)
+    viewModelOf(::NewsViewModel)
     viewModelOf(::CalendarViewModel)
     viewModel { parameters -> DailyMomentsViewModel(dateStr = parameters.get(), get()) }
     viewModelOf(::CreateMomentViewModel)

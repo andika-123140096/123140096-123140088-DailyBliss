@@ -24,18 +24,6 @@ class MomentRepositoryImpl(database: BlissDatabase) : MomentRepository {
         .mapToList(Dispatchers.Default)
         .map { it.toDomainList() }
 
-    override fun getPinnedMoments(): Flow<List<Moment>> = queries
-        .getPinnedMoments()
-        .asFlow()
-        .mapToList(Dispatchers.Default)
-        .map { it.toDomainList() }
-
-    override fun searchMoments(query: String): Flow<List<Moment>> = queries
-        .searchMoments(query, query)
-        .asFlow()
-        .mapToList(Dispatchers.Default)
-        .map { it.toDomainList() }
-
     override fun getMomentById(id: Long): Flow<Moment?> = queries
         .getMomentById(id)
         .asFlow()
@@ -74,16 +62,6 @@ class MomentRepositoryImpl(database: BlissDatabase) : MomentRepository {
     override suspend fun deleteMoment(id: Long) = withContext(Dispatchers.Default) {
         queries.deleteMoment(id)
     }
-
-    override suspend fun deleteMoments(ids: List<Long>) = withContext(Dispatchers.Default) {
-        queries.deleteMomentsByIds(ids)
-    }
-
-    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> = queries
-        .getMomentsFromSameDay(dayMonth)
-        .asFlow()
-        .mapToList(Dispatchers.Default)
-        .map { it.toDomainList() }
 
     override fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>> = queries
         .getMomentsByDateRange(start, end)

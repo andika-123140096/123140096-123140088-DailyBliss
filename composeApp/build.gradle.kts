@@ -89,6 +89,9 @@ kotlin {
             // Coil
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+
+            // Peekaboo
+            implementation(libs.peekaboo.image.picker)
         }
 
         commonTest.dependencies {

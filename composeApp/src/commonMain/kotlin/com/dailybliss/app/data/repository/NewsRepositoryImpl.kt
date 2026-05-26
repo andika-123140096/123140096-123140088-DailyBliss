@@ -9,7 +9,7 @@ import com.dailybliss.app.data.remote.dto.WeatherResponse
 import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
-import com.dailybliss.app.domain.repository.HomeRepository
+import com.dailybliss.app.domain.repository.NewsRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -25,11 +25,11 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class HomeRepositoryImpl(
+class NewsRepositoryImpl(
     private val httpClient: HttpClient,
     private val database: BlissDatabase,
     private val locationTracker: LocationTracker,
-) : HomeRepository {
+) : NewsRepository {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -43,6 +43,12 @@ class HomeRepositoryImpl(
             momentQueries.getCache(KEY_CURRENCY).executeAsOneOrNull()
         } catch (_: Exception) {
             null
+        }
+
+        if (cached != null && (now - cached.updated_at) < TTL_CURRENCY) {
+            try {
+                return@withContext json.decodeFromString<CurrencyRates>(cached.data_)
+            } catch (_: Exception) { /* ignore and fetch */ }
         }
 
         try {
@@ -64,7 +70,7 @@ class HomeRepositoryImpl(
             momentQueries.insertCache(KEY_CURRENCY, json.encodeToString(rates), now)
             rates
         } catch (e: Exception) {
-            println("HomeRepository: Gagal mengambil data currency: ${e.message}")
+            println("NewsRepository: Gagal mengambil data currency: ${e.message}")
             cached?.let {
                 try {
                     json.decodeFromString<CurrencyRates>(it.data_)
@@ -76,17 +82,23 @@ class HomeRepositoryImpl(
     }
 
     override suspend fun getWeather(): WeatherInfo = withContext(Dispatchers.IO) {
+        val now = Clock.System.now().toEpochMilliseconds()
         val cached = try {
             momentQueries.getCache(KEY_WEATHER).executeAsOneOrNull()
         } catch (_: Exception) {
             null
         }
-        val now = Clock.System.now().toEpochMilliseconds()
+
+        if (cached != null && (now - cached.updated_at) < TTL_WEATHER) {
+            try {
+                return@withContext json.decodeFromString<WeatherInfo>(cached.data_)
+            } catch (_: Exception) { /* ignore and fetch */ }
+        }
 
         try {
             fetchAndCacheWeather(now)
         } catch (e: Exception) {
-            println("HomeRepository: Gagal mengambil data weather: ${e.message}")
+            println("NewsRepository: Gagal mengambil data weather: ${e.message}")
             cached?.let {
                 try {
                     return@withContext json.decodeFromString<WeatherInfo>(it.data_)
@@ -143,6 +155,17 @@ class HomeRepositoryImpl(
 
     override suspend fun getPrabowoNews(): List<NewsArticle> = withContext(Dispatchers.IO) {
         val now = Clock.System.now().toEpochMilliseconds()
+        val cached = try {
+            momentQueries.getCache(KEY_NEWS).executeAsOneOrNull()
+        } catch (_: Exception) {
+            null
+        }
+
+        if (cached != null && (now - cached.updated_at) < TTL_NEWS) {
+            try {
+                return@withContext json.decodeFromString<List<NewsArticle>>(cached.data_)
+            } catch (_: Exception) { /* ignore and fetch */ }
+        }
 
         try {
             val response: HttpResponse = httpClient.get("https://berita-indo-api-next.vercel.app/api/cnn-news") {
@@ -171,13 +194,13 @@ class HomeRepositoryImpl(
                 }
 
             if (filteredNews.isNotEmpty()) {
-                momentQueries.insertCache(KEY_NEWS_FINAL, json.encodeToString(filteredNews), now)
+                momentQueries.insertCache(KEY_NEWS, json.encodeToString(filteredNews), now)
             }
 
             return@withContext filteredNews
         } catch (e: Exception) {
-            println("HomeRepository: Gagal mengambil data news: ${e.message}")
-            momentQueries.getCache(KEY_NEWS_FINAL).executeAsOneOrNull()?.let {
+            println("NewsRepository: Gagal mengambil data news: ${e.message}")
+            cached?.let {
                 try {
                     return@withContext json.decodeFromString<List<NewsArticle>>(it.data_)
                 } catch (_: Exception) { /* ignore */ }
@@ -187,8 +210,12 @@ class HomeRepositoryImpl(
     }
 
     companion object {
-        private const val KEY_WEATHER = "cache_weather_prod"
-        private const val KEY_NEWS_FINAL = "cache_news_prod"
-        private const val KEY_CURRENCY = "cache_currency_prod"
+        private const val KEY_WEATHER = "cache_weather_v2"
+        private const val KEY_NEWS = "cache_news_v2"
+        private const val KEY_CURRENCY = "cache_currency_v2"
+
+        private const val TTL_WEATHER = 3600000L // 1 Jam
+        private const val TTL_NEWS = 14400000L    // 4 Jam
+        private const val TTL_CURRENCY = 43200000L // 12 Jam
     }
 }

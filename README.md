@@ -108,6 +108,18 @@ DailyBliss menggunakan sistem caching berlapis untuk performa optimal dan penghe
 | **Preference Cache** | DataStore | Menyimpan preferensi tema, nickname, dan metadata AI agar tidak hilang saat aplikasi ditutup. |
 | **Media Cache** | Coil | Melakukan caching gambar otomatis untuk foto-foto jurnal yang diunggah. |
 
+## 🍎 iOS Setup (Penting)
+
+Untuk menjalankan aplikasi di iOS, beberapa konfigurasi berikut wajib dilakukan di file `iosApp/iosApp/Info.plist`:
+
+| Key | Value / Deskripsi |
+|-----|-------------------|
+| `GEMINI_API_KEY` | API Key dari Google AI Studio. |
+| `GEMINI_MODEL_NAME` | (Opsional) Nama model (default: `gemini-1.5-flash`). |
+| `NSCameraUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses kamera (untuk foto jurnal). |
+| `NSPhotoLibraryUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses galeri (untuk memilih foto). |
+| `NSLocationWhenInUseUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses lokasi (untuk fitur cuaca & tagging lokasi). |
+
 ## 🤖 AI System Prompts
 
 Aplikasi ini menggunakan instruksi khusus (System Prompts) untuk mengatur perilaku AI (Blissie):

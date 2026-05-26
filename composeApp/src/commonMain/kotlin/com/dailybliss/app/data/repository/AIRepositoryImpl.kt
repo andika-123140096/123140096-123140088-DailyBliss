@@ -30,14 +30,6 @@ class AIRepositoryImpl(
     private val _isChatLoading = MutableStateFlow(false)
     override val isChatLoading: StateFlow<Boolean> = _isChatLoading.asStateFlow()
 
-    override suspend fun streamChat(messages: List<ChatMessage>): Flow<String> {
-        val geminiContents = mapToGeminiContents(messages)
-        return geminiService.streamContent(
-            contents = geminiContents,
-            systemPrompt = getDynamicSystemPrompt(),
-        )
-    }
-
     override suspend fun chat(messages: List<ChatMessage>): String {
         val geminiContents = mapToGeminiContents(messages)
         return geminiService

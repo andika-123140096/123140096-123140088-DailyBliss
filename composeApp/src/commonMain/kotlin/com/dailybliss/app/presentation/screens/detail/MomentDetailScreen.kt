@@ -181,6 +181,11 @@ fun MomentDetailScreen(
                                         onClick = {},
                                         label = { Text(mood) },
                                         shape = RoundedCornerShape(12.dp),
+                                        colors = SuggestionChipDefaults.suggestionChipColors(
+                                            labelColor = MaterialTheme.colorScheme.primary,
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                        ),
+                                        border = null
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }

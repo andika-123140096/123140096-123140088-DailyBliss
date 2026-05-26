@@ -68,12 +68,6 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
         _sortBy.value = sort
     }
 
-    fun togglePin() {
-        viewModelScope.launch {
-            // Logic to toggle pin if needed
-        }
-    }
-
     fun clearSearch() {
         _query.value = ""
     }
