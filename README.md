@@ -15,23 +15,27 @@ Aplikasi jurnal harian cerdas yang membantu pengguna mencatat momen berharga den
 
 | Layar | Deskripsi | Route Name |
 |-------|-----------|------------|
-| **Dashboard** | Layar utama dengan widget cuaca, berita, dan kurs mata uang. | `Home` |
+| **Dashboard** | Layar utama dengan sapaan personal dan *AI Insight* harian. | `Home` |
 | **Journal Feed** | Daftar kronologis memori dengan fitur pencarian dan filter pin. | `Journal` |
-| **Editor Momen** | Form input untuk membuat atau mengedit catatan jurnal. | `CreateMoment` |
-| **Detail Momen** | Review lengkap sebuah memori termasuk media dan analisis AI. | `MomentDetail` |
-| **Blissie AI** | Chat interface untuk berinteraksi dengan asisten AI. | `AIAssistant` |
+| **News & Info** | Pusat informasi real-time: Cuaca, Kurs Mata Uang, dan Berita terkini. | `News` |
+| **Editor Momen** | Form input dengan *Rich Text Editor* dan dukungan banyak foto. | `CreateMoment` |
+| **Detail Momen** | Review lengkap memori dengan visual yang bersih dan modern. | `MomentDetail` |
+| **Blissie AI** | Chat interface empatik dengan dukungan analisis gambar (Vision). | `AIAssistant` |
 | **Kalender** | Visualisasi histori penulisan dalam format kalender bulanan. | `Calendar` |
 | **Momen Harian** | Daftar memori pada tanggal spesifik yang dipilih dari kalender. | `DailyMoments` |
-| **Pengaturan** | Konfigurasi aplikasi, tema, dan preferensi pengguna. | `Settings` |
+| **Pengaturan** | Kustomisasi profil, tema, dan gaya bahasa asisten AI. | `Settings` |
 
 ## ✨ Fitur Unggulan (Data-Driven)
 
 | Fitur | Implementasi Teknis |
 |-------|---------------------|
-| **Rich Journaling** | Mendukung `title`, `content`, dan `media_url` (foto). |
+| **Rich Journaling** | Mendukung `title`, `content` (HTML/Annotated), dan multiple images via `HorizontalPager`. |
 | **AI Insights** | Analisis `mood` otomatis dan `smart tagging` via Gemini AI. |
 | **Long-term Memory** | Blissie memiliki memori naratif dari histori jurnal pengguna untuk respon yang lebih personal. |
+| **Vision Support** | Asisten AI (Blissie) dapat menganalisis gambar yang dikirim pengguna dalam sesi chat. |
+| **Kustomisasi AI** | Pengguna dapat mengatur gaya bahasa Blissie (Santai, Formal, atau Puitis). |
 | **Flashback** | Fitur "On This Day" untuk melihat memori di tanggal yang sama di tahun lalu. |
+| **Daily Insight** | Kalimat refleksi harian yang dipersonalisasi berdasarkan histori jurnal. |
 | **Organisasi** | Sistem `pinning` (is_pinned) untuk menandai momen penting. |
 | **Real-time Data** | Integrasi Weather, News, Geolocation, dan Currency exchange. |
 
@@ -176,6 +180,20 @@ Fokus pada:
 Tujuan ringkasan ini adalah sebagai 'memori jangka panjang' bagi asisten AI agar bisa memberikan respon yang lebih personal.
 Jangan gunakan format poin-poin yang kaku. Tulis dalam 2-3 paragraf singkat yang naratif.
 Maksimal 300 kata.
+```
+</details>
+
+<details>
+<summary><b>5. Daily Insight</b></summary>
+
+```text
+Buatlah satu kalimat refleksi atau afirmasi yang sangat singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
+Tujuan: Menjadi "Bliss Insight" di layar utama yang memberikan semangat dan refleksi instan.
+PANDUAN:
+- Maksimal 20 kata.
+- Harus terasa personal dan hangat.
+- Hindari kata-kata klise yang terlalu umum.
+- Jangan gunakan format poin-poin.
 ```
 </details>
 

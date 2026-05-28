@@ -102,7 +102,7 @@ fun HtmlBlockItem(
                                 onHtmlChange(joinParts(newParts))
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp),
                     )
                 }
             }
@@ -371,13 +371,12 @@ fun ImageGroupBlockItem(
         modifier = modifier
             .fillMaxWidth()
             .height(240.dp)
-            .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
     ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            pageSpacing = 8.dp,
+            pageSpacing = 0.dp,
         ) { page ->
             SubcomposeAsyncImage(
                 model = urls[page],
