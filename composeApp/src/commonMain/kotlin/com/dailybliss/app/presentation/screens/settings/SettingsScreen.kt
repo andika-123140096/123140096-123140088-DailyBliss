@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 
+import androidx.compose.ui.platform.testTag
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -30,7 +32,26 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    SettingsScreenContent(
+        uiState = uiState,
+        onNicknameChange = viewModel::updateNickname,
+        onDarkModeToggle = viewModel::toggleDarkMode,
+        onAiStyleChange = viewModel::updateAiStyle,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreenContent(
+    uiState: SettingsUiState,
+    onNicknameChange: (String) -> Unit,
+    onDarkModeToggle: (Boolean) -> Unit,
+    onAiStyleChange: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+) {
     Scaffold(
+        modifier = Modifier.testTag("SETTINGS_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
@@ -45,7 +66,7 @@ fun SettingsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("BACK_BUTTON")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
@@ -58,7 +79,8 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .testTag("SETTINGS_LIST"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
@@ -74,9 +96,9 @@ fun SettingsScreen(
 
                 OutlinedTextField(
                     value = uiState.nickname,
-                    onValueChange = { viewModel.updateNickname(it) },
+                    onValueChange = onNicknameChange,
                     label = { Text("Nama Panggilan") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("NICKNAME_FIELD"),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                 )
@@ -112,7 +134,8 @@ fun SettingsScreen(
 
                         Switch(
                             checked = uiState.isDarkMode,
-                            onCheckedChange = { viewModel.toggleDarkMode(it) },
+                            onCheckedChange = onDarkModeToggle,
+                            modifier = Modifier.testTag("DARK_MODE_SWITCH"),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                 checkedTrackColor = MaterialTheme.colorScheme.primary,
@@ -144,7 +167,8 @@ fun SettingsScreen(
                         StyleItem(
                             name = style,
                             isSelected = uiState.aiLanguageStyle == style,
-                            onClick = { viewModel.updateAiStyle(style) },
+                            onClick = { onAiStyleChange(style) },
+                            modifier = Modifier.testTag("STYLE_ITEM_$style")
                         )
                     }
                 }
@@ -174,7 +198,7 @@ fun SettingsScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("AI_MEMORY_CARD"),
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -209,12 +233,14 @@ fun StyleItem(
     name: String,
     isSelected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         border = if (isSelected) null else null,
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier

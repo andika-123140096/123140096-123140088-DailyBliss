@@ -18,6 +18,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.presentation.components.CalendarView
 import org.koin.compose.viewmodel.koinViewModel
 
+import androidx.compose.ui.platform.testTag
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
@@ -26,7 +28,28 @@ fun CalendarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    CalendarScreenContent(
+        uiState = uiState,
+        onPreviousMonth = viewModel::previousMonth,
+        onNextMonth = viewModel::nextMonth,
+        onDateSelected = { date ->
+            viewModel.onDateSelected(date)
+            val dateStr = "${date.year}-${date.monthNumber.toString().padStart(2, '0')}-${date.dayOfMonth.toString().padStart(2, '0')}"
+            onNavigateToDailyMoments(dateStr)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CalendarScreenContent(
+    uiState: CalendarUiState,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onDateSelected: (kotlinx.datetime.LocalDate) -> Unit,
+) {
     Scaffold(
+        modifier = Modifier.testTag("CALENDAR_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
@@ -59,16 +82,23 @@ fun CalendarScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { viewModel.previousMonth() }) {
+                IconButton(
+                    onClick = onPreviousMonth,
+                    modifier = Modifier.testTag("PREV_MONTH_BUTTON")
+                ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous")
                 }
 
                 Text(
                     text = "${uiState.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${uiState.currentMonth.year}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.testTag("CURRENT_MONTH_TEXT")
                 )
 
-                IconButton(onClick = { viewModel.nextMonth() }) {
+                IconButton(
+                    onClick = onNextMonth,
+                    modifier = Modifier.testTag("NEXT_MONTH_BUTTON")
+                ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next")
                 }
             }
@@ -77,7 +107,8 @@ fun CalendarScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .testTag("STREAK_CARD"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -107,11 +138,7 @@ fun CalendarScreen(
             CalendarView(
                 days = uiState.days,
                 selectedDate = uiState.selectedDate,
-                onDateSelected = { date ->
-                    viewModel.onDateSelected(date)
-                    val dateStr = "${date.year}-${date.monthNumber.toString().padStart(2, '0')}-${date.dayOfMonth.toString().padStart(2, '0')}"
-                    onNavigateToDailyMoments(dateStr)
-                },
+                onDateSelected = onDateSelected,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
 

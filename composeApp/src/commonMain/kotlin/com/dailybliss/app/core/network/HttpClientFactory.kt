@@ -31,6 +31,7 @@ object HttpClientFactory {
             isLenient = true // Lebih toleran terhadap format JSON
             prettyPrint = false // Tidak perlu pretty print untuk production
             encodeDefaults = true // Include default values saat serialize
+            coerceInputValues = true // Handle Int to Double conversion automatically
         }
 
     /**

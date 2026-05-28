@@ -34,6 +34,7 @@ data class NewsItem(
     val contentSnippet: String? = null,
     val link: String = "",
     val image: NewsImage? = null,
+    val isoDate: String? = null,
 )
 
 @Serializable

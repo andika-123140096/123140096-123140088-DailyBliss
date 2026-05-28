@@ -41,7 +41,7 @@ class ExampleUiTest {
 
         composeTestRule.setContent {
             DailyBlissTheme {
-                com.dailybliss.app.presentation.components.MomentCard(
+                com.dailybliss.app.presentation.components.BlissCard(
                     moment = testMoment,
                     onClick = {},
                 )
@@ -62,7 +62,7 @@ class ExampleUiTest {
 
         composeTestRule.setContent {
             DailyBlissTheme {
-                com.dailybliss.app.presentation.screens.home.WeatherCard(
+                com.dailybliss.app.presentation.screens.news.WeatherCard(
                     weather = testWeather,
                 )
             }

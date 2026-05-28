@@ -12,6 +12,7 @@ import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MoodResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -52,6 +53,7 @@ class AIRepositoryImpl(
         _isChatLoading.value = true
 
         applicationScope.launch {
+            yield() // Ensure test dispatcher can switch to this coroutine
             var attempt = 1
             while (true) {
                 try {
@@ -141,7 +143,6 @@ class AIRepositoryImpl(
                 val jsonStr = it.replace("```json", "").replace("```", "").trim()
                 json.decodeFromString<TagsResponse>(jsonStr).tags
             } catch (e: Exception) {
-                println("AIRepository: operation failed: ${e.message}")
                 emptyList()
             }
         } ?: emptyList()
@@ -153,6 +154,15 @@ class AIRepositoryImpl(
             .generateContent(
                 parts = parts,
                 systemPrompt = SystemPrompts.JOURNAL_SUMMARY_PROMPT,
+            ).getOrNull()
+    }
+
+    override suspend fun generateDailyInsight(momentsText: String): String? {
+        val parts = listOf(GeminiPart(text = momentsText))
+        return geminiService
+            .generateContent(
+                parts = parts,
+                systemPrompt = SystemPrompts.DAILY_INSIGHT_PROMPT,
             ).getOrNull()
     }
 
@@ -178,18 +188,18 @@ class AIRepositoryImpl(
 
         return """
             ${SystemPrompts.CHAT_SYSTEM_PROMPT}
-            
+
             $summaryContext
-            
+
             PANDUAN KHUSUS UNTUK $nickname:
             - Kamu sedang berbicara dengan: $nickname.
             - Gaya bahasa WAJIB: $style.
-            
+
             DEFINISI GAYA BAHASA '$style' (Ikuti dengan ketat):
             1. 'Santai/Kasual': Gunakan bahasa percakapan sehari-hari yang akrab namun sopan. Boleh gunakan kata seperti 'banget', 'kok', 'sih'. Hindari bahasa yang terlalu alay/lebay. Anggap $nickname adalah teman dekat.
             2. 'Formal/Baku': Gunakan kosakata bahasa Indonesia yang standar (EYD). Gunakan kalimat yang lengkap dan tertata. Tetap hangat, tapi pertahankan profesionalisme. Cocok untuk refleksi serius.
             3. 'Puitis/Puitik': Gunakan diksi yang indah, lembut, dan penuh makna. Gunakan sedikit metafora alam atau perasaan. Fokus pada ketenangan dan keindahan momen kecil.
-            
+
             CATATAN PENTING:
             - Jangan berlebihan (jangan 'lebay'). Tetaplah terasa natural seperti manusia, bukan AI yang dipaksakan.
             - Pastikan perbedaan antara gaya 'Santai' dan 'Puitis' sangat terasa jelas dari pilihan kata (diksi).

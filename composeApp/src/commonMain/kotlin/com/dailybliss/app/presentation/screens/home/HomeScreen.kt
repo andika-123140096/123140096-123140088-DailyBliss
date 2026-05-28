@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,8 +34,22 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    HomeScreenContent(
+        uiState = uiState,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToMomentDetail = onNavigateToMomentDetail
+    )
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreenContent(
+    uiState: HomeUiState,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToMomentDetail: (Long) -> Unit,
+) {
     Scaffold(
+        modifier = Modifier.testTag("HOME_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
@@ -47,7 +62,10 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettings) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.testTag("SETTINGS_BUTTON")
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
@@ -62,14 +80,20 @@ fun HomeScreen(
         },
     ) { paddingValues ->
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("LOADING_INDICATOR"),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .testTag("HOME_CONTENT_LIST"),
                 contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
@@ -81,6 +105,13 @@ fun HomeScreen(
                 // AI Daily Insight Card (Refined & Modern)
                 item {
                     ModernInsightSection(insight = uiState.dailyInsight)
+                }
+
+                // AI Processing Indicator
+                if (uiState.isAiProcessing) {
+                    item {
+                        BackgroundAIStatus()
+                    }
                 }
 
                 // Recent Memories Section
@@ -103,7 +134,11 @@ fun HomeScreen(
                     }
 
                     items(uiState.recentMoments) { moment ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .testTag("MOMENT_ITEM_${moment.id}")
+                        ) {
                             BlissCard(
                                 moment = moment,
                                 onClick = { onNavigateToMomentDetail(moment.id) },
@@ -221,12 +256,40 @@ private fun EmptyStateSection() {
 
 
 @Composable
-private fun SectionHeader(title: String, showPadding: Boolean = true) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
-        modifier = if (showPadding) Modifier.padding(horizontal = 20.dp) else Modifier
-    )
+private fun BackgroundAIStatus() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "AI Blissie sedang bekerja...",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+        }
+    }
 }

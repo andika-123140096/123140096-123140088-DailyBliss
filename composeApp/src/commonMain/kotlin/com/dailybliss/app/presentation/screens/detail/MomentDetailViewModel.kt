@@ -110,7 +110,6 @@ class MomentDetailViewModel(
             _uiState.update { it.copy(isSaving = true) }
             saveMomentUseCase(current)
             originalMoment = current
-            backgroundAIProcessor.processMoment(momentId)
             _uiState.update { it.copy(isSaving = false, isDirty = false) }
         }
     }
@@ -120,25 +119,11 @@ class MomentDetailViewModel(
         return match?.groupValues?.get(1)
     }
 
-    fun togglePin() {
-        val currentMoment = _uiState.value.moment ?: return
-        viewModelScope.launch {
-            val updated = currentMoment.copy(isPinned = !currentMoment.isPinned)
-            saveMomentUseCase(updated)
-            originalMoment = updated
-            _uiState.update { it.copy(moment = updated) }
-        }
-    }
-
     fun deleteMoment(onDeleted: () -> Unit) {
         viewModelScope.launch {
             deleteMomentUseCase(momentId)
             onDeleted()
         }
-    }
-
-    fun refreshAIAnalysis() {
-        backgroundAIProcessor.processMoment(momentId, force = true)
     }
 }
 

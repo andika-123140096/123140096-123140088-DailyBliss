@@ -6,13 +6,13 @@ import com.dailybliss.app.domain.repository.MomentRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.toInstant
 
-enum class MomentSortBy(val displayName: String) {
-    TITLE_ASC("Judul (A-Z)"),
-    TITLE_DESC("Judul (Z-A)"),
-    CREATED_ASC("Dibuat (Lama)"),
-    CREATED_DESC("Dibuat (Baru)"),
-    UPDATED_ASC("Diupdate (Lama)"),
-    UPDATED_DESC("Diupdate (Baru)"),
+enum class MomentSortBy {
+    TITLE_ASC,
+    TITLE_DESC,
+    CREATED_ASC,
+    CREATED_DESC,
+    UPDATED_ASC,
+    UPDATED_DESC,
 }
 
 class GetAllMomentsUseCase(private val repository: MomentRepository) {
@@ -30,6 +30,7 @@ class SaveMomentUseCase(
             repository.updateMoment(moment)
             moment.id
         }
+        aiProcessor.processMoment(id)
         aiProcessor.updateGlobalSummary()
         return id
     }

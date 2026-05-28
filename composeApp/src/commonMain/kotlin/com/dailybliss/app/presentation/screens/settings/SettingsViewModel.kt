@@ -11,6 +11,7 @@ data class SettingsUiState(
     val aiLanguageStyle: String = "Santai/Kasual",
     val isDarkMode: Boolean = false,
     val journalSummary: String = "",
+    val dailyInsight: String = "",
 )
 
 class SettingsViewModel(private val userPreferences: UserPreferences) : ViewModel() {
@@ -20,8 +21,9 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
         userPreferences.aiLanguageStyle,
         userPreferences.isDarkMode,
         userPreferences.journalSummary,
-    ) { nickname, aiStyle, isDark, summary ->
-        SettingsUiState(nickname, aiStyle, isDark, summary)
+        userPreferences.dailyInsight,
+    ) { nickname, aiStyle, isDark, summary, insight ->
+        SettingsUiState(nickname, aiStyle, isDark, summary, insight)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun updateNickname(name: String) {
@@ -41,6 +43,4 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
             userPreferences.setDarkMode(isDark)
         }
     }
-
-    val languageStyles = listOf("Santai/Kasual", "Formal/Baku", "Puitis/Puitik")
 }

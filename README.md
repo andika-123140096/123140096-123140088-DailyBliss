@@ -104,7 +104,7 @@ DailyBliss menggunakan sistem caching berlapis untuk performa optimal dan penghe
 
 | Tipe Cache | Teknologi | Kegunaan |
 |------------|-----------|----------|
-| **Local Cache** | SQLDelight (HomeCache) | Menyimpan respon API (Cuaca, Berita, Kurs) agar dashboard bisa dibuka instan tanpa koneksi internet. |
+| **Local Cache** | SQLDelight (NewsCache) | Menyimpan respon API (Cuaca, Berita, Kurs) agar dashboard bisa dibuka instan tanpa koneksi internet. |
 | **Preference Cache** | DataStore | Menyimpan preferensi tema, nickname, dan metadata AI agar tidak hilang saat aplikasi ditutup. |
 | **Media Cache** | Coil | Melakukan caching gambar otomatis untuk foto-foto jurnal yang diunggah. |
 

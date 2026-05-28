@@ -1,4 +1,4 @@
-CREATE TABLE HomeCache (
+CREATE TABLE NewsCache (
     key TEXT PRIMARY KEY,
     data_ TEXT NOT NULL,
     updated_at INTEGER NOT NULL

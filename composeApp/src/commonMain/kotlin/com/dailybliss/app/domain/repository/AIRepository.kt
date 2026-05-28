@@ -44,6 +44,11 @@ interface AIRepository {
      * Generates a global summary of multiple journal entries.
      */
     suspend fun generateGlobalSummary(momentsText: String): String?
+
+    /**
+     * Generates a short, punchy insight for the home screen.
+     */
+    suspend fun generateDailyInsight(momentsText: String): String?
 }
 
 data class MoodResult(val mood: String, val emoji: String)

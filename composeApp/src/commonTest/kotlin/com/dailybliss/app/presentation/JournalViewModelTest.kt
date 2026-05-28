@@ -8,40 +8,26 @@ import com.dailybliss.app.presentation.screens.home.JournalUiState
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.test.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * Unit Tests untuk JournalViewModel
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class JournalViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var repository: FakeMomentRepository
+    private lateinit var momentRepository: FakeMomentRepository
     private lateinit var getAllMomentsUseCase: GetAllMomentsUseCase
     private lateinit var viewModel: JournalViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-
-        repository = FakeMomentRepository()
-        getAllMomentsUseCase = GetAllMomentsUseCase(repository)
-
-        viewModel =
-            JournalViewModel(
-                getAllMomentsUseCase = getAllMomentsUseCase,
-            )
+        momentRepository = FakeMomentRepository()
+        getAllMomentsUseCase = GetAllMomentsUseCase(momentRepository)
+        viewModel = JournalViewModel(getAllMomentsUseCase)
     }
 
     @AfterTest
@@ -50,84 +36,45 @@ class JournalViewModelTest {
     }
 
     @Test
-    fun `initial state should be Loading then Empty`() = runTest {
+    fun `initial state should be Success or Empty based on repository`() = runTest {
         viewModel.uiState.test {
-            // Initial loading state
-            val loading = awaitItem()
-            assertTrue(loading is JournalUiState.Loading)
-
-            // After loading, should be empty (no moments)
+            assertEquals(JournalUiState.Loading, awaitItem())
+            
+            // Advance time to pass debounce if needed (initially empty query might not debounce if emitted immediately)
             advanceUntilIdle()
-            val empty = awaitItem()
-            assertTrue(empty is JournalUiState.Empty)
-
+            
+            val state = awaitItem()
+            assertTrue(state is JournalUiState.Empty)
+            
+            momentRepository.insertMoment(Moment(title = "T", content = "C"))
+            
+            val successState = awaitItem()
+            assertTrue(successState is JournalUiState.Success)
+            assertEquals(1, (successState as JournalUiState.Success).moments.size)
+            
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `state should be Success when moments exist`() = runTest {
-        // Arrange
-        repository.insertMoment(createTestMoment("Moment 1"))
-        repository.insertMoment(createTestMoment("Moment 2"))
-
-        // Create new viewmodel after inserting moments
-        val vm =
-            JournalViewModel(
-                getAllMomentsUseCase = getAllMomentsUseCase,
-            )
-
-        // Act & Assert
-        vm.uiState.test {
-            skipItems(1) // Skip loading
-            advanceUntilIdle()
-
+    fun `search should filter moments with debounce`() = runTest {
+        momentRepository.insertMoment(Moment(title = "Matching", content = "C"))
+        momentRepository.insertMoment(Moment(title = "Other", content = "C"))
+        
+        viewModel.uiState.test {
+            skipItems(2) // Loading + Empty/Initial Success
+            
+            viewModel.onSearchQueryChange("Matching")
+            
+            // Debounce is 300ms
+            advanceTimeBy(301L)
+            runCurrent()
+            
             val state = awaitItem()
             assertTrue(state is JournalUiState.Success)
-            assertEquals(2, (state as JournalUiState.Success).moments.size)
-
+            assertEquals(1, state.moments.size)
+            assertEquals("Matching", state.moments[0].title)
             cancelAndIgnoreRemainingEvents()
         }
     }
-
-    @Test
-    fun `search should filter moments by query`() = runTest {
-        // Arrange
-        repository.insertMoment(createTestMoment("Kotlin Guide"))
-        repository.insertMoment(createTestMoment("Java Tutorial"))
-
-        val vm =
-            JournalViewModel(
-                getAllMomentsUseCase = getAllMomentsUseCase,
-            )
-
-        vm.uiState.test {
-            skipItems(1) // Skip loading
-            advanceUntilIdle()
-            skipItems(1) // Skip initial success
-
-            // Act
-            vm.onSearchQueryChange("Kotlin")
-            advanceUntilIdle()
-
-            val state = expectMostRecentItem()
-            assertTrue(state is JournalUiState.Success)
-            assertEquals(1, (state as JournalUiState.Success).moments.size)
-            assertEquals("Kotlin Guide", state.moments.first().title)
-
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    private fun createTestMoment(title: String): Moment = Moment(
-        id = 0,
-        title = title,
-        content = "Test content",
-        imageUrl = null,
-        mood = null,
-        tags = emptyList(),
-        isPinned = false,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
-    )
 }

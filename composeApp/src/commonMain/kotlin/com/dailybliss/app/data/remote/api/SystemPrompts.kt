@@ -39,4 +39,14 @@ object SystemPrompts {
         Jangan gunakan format poin-poin yang kaku. Tulis dalam 2-3 paragraf singkat yang naratif.
         Maksimal 300 kata.
         """
+
+    const val DAILY_INSIGHT_PROMPT = """
+        Buatlah satu kalimat refleksi atau afirmasi yang sangat singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
+        Tujuan: Menjadi "Bliss Insight" di layar utama yang memberikan semangat dan refleksi instan.
+        PANDUAN:
+        - Maksimal 20 kata.
+        - Harus terasa personal dan hangat.
+        - Hindari kata-kata klise yang terlalu umum.
+        - Jangan gunakan format poin-poin.
+        """
 }

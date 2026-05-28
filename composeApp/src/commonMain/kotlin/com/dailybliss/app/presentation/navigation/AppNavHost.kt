@@ -227,13 +227,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                     JournalScreen(
                         onNavigateToCreateMoment = { actions.navigateToCreateMoment() },
                         onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
+                        onNavigateBack = { actions.navigateBack() },
                     )
                 }
 
                 composable<Route.News> {
-                    NewsScreen(
-                        onNavigateToSettings = { actions.navigateToSettings() },
-                    )
+                    NewsScreen()
                 }
 
                 composable<Route.Calendar> {
@@ -281,7 +280,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
     )
 }
 
-private class NavigationActionsImpl(private val navController: NavHostController) : NavigationActions {
+internal class NavigationActionsImpl(private val navController: NavHostController) : NavigationActions {
     override fun navigateToHome() {
         navController.navigate(Route.Home) {
             popUpTo(Route.Home) {

@@ -35,6 +35,20 @@ import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.presentation.util.HtmlConverter
 import kotlin.text.*
 
+internal fun calculateTextOffsets(parts: List<HtmlPart>): List<Int> {
+    val offsets = mutableListOf<Int>()
+    var current = 0
+    parts.forEach { part ->
+        offsets.add(current)
+        if (part is HtmlPart.Text) {
+            current += part.content.length
+        } else if (part is HtmlPart.ImageGroup) {
+            current += 1 // Placeholder for group
+        }
+    }
+    return offsets
+}
+
 @Composable
 fun HtmlBlockItem(
     html: String,
@@ -274,7 +288,7 @@ private fun HtmlTextPart(
                 Text(
                     text = "Mulai menulis...",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 )
             }
             innerTextField()
@@ -306,12 +320,12 @@ private fun getActiveStylesAt(value: TextFieldValue): Set<String> {
     return active
 }
 
-private sealed class HtmlPart {
+internal sealed class HtmlPart {
     data class Text(val content: String) : HtmlPart()
     data class ImageGroup(val urls: List<String>) : HtmlPart()
 }
 
-private fun splitHtml(html: String): List<HtmlPart> {
+internal fun splitHtml(html: String): List<HtmlPart> {
     if (html.isEmpty()) return listOf(HtmlPart.Text(""))
 
     val parts = mutableListOf<HtmlPart>()
@@ -336,7 +350,7 @@ private fun splitHtml(html: String): List<HtmlPart> {
     return parts
 }
 
-private fun joinParts(parts: List<HtmlPart>): String = parts.joinToString("") { part ->
+internal fun joinParts(parts: List<HtmlPart>): String = parts.joinToString("") { part ->
     when (part) {
         is HtmlPart.Text -> part.content
         is HtmlPart.ImageGroup -> {

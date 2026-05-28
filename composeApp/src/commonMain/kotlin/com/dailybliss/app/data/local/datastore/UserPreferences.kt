@@ -18,7 +18,23 @@ import kotlinx.coroutines.flow.map
  *
  * @param dataStore Instance DataStore dari platform
  */
-class UserPreferences(private val dataStore: DataStore<Preferences>) {
+interface UserPreferences {
+    val nickname: Flow<String>
+    suspend fun setNickname(name: String)
+    val aiLanguageStyle: Flow<String>
+    suspend fun setAiLanguageStyle(style: String)
+    val journalSummary: Flow<String>
+    suspend fun setJournalSummary(summary: String)
+    val dailyInsight: Flow<String>
+    suspend fun setDailyInsight(insight: String)
+    val isDarkMode: Flow<Boolean>
+    suspend fun setDarkMode(isDark: Boolean)
+}
+
+/**
+ * User Preferences implementation using DataStore
+ */
+class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : UserPreferences {
     // ==================== PREFERENCE KEYS ====================
 
     private object Keys {
@@ -26,39 +42,28 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
         val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
+        val DAILY_INSIGHT = stringPreferencesKey("daily_insight")
     }
 
     // ==================== USER PROFILE ====================
 
-    /**
-     * Observe nickname
-     */
-    val nickname: Flow<String> =
+    override val nickname: Flow<String> =
         dataStore.data.map { prefs ->
             prefs[Keys.NICKNAME] ?: "User"
         }
 
-    /**
-     * Set nickname
-     */
-    suspend fun setNickname(name: String) {
+    override suspend fun setNickname(name: String) {
         dataStore.edit { prefs ->
             prefs[Keys.NICKNAME] = name
         }
     }
 
-    /**
-     * Observe AI language style
-     */
-    val aiLanguageStyle: Flow<String> =
+    override val aiLanguageStyle: Flow<String> =
         dataStore.data.map { prefs ->
             prefs[Keys.AI_LANGUAGE_STYLE] ?: "Santai/Kasual"
         }
 
-    /**
-     * Set AI language style
-     */
-    suspend fun setAiLanguageStyle(style: String) {
+    override suspend fun setAiLanguageStyle(style: String) {
         dataStore.edit { prefs ->
             prefs[Keys.AI_LANGUAGE_STYLE] = style
         }
@@ -66,35 +71,32 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
 
     // ==================== JOURNAL SUMMARY ====================
 
-    /**
-     * Observe Global Journal Summary
-     */
-    val journalSummary: Flow<String> =
+    override val journalSummary: Flow<String> =
         dataStore.data.map {
             it[Keys.JOURNAL_SUMMARY] ?: ""
         }
 
-    /**
-     * Update Global Journal Summary
-     */
-    suspend fun setJournalSummary(summary: String) {
+    override suspend fun setJournalSummary(summary: String) {
         dataStore.edit { it[Keys.JOURNAL_SUMMARY] = summary }
+    }
+
+    override val dailyInsight: Flow<String> =
+        dataStore.data.map {
+            it[Keys.DAILY_INSIGHT] ?: ""
+        }
+
+    override suspend fun setDailyInsight(insight: String) {
+        dataStore.edit { it[Keys.DAILY_INSIGHT] = insight }
     }
 
     // ==================== THEME ====================
 
-    /**
-     * Observe dark mode
-     */
-    val isDarkMode: Flow<Boolean> =
+    override val isDarkMode: Flow<Boolean> =
         dataStore.data.map { prefs ->
             prefs[Keys.IS_DARK_MODE] ?: false
         }
 
-    /**
-     * Set dark mode
-     */
-    suspend fun setDarkMode(isDark: Boolean) {
+    override suspend fun setDarkMode(isDark: Boolean) {
         dataStore.edit { prefs ->
             prefs[Keys.IS_DARK_MODE] = isDark
         }

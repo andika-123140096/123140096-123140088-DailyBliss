@@ -50,3 +50,4 @@ daemon/
 kotlin-profile/
 native/
 wrapper/
+/composeApp/*.preferences_pb

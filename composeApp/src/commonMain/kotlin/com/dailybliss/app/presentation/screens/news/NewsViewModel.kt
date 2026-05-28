@@ -6,11 +6,10 @@ import com.dailybliss.app.domain.model.CurrencyRates
 import com.dailybliss.app.domain.model.NewsArticle
 import com.dailybliss.app.domain.model.WeatherInfo
 import com.dailybliss.app.domain.repository.NewsRepository
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 data class NewsUiState(
     val weather: WeatherInfo? = null,
@@ -28,32 +27,52 @@ class NewsViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun loadNewsData() {
+        if (_uiState.value.isLoading) return
+        
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val weatherDeferred = async { newsRepository.getWeather() }
-                val newsDeferred = async { newsRepository.getPrabowoNews() }
-                val currencyDeferred = async { newsRepository.getCurrencyRates() }
-
-                val weather = weatherDeferred.await()
-                val news = newsDeferred.await()
-                val currency = currencyDeferred.await()
-
-                _uiState.update {
-                    it.copy(
-                        weather = weather,
-                        news = news,
-                        currencyRates = currency,
-                        isLoading = false,
+                supervisorScope {
+                    val jobs = listOf(
+                        launch {
+                            try {
+                                val weather = newsRepository.getWeather()
+                                _uiState.update { it.copy(weather = weather) }
+                            } catch (e: Exception) {
+                                println("NewsViewModel: Weather error: ${e.message}")
+                            }
+                        },
+                        launch {
+                            try {
+                                val news = newsRepository.getPrabowoNews()
+                                val finalNews = if (news.isEmpty()) {
+                                    listOf(NewsArticle("Info", "Belum ada berita Prabowo terbaru.", "", ""))
+                                } else news
+                                _uiState.update { it.copy(news = finalNews) }
+                            } catch (e: Exception) {
+                                _uiState.update { 
+                                    it.copy(news = listOf(NewsArticle("Info", "Gagal memuat berita saat ini.", "", "")))
+                                }
+                            }
+                        },
+                        launch {
+                            try {
+                                val currency = newsRepository.getCurrencyRates()
+                                val finalCurrency = currency ?: CurrencyRates(16000.0, 12000.0)
+                                _uiState.update { it.copy(currencyRates = finalCurrency) }
+                            } catch (e: Exception) {
+                                _uiState.update { it.copy(currencyRates = CurrencyRates(16000.0, 12000.0)) }
+                            }
+                        }
                     )
+                    
+                    // Give a standard 500ms delay for visual feedback
+                    delay(500)
+                    jobs.joinAll()
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Gagal memuat data: ${e.message}",
-                    )
-                }
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

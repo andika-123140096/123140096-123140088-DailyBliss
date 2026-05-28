@@ -27,31 +27,6 @@ class CreateMomentViewModel(
 
     private var currentMomentId: Long? = null
 
-    fun loadMoment(id: Long) {
-        if (currentMomentId == id) return
-        currentMomentId = id
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val moment = getMomentByIdUseCase(id).first()
-
-            moment?.let {
-                _uiState.update { state ->
-                    state.copy(
-                        title = it.title,
-                        content = it.content,
-                        imageUrl = it.imageUrl,
-                        mood = it.mood,
-                        tags = it.tags,
-                        isLoading = false,
-                        isEditMode = true,
-                        createdAt = it.createdAt,
-                    )
-                }
-            }
-        }
-    }
-
     fun onTitleChange(title: String) {
         _uiState.update { it.copy(title = title, titleError = null) }
     }
@@ -136,8 +111,6 @@ class CreateMomentViewModel(
             if (currentMomentId == null) {
                 currentMomentId = newId
             }
-
-            backgroundAIProcessor.processMoment(newId)
 
             _uiState.update { it.copy(isSaving = false) }
             _events.emit(CreateMomentEvent.MomentSaved)

@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.repository.MomentRepository
@@ -15,11 +16,13 @@ data class HomeUiState(
     val recentMoments: List<Moment> = emptyList(),
     val dailyInsight: String = "",
     val isLoading: Boolean = false,
+    val isAiProcessing: Boolean = false,
 )
 
 class HomeViewModel(
     private val momentRepository: MomentRepository,
     private val userPreferences: UserPreferences,
+    private val backgroundAIProcessor: BackgroundAIProcessor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -36,17 +39,16 @@ class HomeViewModel(
             // Combine flows for efficiency
             combine(
                 userPreferences.nickname,
-                userPreferences.journalSummary,
+                userPreferences.dailyInsight,
                 momentRepository.getAllMoments(),
-            ) { nickname, summary, moments ->
+                backgroundAIProcessor.isProcessing,
+            ) { nickname, insight, moments, isAiProcessing ->
                 val moodCounts = moments.mapNotNull { it.mood?.split(" ")?.lastOrNull() }
                     .groupingBy { it }
                     .eachCount()
 
-                val insight = if (summary.isNotBlank()) {
-                    // We just use the summary or a part of it as insight for now
-                    // In a real app, we might call Gemini to generate a short affirmation from this summary
-                    summary.take(150) + if (summary.length > 150) "..." else ""
+                val finalInsight = if (insight.isNotBlank()) {
+                    insight
                 } else {
                     "Mulai menulis jurnal hari ini untuk mendapatkan insight personal dari AI!"
                 }
@@ -56,8 +58,9 @@ class HomeViewModel(
                     totalMoments = moments.size,
                     moodStats = moodCounts,
                     recentMoments = moments.take(3),
-                    dailyInsight = insight,
+                    dailyInsight = finalInsight,
                     isLoading = false,
+                    isAiProcessing = isAiProcessing,
                 )
             }.collect { newState ->
                 _uiState.value = newState

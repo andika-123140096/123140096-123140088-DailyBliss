@@ -2,6 +2,7 @@ package com.dailybliss.app.core.di
 
 import com.dailybliss.app.core.network.HttpClientFactory
 import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.core.util.BackgroundAIProcessorImpl
 import com.dailybliss.app.core.util.DatabaseDriverFactory
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
@@ -40,7 +41,7 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
-    single { BackgroundAIProcessor(get(), get(), get(), get(), get()) }
+    single<BackgroundAIProcessor> { BackgroundAIProcessorImpl(get(), get(), get(), get(), get()) }
 }
 
 // ==================== NETWORK MODULE ====================
@@ -63,7 +64,7 @@ val databaseModule = module {
 
 val preferencesModule = module {
     single { get<DataStoreFactory>().create() }
-    single { UserPreferences(get()) }
+    single<UserPreferences> { com.dailybliss.app.data.local.datastore.DataStoreUserPreferences(get()) }
 }
 
 // ==================== REPOSITORY MODULE ====================

@@ -64,10 +64,6 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
         _query.value = newQuery
     }
 
-    fun onSortByChanged(sort: MomentSortBy) {
-        _sortBy.value = sort
-    }
-
     fun clearSearch() {
         _query.value = ""
     }

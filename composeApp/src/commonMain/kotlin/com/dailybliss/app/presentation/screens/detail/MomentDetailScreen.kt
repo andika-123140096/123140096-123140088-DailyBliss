@@ -31,6 +31,8 @@ import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+import androidx.compose.ui.platform.testTag
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MomentDetailScreen(
@@ -40,6 +42,37 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    MomentDetailScreenContent(
+        uiState = uiState,
+        onTitleChange = viewModel::updateTitle,
+        onContentChange = viewModel::updateContent,
+        onAddImage = viewModel::addImage,
+        onSaveChanges = viewModel::saveChanges,
+        onDeleteMoment = { showDeleteDialog = true },
+        onConfirmDelete = {
+            viewModel.deleteMoment { onNavigateBack() }
+        },
+        onNavigateBack = onNavigateBack,
+        showDeleteDialog = showDeleteDialog,
+        onDismissDeleteDialog = { showDeleteDialog = false }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun MomentDetailScreenContent(
+    uiState: MomentDetailUiState,
+    onTitleChange: (String) -> Unit,
+    onContentChange: (String) -> Unit,
+    onAddImage: (List<ByteArray>, Int) -> Unit,
+    onSaveChanges: () -> Unit,
+    onDeleteMoment: () -> Unit,
+    onConfirmDelete: () -> Unit,
+    onNavigateBack: () -> Unit,
+    showDeleteDialog: Boolean,
+    onDismissDeleteDialog: () -> Unit,
+) {
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
@@ -49,12 +82,13 @@ fun MomentDetailScreen(
     val imagePicker = rememberImagePickerLauncher(
         onResult = { bytesList ->
             if (bytesList.isNotEmpty()) {
-                viewModel.addImage(bytesList, lastCursorPosition)
+                onAddImage(bytesList, lastCursorPosition)
             }
         },
     )
 
     Scaffold(
+        modifier = Modifier.testTag("MOMENT_DETAIL_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
@@ -69,19 +103,23 @@ fun MomentDetailScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("BACK_BUTTON")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {
                     if (uiState.isDirty) {
                         TextButton(
-                            onClick = { viewModel.saveChanges() },
+                            onClick = onSaveChanges,
                             enabled = !uiState.isSaving,
+                            modifier = Modifier.testTag("SAVE_BUTTON"),
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         ) {
                             if (uiState.isSaving) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp).testTag("SAVING_INDICATOR"), 
+                                    strokeWidth = 2.dp
+                                )
                             } else {
                                 Text(
                                     "Simpan",
@@ -93,7 +131,8 @@ fun MomentDetailScreen(
                         }
                     } else {
                         TextButton(
-                            onClick = { showDeleteDialog = true },
+                            onClick = onDeleteMoment,
+                            modifier = Modifier.testTag("DELETE_BUTTON"),
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         ) {
                             Text(
@@ -112,9 +151,14 @@ fun MomentDetailScreen(
         },
     ) { paddingValues ->
         if (uiState.isLoading) {
-            LoadingIndicator()
+            Box(modifier = Modifier.testTag("LOADING_INDICATOR")) {
+                LoadingIndicator()
+            }
         } else if (uiState.error != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize().testTag("ERROR_CONTAINER"), 
+                contentAlignment = Alignment.Center
+            ) {
                 Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
             }
         } else {
@@ -133,7 +177,7 @@ fun MomentDetailScreen(
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             BasicTextField(
                                 value = moment.title,
-                                onValueChange = viewModel::updateTitle,
+                                onValueChange = onTitleChange,
                                 textStyle = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -146,7 +190,7 @@ fun MomentDetailScreen(
                                         Text(
                                             text = "Judul Cerita",
                                             style = MaterialTheme.typography.headlineMedium.copy(
-                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                                 fontWeight = FontWeight.Bold,
                                             ),
                                         )
@@ -155,7 +199,8 @@ fun MomentDetailScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 12.dp)
+                                    .testTag("TITLE_TEXT_FIELD"),
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -172,46 +217,50 @@ fun MomentDetailScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Mood & Tags
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 moment.mood?.let { mood ->
                                     SuggestionChip(
                                         onClick = {},
                                         label = { Text(mood) },
                                         shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.testTag("MOOD_CHIP"),
                                         colors = SuggestionChipDefaults.suggestionChipColors(
                                             labelColor = MaterialTheme.colorScheme.primary,
                                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                                         ),
                                         border = null
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
                                 }
 
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    moment.tags.forEach { tag ->
-                                        AssistChip(
-                                            onClick = {},
-                                            label = { Text("#$tag") },
-                                            colors = AssistChipDefaults.assistChipColors(
-                                                labelColor = MaterialTheme.colorScheme.secondary,
-                                            ),
-                                            border = null,
-                                            shape = RoundedCornerShape(12.dp),
-                                        )
+                                if (moment.tags.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        moment.tags.forEach { tag ->
+                                            AssistChip(
+                                                onClick = {},
+                                                label = { Text("#$tag") },
+                                                colors = AssistChipDefaults.assistChipColors(
+                                                    labelColor = MaterialTheme.colorScheme.secondary,
+                                                ),
+                                                border = null,
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier.testTag("TAG_CHIP_$tag")
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        Box(modifier = Modifier.padding(horizontal = 0.dp)) {
+                        Box(modifier = Modifier.padding(horizontal = 0.dp).testTag("HTML_CONTENT_BOX")) {
                             HtmlBlockItem(
                                 html = moment.content,
-                                onHtmlChange = viewModel::updateContent,
+                                onHtmlChange = onContentChange,
                                 activeStyles = activeStyles,
                                 onFocusValueChange = { value, styles, update, offset ->
                                     focusedValue = value
@@ -257,7 +306,7 @@ fun MomentDetailScreen(
                                 }
                                 imagePicker.launch()
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),
                         )
                     }
                 }
@@ -267,23 +316,20 @@ fun MomentDetailScreen(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = onDismissDeleteDialog,
             title = { Text("Hapus Jurnal") },
             text = { Text("Apakah kamu yakin ingin menghapus jurnal ini? Tindakan ini tidak dapat dibatalkan.") },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        viewModel.deleteMoment {
-                            onNavigateBack()
-                        }
-                    },
+                    onClick = onConfirmDelete,
+                    modifier = Modifier.testTag("CONFIRM_DELETE_BUTTON"),
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Text("Hapus")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(onClick = onDismissDeleteDialog, modifier = Modifier.testTag("CANCEL_DELETE_BUTTON")) {
                     Text("Batal")
                 }
             },
