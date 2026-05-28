@@ -43,7 +43,7 @@ data class GeminiFunctionProperty(
 data class GeminiSystemInstruction(val parts: List<GeminiPart>)
 
 @Serializable
-data class GeminiContent(val parts: List<GeminiPart>, val role: String)
+data class GeminiContent(val parts: List<GeminiPart>, val role: String = "model")
 
 @Serializable
 data class GeminiPart(
