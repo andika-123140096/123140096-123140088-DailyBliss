@@ -1,5 +1,6 @@
 package com.dailybliss.app.data.repository
 
+import com.dailybliss.app.data.remote.dto.*
 import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.domain.model.ChatSession
 import com.dailybliss.app.domain.repository.AIRepository
@@ -85,9 +86,21 @@ class FakeAIRepository : AIRepository {
         startNewSession()
     }
 
-    override suspend fun chat(messages: List<ChatMessage>): String {
+    override suspend fun chat(
+        messages: List<ChatMessage>,
+        tools: List<GeminiTool>?,
+    ): GeminiResponse {
         delayIfSlow()
-        return mockChatResponse
+        return GeminiResponse(
+            candidates = listOf(
+                GeminiCandidate(
+                    content = GeminiContent(
+                        parts = listOf(GeminiPart(text = mockChatResponse)),
+                        role = "model",
+                    ),
+                ),
+            ),
+        )
     }
 
     override suspend fun analyzeMood(content: String, imageBytes: ByteArray?): MoodResult? {

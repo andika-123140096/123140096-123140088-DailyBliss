@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.dailybliss.app.core.network.FakeApiConfig
 import com.dailybliss.app.data.remote.dto.GeminiContent
 import com.dailybliss.app.data.remote.dto.GeminiPart
+import com.dailybliss.app.data.remote.dto.getTextContent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -74,7 +75,7 @@ class GeminiServiceTest {
         val result = service.generateChat(listOf(GeminiContent(parts = listOf(GeminiPart(text = "Hi")), role = "user")))
 
         assertTrue(result.isSuccess)
-        assertEquals("Chat Response", result.getOrNull())
+        assertEquals("Chat Response", result.getOrNull()?.getTextContent())
     }
 
     @Test
@@ -142,7 +143,7 @@ class GeminiServiceTest {
         }
         val service = GeminiService(httpClient, apiConfig)
 
-        service.streamContent(listOf(GeminiContent(parts = listOf(GeminiPart(text = "Stream"))))).test {
+        service.streamContent(listOf(GeminiContent(parts = listOf(GeminiPart(text = "Stream")), role = "user"))).test {
             assertEquals("Part 1", awaitItem())
             assertEquals("Part 2", awaitItem())
             awaitComplete()

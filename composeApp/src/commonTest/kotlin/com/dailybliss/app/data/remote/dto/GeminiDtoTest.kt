@@ -13,6 +13,7 @@ class GeminiDtoTest {
                 GeminiCandidate(
                     content = GeminiContent(
                         parts = listOf(GeminiPart(text = "Hello World")),
+                        role = "model",
                     ),
                 ),
             ),

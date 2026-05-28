@@ -6,6 +6,8 @@ import com.dailybliss.app.core.network.FakeApiConfig
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.FakeUserPreferences
 import com.dailybliss.app.data.remote.api.GeminiService
+import com.dailybliss.app.domain.repository.CurrencyRepository
+import com.dailybliss.app.domain.repository.WeatherRepository
 import com.dailybliss.app.presentation.FakeFileStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -56,7 +58,21 @@ class AIRepositoryImplTest {
     @Test
     fun `sendMessage should update chatMessages flow with response`() = runTest {
         val geminiService = GeminiService(createClient(successJson), FakeApiConfig())
-        val repository = AIRepositoryImpl(geminiService, userPreferences, database, fileStorage, this)
+        val repository = AIRepositoryImpl(
+            geminiService = geminiService,
+            userPreferences = userPreferences,
+            database = database,
+            fileStorage = fileStorage,
+            momentRepository = FakeMomentRepository(),
+            newsRepository = FakeNewsRepository(),
+            weatherRepository = object : WeatherRepository {
+                override suspend fun getCurrentWeather(location: String) = "Sunny"
+            },
+            currencyRepository = object : CurrencyRepository {
+                override suspend fun getExchangeRate(base: String, target: String) = "1.0"
+            },
+            applicationScope = this,
+        )
 
         repository.chatMessages.test {
             // Initial empty
@@ -84,7 +100,21 @@ class AIRepositoryImplTest {
     @Test
     fun `clearChat should empty messages`() = runTest {
         val geminiService = GeminiService(createClient(successJson), FakeApiConfig())
-        val repository = AIRepositoryImpl(geminiService, userPreferences, database, fileStorage, this)
+        val repository = AIRepositoryImpl(
+            geminiService = geminiService,
+            userPreferences = userPreferences,
+            database = database,
+            fileStorage = fileStorage,
+            momentRepository = FakeMomentRepository(),
+            newsRepository = FakeNewsRepository(),
+            weatherRepository = object : WeatherRepository {
+                override suspend fun getCurrentWeather(location: String) = "Sunny"
+            },
+            currencyRepository = object : CurrencyRepository {
+                override suspend fun getExchangeRate(base: String, target: String) = "1.0"
+            },
+            applicationScope = this,
+        )
 
         repository.sendMessage("Hi", null)
         advanceUntilIdle()
@@ -100,7 +130,21 @@ class AIRepositoryImplTest {
     fun `analyzeMood should parse JSON correctly`() = runTest {
         val json = """{"candidates": [{"content": {"parts": [{"text": "{\"mood\": \"Senang\", \"emoji\": \"😊\"}"}]}}]}"""
         val geminiService = GeminiService(createClient(json), FakeApiConfig())
-        val repository = AIRepositoryImpl(geminiService, userPreferences, database, fileStorage, this)
+        val repository = AIRepositoryImpl(
+            geminiService = geminiService,
+            userPreferences = userPreferences,
+            database = database,
+            fileStorage = fileStorage,
+            momentRepository = FakeMomentRepository(),
+            newsRepository = FakeNewsRepository(),
+            weatherRepository = object : WeatherRepository {
+                override suspend fun getCurrentWeather(location: String) = "Sunny"
+            },
+            currencyRepository = object : CurrencyRepository {
+                override suspend fun getExchangeRate(base: String, target: String) = "1.0"
+            },
+            applicationScope = this,
+        )
 
         val result = repository.analyzeMood("Content", null)
 
