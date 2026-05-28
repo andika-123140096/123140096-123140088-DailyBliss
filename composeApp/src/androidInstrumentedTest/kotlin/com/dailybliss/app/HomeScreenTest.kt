@@ -23,7 +23,7 @@ class HomeScreenTest {
                     onNavigateToCalendar = {},
                     onNavigateToAIAssistant = {},
                     onNavigateToSettings = {},
-                    onNavigateToCreateMoment = {}
+                    onNavigateToCreateMoment = {},
                 )
             }
         }

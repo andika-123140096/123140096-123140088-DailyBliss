@@ -39,19 +39,19 @@ class JournalViewModelTest {
     fun `initial state should be Success or Empty based on repository`() = runTest {
         viewModel.uiState.test {
             assertEquals(JournalUiState.Loading, awaitItem())
-            
+
             // Advance time to pass debounce if needed (initially empty query might not debounce if emitted immediately)
             advanceUntilIdle()
-            
+
             val state = awaitItem()
             assertTrue(state is JournalUiState.Empty)
-            
+
             momentRepository.insertMoment(Moment(title = "T", content = "C"))
-            
+
             val successState = awaitItem()
             assertTrue(successState is JournalUiState.Success)
             assertEquals(1, (successState as JournalUiState.Success).moments.size)
-            
+
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -60,16 +60,16 @@ class JournalViewModelTest {
     fun `search should filter moments with debounce`() = runTest {
         momentRepository.insertMoment(Moment(title = "Matching", content = "C"))
         momentRepository.insertMoment(Moment(title = "Other", content = "C"))
-        
+
         viewModel.uiState.test {
             skipItems(2) // Loading + Empty/Initial Success
-            
+
             viewModel.onSearchQueryChange("Matching")
-            
+
             // Debounce is 300ms
             advanceTimeBy(301L)
             runCurrent()
-            
+
             val state = awaitItem()
             assertTrue(state is JournalUiState.Success)
             assertEquals(1, state.moments.size)

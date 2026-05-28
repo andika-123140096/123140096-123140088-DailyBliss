@@ -18,14 +18,20 @@ class DataStoreUserPreferencesTest {
         // Use a unique name for each test run to avoid persistence issues
         val uniqueName = "test_prefs_${Clock.System.now().toEpochMilliseconds()}_${Random.nextInt(100)}.preferences_pb"
         val dataStore = PreferenceDataStoreFactory.createWithPath(
-            produceFile = { uniqueName.toPath() }
+            produceFile = { uniqueName.toPath() },
         )
         val userPreferences = DataStoreUserPreferences(dataStore)
-        
+
         // Use a shorter test flow to avoid complexity
         userPreferences.setNickname("New")
-        assertEquals("New", userPreferences.nickname.test { assertEquals("New", awaitItem()) ; cancelAndIgnoreRemainingEvents() }.let { "New" })
-        
+        assertEquals(
+            "New",
+            userPreferences.nickname.test {
+                assertEquals("New", awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }.let { "New" },
+        )
+
         // Actually let's just test setters and first value
         userPreferences.setDarkMode(true)
         userPreferences.isDarkMode.test {

@@ -26,14 +26,14 @@ class CreateMomentScreenTest {
                     onContentChange = { contentChanged = it },
                     onAddImage = {},
                     onSaveMoment = { saved = true },
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }
 
         // Check initial state
         composeTestRule.onNodeWithText("Initial Title").assertIsDisplayed()
-        
+
         // Test title change
         composeTestRule.onNodeWithText("Initial Title").performTextReplacement("New Title")
         assertEquals("New Title", titleChanged)

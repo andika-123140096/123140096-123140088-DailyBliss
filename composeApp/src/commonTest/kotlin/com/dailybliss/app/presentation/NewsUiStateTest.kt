@@ -1,7 +1,6 @@
 package com.dailybliss.app.presentation
 
 import com.dailybliss.app.presentation.screens.news.NewsUiState
-import com.dailybliss.app.domain.model.WeatherInfo
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

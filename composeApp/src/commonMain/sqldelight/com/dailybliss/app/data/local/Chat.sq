@@ -1,0 +1,61 @@
+CREATE TABLE ChatSessionEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE ChatMessageEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    text_content TEXT NOT NULL,
+    image_path TEXT,
+    is_error INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES ChatSessionEntity(id) ON DELETE CASCADE
+);
+
+-- Session Queries --
+getAllChatSessions:
+SELECT * FROM ChatSessionEntity
+ORDER BY updated_at DESC;
+
+getChatSessionById:
+SELECT * FROM ChatSessionEntity
+WHERE id = ?;
+
+insertChatSession:
+INSERT INTO ChatSessionEntity (title, created_at, updated_at)
+VALUES (?, ?, ?);
+
+updateChatSessionTitle:
+UPDATE ChatSessionEntity
+SET title = ?, updated_at = ?
+WHERE id = ?;
+
+updateChatSessionTimestamp:
+UPDATE ChatSessionEntity
+SET updated_at = ?
+WHERE id = ?;
+
+deleteChatSession:
+DELETE FROM ChatSessionEntity
+WHERE id = ?;
+
+-- Message Queries --
+getMessagesBySessionId:
+SELECT * FROM ChatMessageEntity
+WHERE session_id = ?
+ORDER BY created_at ASC;
+
+insertChatMessage:
+INSERT INTO ChatMessageEntity (session_id, role, text_content, image_path, is_error, created_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deleteMessagesBySessionId:
+DELETE FROM ChatMessageEntity
+WHERE session_id = ?;
+
+lastInsertId:
+SELECT last_insert_rowid();

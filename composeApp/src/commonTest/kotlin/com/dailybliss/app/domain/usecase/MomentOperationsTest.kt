@@ -27,7 +27,7 @@ class MomentOperationsTest {
     fun `SaveMomentUseCase should trigger AI processing after save`() = runTest {
         val moment = Moment(title = "Test", content = "Content")
         val id = saveUseCase(moment)
-        
+
         assertTrue(id > 0)
         assertEquals(id, aiProcessor.lastProcessedMomentId)
         assertTrue(aiProcessor.processMomentCalled)
@@ -36,9 +36,9 @@ class MomentOperationsTest {
     @Test
     fun `DeleteMomentUseCase should trigger global summary update after delete`() = runTest {
         val id = repository.insertMoment(Moment(title = "T", content = "C"))
-        
+
         deleteUseCase(id)
-        
+
         assertTrue(repository.moments.value.isEmpty())
         assertTrue(aiProcessor.updateGlobalSummaryCalled)
     }

@@ -20,12 +20,12 @@ class SettingsScreenTest {
                     uiState = SettingsUiState(
                         nickname = "Andika",
                         journalSummary = "Summary text",
-                        dailyInsight = "Insight text"
+                        dailyInsight = "Insight text",
                     ),
                     onNicknameChange = {},
                     onAiStyleChange = {},
                     onDarkModeToggle = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }

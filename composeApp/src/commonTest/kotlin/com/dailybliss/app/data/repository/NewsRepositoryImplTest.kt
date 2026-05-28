@@ -33,14 +33,14 @@ class NewsRepositoryImplTest {
         locationTracker = FakeLocationTracker()
     }
 
-    private fun createClient(engine: MockEngine): HttpClient {
-        return HttpClient(engine) {
-            install(ContentNegotiation) {
-                json(Json { 
-                    ignoreUnknownKeys = true 
+    private fun createClient(engine: MockEngine): HttpClient = HttpClient(engine) {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
                     coerceInputValues = true
-                })
-            }
+                },
+            )
         }
     }
 
@@ -49,13 +49,13 @@ class NewsRepositoryImplTest {
         val mockEngine = MockEngine { request ->
             respond(
                 content = """{"amount": 1.0, "base": "USD", "date": "2024-05-26", "rates": {"IDR": 15000.0}}""",
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val rates = repository.getCurrencyRates()
-        
+
         assertNotNull(rates)
         assertEquals(15000.0, rates.usdToIdr)
     }
@@ -66,13 +66,13 @@ class NewsRepositoryImplTest {
             respond(
                 content = "Internal Server Error",
                 status = HttpStatusCode.InternalServerError,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Text.Plain.toString()),
             )
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val rates = repository.getCurrencyRates()
-        
+
         assertTrue(rates == null)
     }
 
@@ -83,14 +83,16 @@ class NewsRepositoryImplTest {
             if (request.url.toString().contains("latitude=1.23")) {
                 respond(
                     content = """{"current": {"temperature_2m": 25.0, "wind_speed_10m": 10.0}}""",
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                 )
-            } else respond("{}", status = HttpStatusCode.NotFound)
+            } else {
+                respond("{}", status = HttpStatusCode.NotFound)
+            }
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val weather = repository.getWeather()
-        
+
         assertEquals("25.0°C", weather.temperature)
         assertEquals("Lokasi Saat Ini", weather.city)
     }
@@ -103,22 +105,22 @@ class NewsRepositoryImplTest {
                 request.url.toString().contains("ipapi.co") -> {
                     respond(
                         content = """{"latitude": -6.0, "longitude": 106.0, "city": "Ip City"}""",
-                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                     )
                 }
                 request.url.toString().contains("latitude=-6.0") -> {
                     respond(
                         content = """{"current": {"temperature_2m": 22.0, "wind_speed_10m": 5.0}}""",
-                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                     )
                 }
                 else -> respond("{}")
             }
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val weather = repository.getWeather()
-        
+
         assertEquals("22.0°C", weather.temperature)
         assertEquals("Ip City", weather.city)
     }
@@ -134,13 +136,13 @@ class NewsRepositoryImplTest {
                         {"title": "Random News", "contentSnippet": "No mention", "link": "url2", "isoDate": "$recentDate"}
                     ]
                 }""",
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val news = repository.getPrabowoNews()
-        
+
         assertEquals(1, news.size)
         assertEquals("Prabowo Subianto News", news[0].title)
     }
@@ -153,7 +155,7 @@ class NewsRepositoryImplTest {
 
         val mockEngine = MockEngine { respond("{}", HttpStatusCode.InternalServerError) }
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
-        
+
         val rates = repository.getCurrencyRates()
         assertNotNull(rates)
         assertEquals(15000.0, rates.usdToIdr)
@@ -168,13 +170,13 @@ class NewsRepositoryImplTest {
         val mockEngine = MockEngine { request ->
             respond(
                 content = """{"amount": 1.0, "base": "USD", "date": "2024-05-26", "rates": {"IDR": 16000.0}}""",
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         val rates = repository.getCurrencyRates()
-        
+
         assertNotNull(rates)
         assertEquals(16000.0, rates.usdToIdr)
     }
@@ -187,7 +189,7 @@ class NewsRepositoryImplTest {
 
         val mockEngine = MockEngine { respond("Error", HttpStatusCode.InternalServerError) }
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
-        
+
         val weather = repository.getWeather()
         assertEquals("30°C", weather.temperature)
         assertEquals("Cached City", weather.city)
@@ -199,13 +201,13 @@ class NewsRepositoryImplTest {
         val mockEngine = MockEngine { request ->
             respond(
                 content = """{ "data": [{"title": "Prabowo Subianto News", "link": "url1", "isoDate": "$recentDate"}] }""",
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
-        
+
         val repository = NewsRepositoryImpl(createClient(mockEngine), database, locationTracker)
         repository.getPrabowoNews()
-        
+
         val cached = database.momentQueries.getCache("cache_news_v2").executeAsOneOrNull()
         assertNotNull(cached)
         assertTrue(cached.data_.contains("Prabowo Subianto News"))

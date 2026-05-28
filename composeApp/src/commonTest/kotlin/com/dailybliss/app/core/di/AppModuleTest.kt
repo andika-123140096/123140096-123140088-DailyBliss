@@ -4,7 +4,6 @@ import com.dailybliss.app.core.util.PlatformContext
 import io.mockk.mockk
 import org.koin.dsl.module
 import org.koin.test.KoinTest
-import org.koin.test.check.checkModules
 import kotlin.test.Test
 
 class AppModuleTest : KoinTest {
@@ -17,7 +16,7 @@ class AppModuleTest : KoinTest {
             single<PlatformContext> { mockk(relaxed = true) }
             // Add other platform dependencies if needed
         }
-        
+
         // checkModules {
         //    modules(sharedModules + testPlatformModule)
         // }

@@ -1,6 +1,5 @@
 package com.dailybliss.app.presentation
 
-import app.cash.turbine.test
 import com.dailybliss.app.data.repository.FakeNewsRepository
 import com.dailybliss.app.presentation.screens.news.NewsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,7 @@ class NewsViewModelTest {
     fun `loadNewsData should update uiState with news, weather and currency`() = runTest {
         viewModel.loadNewsData()
         advanceUntilIdle()
-        
+
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
         assertNotNull(state.weather)

@@ -1,10 +1,8 @@
 package com.dailybliss.app.presentation.screens.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,15 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
-
-import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,12 +28,23 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    var nicknameState by remember(uiState.nickname) { mutableStateOf(uiState.nickname) }
+
+    // Use a LaunchedEffect to debounce the update to UserPreferences
+    LaunchedEffect(nicknameState) {
+        if (nicknameState != uiState.nickname) {
+            kotlinx.coroutines.delay(800) // 800ms debounce
+            viewModel.updateNickname(nicknameState)
+        }
+    }
+
     SettingsScreenContent(
         uiState = uiState,
-        onNicknameChange = viewModel::updateNickname,
+        nickname = nicknameState,
+        onNicknameChange = { nicknameState = it },
         onDarkModeToggle = viewModel::toggleDarkMode,
         onAiStyleChange = viewModel::updateAiStyle,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
     )
 }
 
@@ -45,6 +52,7 @@ fun SettingsScreen(
 @Composable
 fun SettingsScreenContent(
     uiState: SettingsUiState,
+    nickname: String,
     onNicknameChange: (String) -> Unit,
     onDarkModeToggle: (Boolean) -> Unit,
     onAiStyleChange: (String) -> Unit,
@@ -95,7 +103,7 @@ fun SettingsScreenContent(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
-                    value = uiState.nickname,
+                    value = nickname,
                     onValueChange = onNicknameChange,
                     label = { Text("Nama Panggilan") },
                     modifier = Modifier.fillMaxWidth().testTag("NICKNAME_FIELD"),
@@ -142,7 +150,7 @@ fun SettingsScreenContent(
                                 uncheckedThumbColor = MaterialTheme.colorScheme.outline,
                                 uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 uncheckedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            ),
                         )
                     }
                 }
@@ -168,7 +176,7 @@ fun SettingsScreenContent(
                             name = style,
                             isSelected = uiState.aiLanguageStyle == style,
                             onClick = { onAiStyleChange(style) },
-                            modifier = Modifier.testTag("STYLE_ITEM_$style")
+                            modifier = Modifier.testTag("STYLE_ITEM_$style"),
                         )
                     }
                 }

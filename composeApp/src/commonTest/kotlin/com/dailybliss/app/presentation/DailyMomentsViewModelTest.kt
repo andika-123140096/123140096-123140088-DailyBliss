@@ -1,6 +1,5 @@
 package com.dailybliss.app.presentation
 
-import app.cash.turbine.test
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetMomentsForDateUseCase
@@ -18,7 +17,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DailyMomentsViewModelTest {
@@ -50,13 +48,13 @@ class DailyMomentsViewModelTest {
             id = 1L,
             title = "M1",
             content = "C1",
-            createdAt = testDate.atStartOfDayIn(tz)
+            createdAt = testDate.atStartOfDayIn(tz),
         )
         momentRepository.insertMoment(moment1)
-        
+
         viewModel = DailyMomentsViewModel(dateStr, getMomentsForDateUseCase)
         advanceUntilIdle()
-        
+
         assertEquals(1, viewModel.uiState.value.moments.size)
         assertFalse(viewModel.uiState.value.isLoading)
     }
@@ -68,5 +66,4 @@ class DailyMomentsViewModelTest {
     }
 }
 
-private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = 
-    LocalDateTime(this.year, this.month, this.dayOfMonth, 0, 0, 0, 0).toInstant(tz)
+private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = LocalDateTime(this.year, this.month, this.dayOfMonth, 0, 0, 0, 0).toInstant(tz)

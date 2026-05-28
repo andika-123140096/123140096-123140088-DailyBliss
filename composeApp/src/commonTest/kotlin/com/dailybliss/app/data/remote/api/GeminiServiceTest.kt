@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import com.dailybliss.app.core.network.FakeApiConfig
 import com.dailybliss.app.data.remote.dto.GeminiContent
 import com.dailybliss.app.data.remote.dto.GeminiPart
-import com.dailybliss.app.data.remote.dto.getTextContent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -16,7 +15,6 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -37,7 +35,7 @@ class GeminiServiceTest {
                     }]
                 }""",
                 status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
         val httpClient = HttpClient(mockEngine) {
@@ -46,9 +44,9 @@ class GeminiServiceTest {
             }
         }
         val service = GeminiService(httpClient, apiConfig)
-        
+
         val result = service.generateContent(listOf(GeminiPart(text = "Hello")))
-        
+
         assertTrue(result.isSuccess)
         assertEquals("Success Response", result.getOrNull())
     }
@@ -65,16 +63,16 @@ class GeminiServiceTest {
                     }]
                 }""",
                 status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
         val httpClient = HttpClient(mockEngine) {
             install(ContentNegotiation) { json(json) }
         }
         val service = GeminiService(httpClient, apiConfig)
-        
+
         val result = service.generateChat(listOf(GeminiContent(parts = listOf(GeminiPart(text = "Hi")), role = "user")))
-        
+
         assertTrue(result.isSuccess)
         assertEquals("Chat Response", result.getOrNull())
     }
@@ -90,7 +88,7 @@ class GeminiServiceTest {
                 respond(
                     content = """{"candidates": [{"content": {"parts": [{"text": "Succeed after retry"}]}}]}""",
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                 )
             }
         }
@@ -98,9 +96,9 @@ class GeminiServiceTest {
             install(ContentNegotiation) { json(json) }
         }
         val service = GeminiService(httpClient, apiConfig)
-        
+
         val result = service.generateContent(listOf(GeminiPart(text = "Retry me")))
-        
+
         assertTrue(result.isSuccess)
         assertEquals("Succeed after retry", result.getOrNull())
         assertEquals(3, attempts)
@@ -116,12 +114,12 @@ class GeminiServiceTest {
         val httpClient = HttpClient(mockEngine) {
             install(ContentNegotiation) { json(json) }
         }
-        // Using smaller retry count for test speed if possible, but service has it private. 
+        // Using smaller retry count for test speed if possible, but service has it private.
         // Default is 5.
         val service = GeminiService(httpClient, apiConfig)
-        
+
         val result = service.generateContent(listOf(GeminiPart(text = "Fail me")))
-        
+
         assertTrue(result.isFailure)
         assertEquals(5, attempts)
     }
@@ -136,14 +134,14 @@ class GeminiServiceTest {
                     data: {"candidates": [{"content": {"parts": [{"text": "Part 2"}]}}]}
                 """.trimIndent(),
                 status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "text/event-stream")
+                headers = headersOf(HttpHeaders.ContentType, "text/event-stream"),
             )
         }
         val httpClient = HttpClient(mockEngine) {
             install(ContentNegotiation) { json(json) }
         }
         val service = GeminiService(httpClient, apiConfig)
-        
+
         service.streamContent(listOf(GeminiContent(parts = listOf(GeminiPart(text = "Stream"))))).test {
             assertEquals("Part 1", awaitItem())
             assertEquals("Part 2", awaitItem())

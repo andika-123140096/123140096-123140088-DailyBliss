@@ -17,9 +17,9 @@ class HtmlConverterTest {
     fun `toAnnotatedString should parse basic tags`() {
         val html = "<b>Bold</b> <i>Italic</i> <u>Underline</u>"
         val annotatedString = HtmlConverter.toAnnotatedString(html)
-        
+
         assertEquals("Bold Italic Underline", annotatedString.text)
-        
+
         val spans = annotatedString.spanStyles
         assertTrue(spans.any { it.item.fontWeight == FontWeight.Bold })
         assertTrue(spans.any { it.item.fontStyle == FontStyle.Italic })
@@ -30,7 +30,7 @@ class HtmlConverterTest {
     fun `toAnnotatedString should handle strong and em`() {
         val html = "<strong>Strong</strong> <em>Em</em>"
         val annotatedString = HtmlConverter.toAnnotatedString(html)
-        
+
         assertEquals("Strong Em", annotatedString.text)
         assertTrue(annotatedString.spanStyles.any { it.item.fontWeight == FontWeight.Bold })
         assertTrue(annotatedString.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
@@ -58,10 +58,10 @@ class HtmlConverterTest {
             text = text,
             spanStyles = listOf(
                 AnnotatedString.Range(SpanStyle(fontWeight = FontWeight.Bold), 0, 4),
-                AnnotatedString.Range(SpanStyle(fontStyle = FontStyle.Italic), 5, 11)
-            )
+                AnnotatedString.Range(SpanStyle(fontStyle = FontStyle.Italic), 5, 11),
+            ),
         )
-        
+
         val html = HtmlConverter.fromAnnotatedString(annotatedString)
         assertEquals("<b>Bold</b> <i>Italic</i>", html)
     }
@@ -77,7 +77,7 @@ class HtmlConverterTest {
     fun `toggleStyle should add style if not present`() {
         val value = TextFieldValue("Hello World", selection = TextRange(0, 5))
         val style = SpanStyle(fontWeight = FontWeight.Bold)
-        
+
         val newValue = HtmlConverter.toggleStyle(value, style)
         assertTrue(newValue.annotatedString.spanStyles.any { it.item.fontWeight == FontWeight.Bold })
     }
@@ -86,11 +86,11 @@ class HtmlConverterTest {
     fun `toggleStyle should remove style if already present`() {
         val annotatedString = AnnotatedString(
             "Hello World",
-            spanStyles = listOf(AnnotatedString.Range(SpanStyle(fontWeight = FontWeight.Bold), 0, 5))
+            spanStyles = listOf(AnnotatedString.Range(SpanStyle(fontWeight = FontWeight.Bold), 0, 5)),
         )
         val value = TextFieldValue(annotatedString, selection = TextRange(0, 5))
         val style = SpanStyle(fontWeight = FontWeight.Bold)
-        
+
         val newValue = HtmlConverter.toggleStyle(value, style)
         assertTrue(newValue.annotatedString.spanStyles.isEmpty())
     }
@@ -99,11 +99,11 @@ class HtmlConverterTest {
     fun `toggleStyle should handle partial overlap removal`() {
         val annotatedString = AnnotatedString(
             "Hello World",
-            spanStyles = listOf(AnnotatedString.Range(SpanStyle(fontWeight = FontWeight.Bold), 0, 11))
+            spanStyles = listOf(AnnotatedString.Range(SpanStyle(fontWeight = FontWeight.Bold), 0, 11)),
         )
         val value = TextFieldValue(annotatedString, selection = TextRange(0, 5))
         val style = SpanStyle(fontWeight = FontWeight.Bold)
-        
+
         val newValue = HtmlConverter.toggleStyle(value, style)
         val spans = newValue.annotatedString.spanStyles
         assertEquals(1, spans.size)

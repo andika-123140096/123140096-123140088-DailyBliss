@@ -18,6 +18,7 @@ import com.dailybliss.app.domain.repository.NewsRepository
 import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
+import com.dailybliss.app.presentation.screens.ai.ChatHistoryViewModel
 import com.dailybliss.app.presentation.screens.calendar.CalendarViewModel
 import com.dailybliss.app.presentation.screens.calendar.DailyMomentsViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
@@ -96,6 +97,7 @@ val viewModelModule = module {
     viewModelOf(::CreateMomentViewModel)
     viewModelOf(::MomentDetailViewModel)
     viewModelOf(::AIAssistantViewModel)
+    viewModelOf(::ChatHistoryViewModel)
     viewModelOf(::SettingsViewModel)
 }
 

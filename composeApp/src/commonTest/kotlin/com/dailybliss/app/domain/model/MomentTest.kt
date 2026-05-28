@@ -9,9 +9,9 @@ class MomentTest {
     fun `preview should strip html tags`() {
         val moment = Moment(
             title = "Test",
-            content = "<b>Bold</b> <i>Italic</i> <div class=\"image-group\"><img src=\"url\" /></div> Text"
+            content = "<b>Bold</b> <i>Italic</i> <div class=\"image-group\"><img src=\"url\" /></div> Text",
         )
-        
+
         val preview = moment.preview
         assertEquals("Bold Italic Text", preview)
     }
@@ -20,7 +20,7 @@ class MomentTest {
     fun `preview should truncate long text`() {
         val longText = "A".repeat(200)
         val moment = Moment(title = "Test", content = longText)
-        
+
         val preview = moment.preview
         assertTrue(preview.length <= 123) // 120 + "..."
         assertTrue(preview.endsWith("..."))

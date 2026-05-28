@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,7 +39,11 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewModel = koinViewModel()) {
+fun AIAssistantScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    viewModel: AIAssistantViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AIAssistantScreenContent(
@@ -46,7 +51,8 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
         onInputChange = viewModel::onInputChange,
         onSendMessage = viewModel::sendMessage,
         onImageSelected = viewModel::onImageSelected,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        onNavigateToHistory = onNavigateToHistory,
     )
 }
 
@@ -58,6 +64,7 @@ fun AIAssistantScreenContent(
     onSendMessage: () -> Unit,
     onImageSelected: (ByteArray?) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -98,6 +105,11 @@ fun AIAssistantScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("BACK_BUTTON")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToHistory, modifier = Modifier.testTag("HISTORY_BUTTON")) {
+                        Icon(Icons.Default.History, "History")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -209,8 +221,8 @@ fun AIAssistantScreenContent(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                     ) {
                         IconButton(
-                            onClick = { imagePicker.launch() }, 
-                            modifier = Modifier.size(40.dp).testTag("GALLERY_BUTTON")
+                            onClick = { imagePicker.launch() },
+                            modifier = Modifier.size(40.dp).testTag("GALLERY_BUTTON"),
                         ) {
                             Icon(
                                 Icons.Default.Image, // Changed to Image icon for clarity
@@ -233,7 +245,7 @@ fun AIAssistantScreenContent(
                                 .border(
                                     width = 1.dp,
                                     color = MaterialTheme.colorScheme.outline,
-                                    shape = RoundedCornerShape(20.dp)
+                                    shape = RoundedCornerShape(20.dp),
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(

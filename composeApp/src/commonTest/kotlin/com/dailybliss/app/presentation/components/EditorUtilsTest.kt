@@ -10,14 +10,14 @@ class EditorUtilsTest {
     fun `splitHtml should separate text and image groups`() {
         val html = "Text before<div class=\"image-group\"><img src=\"url1\" /><img src=\"url2\" /></div>Text after"
         val parts = splitHtml(html)
-        
+
         assertEquals(3, parts.size)
         assertTrue(parts[0] is HtmlPart.Text)
         assertEquals("Text before", (parts[0] as HtmlPart.Text).content)
-        
+
         assertTrue(parts[1] is HtmlPart.ImageGroup)
         assertEquals(listOf("url1", "url2"), (parts[1] as HtmlPart.ImageGroup).urls)
-        
+
         assertTrue(parts[2] is HtmlPart.Text)
         assertEquals("Text after", (parts[2] as HtmlPart.Text).content)
     }
@@ -27,9 +27,9 @@ class EditorUtilsTest {
         val parts = listOf(
             HtmlPart.Text("Start "),
             HtmlPart.ImageGroup(listOf("img1.png")),
-            HtmlPart.Text(" End")
+            HtmlPart.Text(" End"),
         )
-        
+
         val html = joinParts(parts)
         assertEquals("Start <div class=\"image-group\"><img src=\"img1.png\" /></div> End", html)
     }
@@ -39,7 +39,7 @@ class EditorUtilsTest {
         val parts = listOf(
             HtmlPart.Text("ABC"),
             HtmlPart.ImageGroup(listOf("url")),
-            HtmlPart.Text("D")
+            HtmlPart.Text("D"),
         )
         val offsets = calculateTextOffsets(parts)
         assertEquals(listOf(0, 3, 4), offsets)

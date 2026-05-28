@@ -1,6 +1,5 @@
 package com.dailybliss.app.data.local.datastore
 
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeUserPreferences : UserPreferences {

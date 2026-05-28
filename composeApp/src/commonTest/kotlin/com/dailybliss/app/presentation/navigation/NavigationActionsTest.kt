@@ -72,6 +72,12 @@ class NavigationActionsTest {
     }
 
     @Test
+    fun `navigateToChatHistory should navigate to ChatHistory`() {
+        actions.navigateToChatHistory()
+        verify { navController.navigate(Route.ChatHistory) }
+    }
+
+    @Test
     fun `navigateBack should popBackStack`() {
         actions.navigateBack()
         verify { navController.popBackStack() }

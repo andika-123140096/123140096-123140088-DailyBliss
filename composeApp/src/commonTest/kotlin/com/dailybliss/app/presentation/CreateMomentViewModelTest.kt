@@ -19,7 +19,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,15 +38,15 @@ class CreateMomentViewModelTest {
         momentRepository = FakeMomentRepository()
         backgroundAIProcessor = FakeBackgroundAIProcessor()
         fileStorage = FakeFileStorage()
-        
+
         saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor)
         getMomentByIdUseCase = GetMomentByIdUseCase(momentRepository)
-        
+
         viewModel = CreateMomentViewModel(
             saveMomentUseCase = saveMomentUseCase,
             getMomentByIdUseCase = getMomentByIdUseCase,
             backgroundAIProcessor = backgroundAIProcessor,
-            fileStorage = fileStorage
+            fileStorage = fileStorage,
         )
     }
 
@@ -96,13 +95,13 @@ class CreateMomentViewModelTest {
         viewModel.events.test {
             viewModel.saveMoment()
             advanceUntilIdle()
-            
+
             assertEquals(CreateMomentEvent.MomentSaved, awaitItem())
-            
+
             val savedMoments = momentRepository.getAllMoments().first()
             assertEquals(1, savedMoments.size)
             assertEquals("Test Title", savedMoments[0].title)
-            
+
             // Verify AI processing was triggered via UseCase
             assertTrue(backgroundAIProcessor.processMomentCalled)
         }

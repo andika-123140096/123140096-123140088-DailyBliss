@@ -17,9 +17,9 @@ class AIAssistantScreenTest {
     fun aiAssistantScreen_displaysMessages() {
         val messages = listOf(
             ChatMessage(role = "user", text = "Halo AI"),
-            ChatMessage(role = "model", text = "Halo User!")
+            ChatMessage(role = "model", text = "Halo User!"),
         )
-        
+
         composeTestRule.setContent {
             DailyBlissTheme {
                 AIAssistantScreen(
@@ -28,7 +28,7 @@ class AIAssistantScreenTest {
                     onSendMessage = {},
                     onImageSelected = {},
                     onRemoveSelectedImage = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }
@@ -48,7 +48,7 @@ class AIAssistantScreenTest {
                     onSendMessage = {},
                     onImageSelected = {},
                     onRemoveSelectedImage = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }

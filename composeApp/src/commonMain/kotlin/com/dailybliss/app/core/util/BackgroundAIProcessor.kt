@@ -52,7 +52,7 @@ class BackgroundAIProcessorImpl(
         applicationScope.launch {
             jobMutex.withLock {
                 activeJobs[momentId]?.cancel()
-                
+
                 val job = applicationScope.launch {
                     try {
                         val moment = momentRepository.getMomentById(momentId).first() ?: return@launch
@@ -95,7 +95,7 @@ class BackgroundAIProcessorImpl(
             jobMutex.withLock {
                 globalSummaryJob?.cancel()
                 isGlobalSummaryRunning = true
-                
+
                 val job = applicationScope.launch {
                     try {
                         val allMoments = momentRepository.getAllMoments().first()

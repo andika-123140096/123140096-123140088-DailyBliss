@@ -11,7 +11,7 @@ fun rememberImagePickerLauncher(onResult: (List<ByteArray>) -> Unit): ImagePicke
     val launcher = peekabooRememberImagePickerLauncher(
         selectionMode = SelectionMode.Multiple(maxSelection = 5),
         scope = scope,
-        onResult = onResult
+        onResult = onResult,
     )
     return object : ImagePickerLauncher {
         override fun launch() {

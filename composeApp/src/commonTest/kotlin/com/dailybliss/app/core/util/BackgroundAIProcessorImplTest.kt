@@ -28,23 +28,23 @@ class BackgroundAIProcessorImplTest {
         momentRepository = FakeMomentRepository()
         userPreferences = FakeUserPreferences()
         fileStorage = FakeFileStorage()
-        
+
         processor = BackgroundAIProcessorImpl(
             aiRepository = aiRepository,
             momentRepository = momentRepository,
             userPreferences = userPreferences,
             fileStorage = fileStorage,
-            applicationScope = testScope
+            applicationScope = testScope,
         )
     }
 
     @Test
     fun `processMoment should analyze mood and tags and update moment`() = runTest {
         val momentId = momentRepository.insertMoment(Moment(title = "Title", content = "Happy content"))
-        
+
         processor.processMoment(momentId)
         testScope.advanceUntilIdle()
-        
+
         momentRepository.getMomentById(momentId).test {
             val item = awaitItem()
             assertTrue(item?.mood?.contains("Bahagia") == true)
@@ -58,10 +58,10 @@ class BackgroundAIProcessorImplTest {
         momentRepository.insertMoment(Moment(title = "M1", content = "C1"))
         aiRepository.mockGlobalSummary = "Great summary"
         aiRepository.mockDailyInsight = "Punchy insight"
-        
+
         processor.updateGlobalSummary()
         testScope.advanceUntilIdle()
-        
+
         userPreferences.journalSummary.test {
             assertEquals("Great summary", awaitItem())
             cancelAndIgnoreRemainingEvents()
@@ -75,10 +75,10 @@ class BackgroundAIProcessorImplTest {
     @Test
     fun `processMoment should skip if content is blank`() = runTest {
         val momentId = momentRepository.insertMoment(Moment(title = "", content = ""))
-        
+
         processor.processMoment(momentId)
         testScope.advanceUntilIdle()
-        
+
         val moment = momentRepository.getMomentById(momentId).test {
             val item = awaitItem()
             assertTrue(item?.mood == null)
@@ -88,16 +88,18 @@ class BackgroundAIProcessorImplTest {
 
     @Test
     fun `processMoment should process if already processed but forced`() = runTest {
-        val momentId = momentRepository.insertMoment(Moment(
-            title = "T", 
-            content = "New Content", 
-            mood = "Existing", 
-            tags = listOf("Tag")
-        ))
-        
+        val momentId = momentRepository.insertMoment(
+            Moment(
+                title = "T",
+                content = "New Content",
+                mood = "Existing",
+                tags = listOf("Tag"),
+            ),
+        )
+
         processor.processMoment(momentId, force = true)
         testScope.advanceUntilIdle()
-        
+
         momentRepository.getMomentById(momentId).test {
             val item = awaitItem()
             assertTrue(item?.mood?.contains("Bahagia") == true)
@@ -107,15 +109,17 @@ class BackgroundAIProcessorImplTest {
 
     @Test
     fun `processMoment should strip HTML tags`() = runTest {
-        val momentId = momentRepository.insertMoment(Moment(
-            title = "T", 
-            content = "<p>Hello <b>World</b></p>"
-        ))
-        
+        val momentId = momentRepository.insertMoment(
+            Moment(
+                title = "T",
+                content = "<p>Hello <b>World</b></p>",
+            ),
+        )
+
         processor.processMoment(momentId)
         testScope.advanceUntilIdle()
-        
-        // No easy way to verify stripped text was sent to AI without a mock check, 
+
+        // No easy way to verify stripped text was sent to AI without a mock check,
         // but we verify processing still happens.
         momentRepository.getMomentById(momentId).test {
             val item = awaitItem()
@@ -126,16 +130,18 @@ class BackgroundAIProcessorImplTest {
 
     @Test
     fun `processMoment should handle image loading failure`() = runTest {
-        val momentId = momentRepository.insertMoment(Moment(
-            title = "T", 
-            content = "C",
-            imageUrl = "invalid_path"
-        ))
+        val momentId = momentRepository.insertMoment(
+            Moment(
+                title = "T",
+                content = "C",
+                imageUrl = "invalid_path",
+            ),
+        )
         // FakeFileStorage returns null for non-existing files usually
-        
+
         processor.processMoment(momentId)
         testScope.advanceUntilIdle()
-        
+
         momentRepository.getMomentById(momentId).test {
             val item = awaitItem()
             assertTrue(item?.mood != null) // Should still process without image
@@ -146,10 +152,10 @@ class BackgroundAIProcessorImplTest {
     @Test
     fun `updateGlobalSummary should clear summary if moments are empty`() = runTest {
         userPreferences.setJournalSummary("Old Summary")
-        
+
         processor.updateGlobalSummary()
         testScope.advanceUntilIdle()
-        
+
         userPreferences.journalSummary.test {
             assertEquals("", awaitItem())
             cancelAndIgnoreRemainingEvents()
@@ -159,18 +165,18 @@ class BackgroundAIProcessorImplTest {
     @Test
     fun `processMoment should cancel existing job for same moment`() = runTest {
         val momentId = momentRepository.insertMoment(Moment(title = "T", content = "C"))
-        
+
         // Mock a slow AI response
-        aiRepository.slowMode = true 
-        
+        aiRepository.slowMode = true
+
         processor.processMoment(momentId)
         // Give it a tiny bit of time to start
         testScope.advanceTimeBy(10)
-        
+
         processor.processMoment(momentId) // Should cancel first one
         testScope.advanceUntilIdle()
-        
-        // We can't easily verify cancellation without counting calls in FakeAIRepository, 
+
+        // We can't easily verify cancellation without counting calls in FakeAIRepository,
         // but we ensure it finishes correctly.
         assertTrue(aiRepository.analyzeCallCount >= 1)
     }
@@ -179,20 +185,20 @@ class BackgroundAIProcessorImplTest {
     fun `isProcessing should be true while jobs are active`() = runTest {
         val id1 = momentRepository.insertMoment(Moment(title = "T1", content = "C1"))
         val id2 = momentRepository.insertMoment(Moment(title = "T2", content = "C2"))
-        
+
         aiRepository.slowMode = true
-        
+
         processor.isProcessing.test {
             assertEquals(false, awaitItem()) // Initial
-            
+
             processor.processMoment(id1)
             testScope.advanceTimeBy(10)
             assertEquals(true, awaitItem())
-            
+
             processor.processMoment(id2)
             testScope.advanceTimeBy(10)
             // Still true
-            
+
             aiRepository.slowMode = false
             testScope.advanceUntilIdle()
             assertEquals(false, awaitItem())

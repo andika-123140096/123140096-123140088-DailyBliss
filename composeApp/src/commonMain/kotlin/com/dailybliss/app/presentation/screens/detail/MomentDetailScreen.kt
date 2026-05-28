@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,8 +32,6 @@ import kotlinx.datetime.*
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-import androidx.compose.ui.platform.testTag
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MomentDetailScreen(
@@ -42,7 +41,7 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    
+
     MomentDetailScreenContent(
         uiState = uiState,
         onTitleChange = viewModel::updateTitle,
@@ -55,7 +54,7 @@ fun MomentDetailScreen(
         },
         onNavigateBack = onNavigateBack,
         showDeleteDialog = showDeleteDialog,
-        onDismissDeleteDialog = { showDeleteDialog = false }
+        onDismissDeleteDialog = { showDeleteDialog = false },
     )
 }
 
@@ -117,8 +116,8 @@ fun MomentDetailScreenContent(
                         ) {
                             if (uiState.isSaving) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp).testTag("SAVING_INDICATOR"), 
-                                    strokeWidth = 2.dp
+                                    modifier = Modifier.size(16.dp).testTag("SAVING_INDICATOR"),
+                                    strokeWidth = 2.dp,
                                 )
                             } else {
                                 Text(
@@ -156,8 +155,8 @@ fun MomentDetailScreenContent(
             }
         } else if (uiState.error != null) {
             Box(
-                modifier = Modifier.fillMaxSize().testTag("ERROR_CONTAINER"), 
-                contentAlignment = Alignment.Center
+                modifier = Modifier.fillMaxSize().testTag("ERROR_CONTAINER"),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
             }
@@ -228,9 +227,9 @@ fun MomentDetailScreenContent(
                                         modifier = Modifier.testTag("MOOD_CHIP"),
                                         colors = SuggestionChipDefaults.suggestionChipColors(
                                             labelColor = MaterialTheme.colorScheme.primary,
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                                         ),
-                                        border = null
+                                        border = null,
                                     )
                                 }
 
@@ -249,7 +248,7 @@ fun MomentDetailScreenContent(
                                                 ),
                                                 border = null,
                                                 shape = RoundedCornerShape(12.dp),
-                                                modifier = Modifier.testTag("TAG_CHIP_$tag")
+                                                modifier = Modifier.testTag("TAG_CHIP_$tag"),
                                             )
                                         }
                                     }

@@ -1,6 +1,5 @@
 package com.dailybliss.app.presentation
 
-import app.cash.turbine.test
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
@@ -13,7 +12,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CalendarViewModelTest {
@@ -28,7 +26,7 @@ class CalendarViewModelTest {
         Dispatchers.setMain(testDispatcher)
         momentRepository = FakeMomentRepository()
         getAllMomentsUseCase = GetAllMomentsUseCase(momentRepository)
-        
+
         viewModel = CalendarViewModel(getAllMomentsUseCase)
     }
 
@@ -48,7 +46,7 @@ class CalendarViewModelTest {
         val initialMonth = viewModel.uiState.value.currentMonth
         viewModel.nextMonth()
         advanceUntilIdle()
-        
+
         val expectedMonth = initialMonth.plus(1, DateTimeUnit.MONTH)
         assertEquals(expectedMonth.year, viewModel.uiState.value.currentMonth.year)
         assertEquals(expectedMonth.month, viewModel.uiState.value.currentMonth.month)
@@ -59,7 +57,7 @@ class CalendarViewModelTest {
         val initialMonth = viewModel.uiState.value.currentMonth
         viewModel.previousMonth()
         advanceUntilIdle()
-        
+
         val expectedMonth = initialMonth.minus(1, DateTimeUnit.MONTH)
         assertEquals(expectedMonth.year, viewModel.uiState.value.currentMonth.year)
         assertEquals(expectedMonth.month, viewModel.uiState.value.currentMonth.month)
@@ -70,10 +68,10 @@ class CalendarViewModelTest {
         val tz = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(tz).date
         val yesterday = today.minus(1, DateTimeUnit.DAY)
-        
+
         momentRepository.insertMoment(Moment(title = "T1", content = "C", createdAt = today.atStartOfDayIn(tz)))
         momentRepository.insertMoment(Moment(title = "T2", content = "C", createdAt = yesterday.atStartOfDayIn(tz)))
-        
+
         advanceUntilIdle()
         assertEquals(2, viewModel.uiState.value.currentStreak)
     }
@@ -84,10 +82,10 @@ class CalendarViewModelTest {
         val today = Clock.System.now().toLocalDateTime(tz).date
         val yesterday = today.minus(1, DateTimeUnit.DAY)
         val dayBefore = yesterday.minus(1, DateTimeUnit.DAY)
-        
+
         momentRepository.insertMoment(Moment(title = "T1", content = "C", createdAt = yesterday.atStartOfDayIn(tz)))
         momentRepository.insertMoment(Moment(title = "T2", content = "C", createdAt = dayBefore.atStartOfDayIn(tz)))
-        
+
         advanceUntilIdle()
         assertEquals(2, viewModel.uiState.value.currentStreak)
     }
@@ -97,9 +95,9 @@ class CalendarViewModelTest {
         val tz = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(tz).date
         val threeDaysAgo = today.minus(3, DateTimeUnit.DAY)
-        
+
         momentRepository.insertMoment(Moment(title = "T1", content = "C", createdAt = threeDaysAgo.atStartOfDayIn(tz)))
-        
+
         advanceUntilIdle()
         assertEquals(0, viewModel.uiState.value.currentStreak)
     }
@@ -112,5 +110,4 @@ class CalendarViewModelTest {
     }
 }
 
-private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = 
-    kotlinx.datetime.LocalDateTime(this.year, this.month, this.dayOfMonth, 0, 0, 0, 0).toInstant(tz)
+private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = kotlinx.datetime.LocalDateTime(this.year, this.month, this.dayOfMonth, 0, 0, 0, 0).toInstant(tz)

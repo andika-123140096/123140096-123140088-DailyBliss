@@ -1,6 +1,5 @@
 package com.dailybliss.app.presentation
 
-import app.cash.turbine.test
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetAllMomentsUseCase
@@ -28,7 +27,7 @@ class CalendarViewModelDeepTest {
         Dispatchers.setMain(testDispatcher)
         momentRepository = FakeMomentRepository()
         getAllMomentsUseCase = GetAllMomentsUseCase(momentRepository)
-        
+
         viewModel = CalendarViewModel(getAllMomentsUseCase)
     }
 
@@ -43,9 +42,9 @@ class CalendarViewModelDeepTest {
         val date = viewModel.uiState.value.currentMonth.plus(5, DateTimeUnit.DAY)
         val moment = Moment(title = "Happy Day", content = "C", mood = "😊 Happy", createdAt = date.atStartOfDayIn(tz))
         momentRepository.insertMoment(moment)
-        
+
         advanceUntilIdle()
-        
+
         val calendarDay = viewModel.uiState.value.days.find { it.date == date }
         assertEquals("😊", calendarDay?.mood)
         assertTrue(calendarDay?.hasMoments == true)
@@ -56,12 +55,12 @@ class CalendarViewModelDeepTest {
         val tz = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(tz).date
         val dayBeforeYesterday = today.minus(2, DateTimeUnit.DAY)
-        
+
         momentRepository.insertMoment(Moment(title = "T1", content = "C", createdAt = today.atStartOfDayIn(tz)))
         momentRepository.insertMoment(Moment(title = "T2", content = "C", createdAt = dayBeforeYesterday.atStartOfDayIn(tz)))
-        
+
         advanceUntilIdle()
-        
+
         // Streak is 1 because yesterday was missing
         assertEquals(1, viewModel.uiState.value.currentStreak)
     }
@@ -74,5 +73,4 @@ class CalendarViewModelDeepTest {
     }
 }
 
-private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = 
-    kotlinx.datetime.LocalDateTime(this.year, this.month, this.dayOfMonth, 12, 0, 0, 0).toInstant(tz)
+private fun LocalDate.atStartOfDayIn(tz: TimeZone): Instant = kotlinx.datetime.LocalDateTime(this.year, this.month, this.dayOfMonth, 12, 0, 0, 0).toInstant(tz)

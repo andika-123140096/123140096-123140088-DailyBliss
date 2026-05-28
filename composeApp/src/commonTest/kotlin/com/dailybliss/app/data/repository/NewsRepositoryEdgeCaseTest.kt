@@ -38,16 +38,16 @@ class NewsRepositoryEdgeCaseTest {
             respond(
                 // Directly provide the non-breaking space character
                 content = """{"data": [{"title": "Prabowo${'\u00A0'}News", "contentSnippet": "Snippet", "link": "url", "isoDate": "$recentDate"}]}""",
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         }
         val httpClient = HttpClient(mockEngine) {
             install(ContentNegotiation) { json(json) }
         }
-        
+
         val repository = NewsRepositoryImpl(httpClient, database, locationTracker)
         val news = repository.getPrabowoNews()
-        
+
         assertEquals(1, news.size)
         // Check if the title is cleaned (should have regular space)
         val title = news[0].title

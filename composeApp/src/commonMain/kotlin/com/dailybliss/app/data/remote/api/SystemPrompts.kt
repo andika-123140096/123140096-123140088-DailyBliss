@@ -49,4 +49,11 @@ object SystemPrompts {
         - Hindari kata-kata klise yang terlalu umum.
         - Jangan gunakan format poin-poin.
         """
+
+    const val CHAT_TITLE_PROMPT = """
+        Buatlah judul yang sangat singkat (maksimal 3 kata) untuk sebuah percakapan berdasarkan pesan pertama pengguna berikut.
+        Judul harus merangkum topik utama tanpa kata-kata pembuka seperti "Judul:".
+        Contoh input: "Aku merasa lelah sekali hari ini karena pekerjaan menumpuk."
+        Contoh output: "Lelah karena Pekerjaan"
+        """
 }

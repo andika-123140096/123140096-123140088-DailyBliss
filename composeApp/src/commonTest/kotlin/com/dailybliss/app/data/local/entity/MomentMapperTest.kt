@@ -18,11 +18,11 @@ class MomentMapperTest {
             tags = "T1,T2",
             is_pinned = 1L,
             created_at = 1000L,
-            updated_at = 2000L
+            updated_at = 2000L,
         )
-        
+
         val domain = entity.toDomain()
-        
+
         assertEquals(1L, domain.id)
         assertEquals("T", domain.title)
         assertEquals(listOf("T1", "T2"), domain.tags)
@@ -42,7 +42,7 @@ class MomentMapperTest {
             tags = "",
             is_pinned = 0L,
             created_at = 1000L,
-            updated_at = 2000L
+            updated_at = 2000L,
         )
         val domain = entity.toDomain()
         assertEquals(emptyList(), domain.tags)
@@ -57,11 +57,11 @@ class MomentMapperTest {
             tags = listOf("A", "B"),
             isPinned = false,
             createdAt = Instant.fromEpochMilliseconds(3000L),
-            updatedAt = Instant.fromEpochMilliseconds(4000L)
+            updatedAt = Instant.fromEpochMilliseconds(4000L),
         )
-        
+
         val values = domain.toEntityValues()
-        
+
         assertEquals("T2", values.title)
         assertEquals("A,B", values.tags)
         assertEquals(0L, values.isPinned)
@@ -72,7 +72,7 @@ class MomentMapperTest {
     fun `List toDomainList should map all items`() {
         val entities = listOf(
             MomentEntity(1L, "T1", "C1", null, null, "", 0L, 0L, 0L),
-            MomentEntity(2L, "T2", "C2", null, null, "", 0L, 0L, 0L)
+            MomentEntity(2L, "T2", "C2", null, null, "", 0L, 0L, 0L),
         )
         val domains = entities.toDomainList()
         assertEquals(2, domains.size)

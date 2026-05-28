@@ -17,9 +17,9 @@ class JournalScreenTest {
     fun journalScreen_displaysList() {
         val moments = listOf(
             Moment(id = 1, title = "Momen 1", content = "Konten 1"),
-            Moment(id = 2, title = "Momen 2", content = "Konten 2")
+            Moment(id = 2, title = "Momen 2", content = "Konten 2"),
         )
-        
+
         composeTestRule.setContent {
             DailyBlissTheme {
                 JournalScreen(
@@ -28,7 +28,7 @@ class JournalScreenTest {
                     onClearSearch = {},
                     onNavigateToCreateMoment = {},
                     onNavigateToMomentDetail = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }
@@ -47,7 +47,7 @@ class JournalScreenTest {
                     onClearSearch = {},
                     onNavigateToCreateMoment = {},
                     onNavigateToMomentDetail = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }

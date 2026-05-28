@@ -43,7 +43,7 @@ fun JournalScreen(
         onClearSearch = viewModel::clearSearch,
         onNavigateToCreateMoment = onNavigateToCreateMoment,
         onNavigateToMomentDetail = onNavigateToMomentDetail,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
     )
 }
 
@@ -91,7 +91,7 @@ fun JournalScreenContent(
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 shape = RoundedCornerShape(16.dp),
                 elevation = FloatingActionButtonDefaults.elevation(4.dp),
-                modifier = Modifier.testTag("ADD_MOMENT_FAB")
+                modifier = Modifier.testTag("ADD_MOMENT_FAB"),
             ) {
                 Icon(Icons.Default.Add, "Add", modifier = Modifier.size(24.dp))
             }
@@ -117,7 +117,7 @@ fun JournalScreenContent(
                     if (query.isNotEmpty()) {
                         IconButton(
                             onClick = onClearSearch,
-                            modifier = Modifier.testTag("CLEAR_SEARCH_BUTTON")
+                            modifier = Modifier.testTag("CLEAR_SEARCH_BUTTON"),
                         ) {
                             Icon(Icons.Default.Clear, contentDescription = "Clear search")
                         }

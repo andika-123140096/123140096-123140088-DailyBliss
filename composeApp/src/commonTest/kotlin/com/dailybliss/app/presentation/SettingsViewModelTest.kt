@@ -37,10 +37,10 @@ class SettingsViewModelTest {
     fun `updateNickname should update preferences and uiState`() = runTest {
         viewModel.uiState.test {
             assertEquals("User", awaitItem().nickname)
-            
+
             viewModel.updateNickname("New Name")
             advanceUntilIdle()
-            
+
             assertEquals("New Name", awaitItem().nickname)
             assertEquals("New Name", userPreferences.nickname.value)
         }
@@ -64,8 +64,8 @@ class SettingsViewModelTest {
     fun `initial state should load summary and insight`() = runTest {
         userPreferences.setJournalSummary("Summary")
         userPreferences.setDailyInsight("Insight")
-        
-        // Re-create ViewModel to pick up new values if needed, 
+
+        // Re-create ViewModel to pick up new values if needed,
         // though it should be reactive if using Flow correctly.
         viewModel.uiState.test {
             advanceUntilIdle()

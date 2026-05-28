@@ -1,6 +1,5 @@
 package com.dailybliss.app.presentation
 
-import app.cash.turbine.test
 import com.dailybliss.app.core.util.FakeBackgroundAIProcessor
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
@@ -38,7 +37,7 @@ class MomentDetailViewModelTest {
     private val testMoment = Moment(
         id = 1L,
         title = "Original Title",
-        content = "Original Content"
+        content = "Original Content",
     )
 
     @BeforeTest
@@ -47,20 +46,20 @@ class MomentDetailViewModelTest {
         momentRepository = FakeMomentRepository()
         backgroundAIProcessor = FakeBackgroundAIProcessor()
         fileStorage = FakeFileStorage()
-        
+
         momentRepository.insertMoment(testMoment)
-        
+
         getMomentByIdUseCase = GetMomentByIdUseCase(momentRepository)
         deleteMomentUseCase = DeleteMomentUseCase(momentRepository, backgroundAIProcessor)
         saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor)
-        
+
         viewModel = MomentDetailViewModel(
             momentId = 1L,
             getMomentByIdUseCase = getMomentByIdUseCase,
             deleteMomentUseCase = deleteMomentUseCase,
             saveMomentUseCase = saveMomentUseCase,
             backgroundAIProcessor = backgroundAIProcessor,
-            fileStorage = fileStorage
+            fileStorage = fileStorage,
         )
         advanceUntilIdle()
     }
@@ -97,7 +96,7 @@ class MomentDetailViewModelTest {
         viewModel.updateTitle("Updated Title")
         viewModel.saveChanges()
         advanceUntilIdle()
-        
+
         assertFalse(viewModel.uiState.value.isDirty)
         val saved = momentRepository.getAllMoments().first().find { it.id == 1L }
         assertEquals("Updated Title", saved?.title)
@@ -110,7 +109,7 @@ class MomentDetailViewModelTest {
         var deletedCalled = false
         viewModel.deleteMoment { deletedCalled = true }
         advanceUntilIdle()
-        
+
         assertTrue(deletedCalled)
         assertTrue(momentRepository.getAllMoments().first().isEmpty())
         assertTrue(backgroundAIProcessor.updateGlobalSummaryCalled)

@@ -12,10 +12,10 @@ class GeminiDtoTest {
             candidates = listOf(
                 GeminiCandidate(
                     content = GeminiContent(
-                        parts = listOf(GeminiPart(text = "Hello World"))
-                    )
-                )
-            )
+                        parts = listOf(GeminiPart(text = "Hello World")),
+                    ),
+                ),
+            ),
         )
         assertEquals("Hello World", response.getTextContent())
     }
@@ -23,7 +23,7 @@ class GeminiDtoTest {
     @Test
     fun `isBlocked should return true if blockReason exists`() {
         val response = GeminiResponse(
-            promptFeedback = PromptFeedback(blockReason = "SAFETY")
+            promptFeedback = PromptFeedback(blockReason = "SAFETY"),
         )
         assertTrue(response.isBlocked())
     }
@@ -32,7 +32,7 @@ class GeminiDtoTest {
     fun `getErrorMessage should return error message or block reason`() {
         val errResponse = GeminiResponse(error = GeminiError(400, "Bad Request", "INVALID"))
         assertEquals("Bad Request", errResponse.getErrorMessage())
-        
+
         val blockedResponse = GeminiResponse(promptFeedback = PromptFeedback(blockReason = "SAFETY"))
         assertTrue(blockedResponse.getErrorMessage()?.contains("SAFETY") == true)
     }

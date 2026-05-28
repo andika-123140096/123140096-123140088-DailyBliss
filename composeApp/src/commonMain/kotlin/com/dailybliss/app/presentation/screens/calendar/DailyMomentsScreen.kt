@@ -11,16 +11,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dailybliss.app.presentation.components.LoadingIndicator
 import com.dailybliss.app.presentation.components.BlissCard
+import com.dailybliss.app.presentation.components.LoadingIndicator
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +34,7 @@ fun DailyMomentsScreen(
     DailyMomentsScreenContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
-        onNavigateToMomentDetail = onNavigateToMomentDetail
+        onNavigateToMomentDetail = onNavigateToMomentDetail,
     )
 }
 

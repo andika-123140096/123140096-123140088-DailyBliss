@@ -17,7 +17,7 @@ class ExtensionsTest {
     fun `Double formatCurrency should format correctly`() {
         val value = 15000.0
         assertEquals("15.000", value.formatCurrency())
-        
+
         val value2 = 1234567.0
         assertEquals("1.234.567", value2.formatCurrency())
     }

@@ -9,15 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,7 +34,7 @@ fun HomeScreen(
     HomeScreenContent(
         uiState = uiState,
         onNavigateToSettings = onNavigateToSettings,
-        onNavigateToMomentDetail = onNavigateToMomentDetail
+        onNavigateToMomentDetail = onNavigateToMomentDetail,
     )
 }
 
@@ -64,7 +61,7 @@ fun HomeScreenContent(
                 actions = {
                     IconButton(
                         onClick = onNavigateToSettings,
-                        modifier = Modifier.testTag("SETTINGS_BUTTON")
+                        modifier = Modifier.testTag("SETTINGS_BUTTON"),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -84,7 +81,7 @@ fun HomeScreenContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag("LOADING_INDICATOR"),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
@@ -122,7 +119,7 @@ fun HomeScreenContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = "Momen Terbaru",
@@ -137,7 +134,7 @@ fun HomeScreenContent(
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
-                                .testTag("MOMENT_ITEM_${moment.id}")
+                                .testTag("MOMENT_ITEM_${moment.id}"),
                         ) {
                             BlissCard(
                                 moment = moment,
@@ -160,13 +157,13 @@ private fun HeaderSection(nickname: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
         Text(
             text = "Halo, $nickname",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
-                letterSpacing = (-0.5).sp
+                letterSpacing = (-0.5).sp,
             ),
             color = MaterialTheme.colorScheme.onBackground,
         )
@@ -189,34 +186,34 @@ private fun ModernInsightSection(insight: String) {
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "BLISS INSIGHT",
                     style = MaterialTheme.typography.labelLarge.copy(
                         letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     ),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
-            
+
             Text(
                 text = insight,
                 style = MaterialTheme.typography.titleMedium.copy(
                     lineHeight = 28.sp,
                     fontWeight = FontWeight.Medium,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
     }
@@ -229,19 +226,19 @@ private fun EmptyStateSection() {
             .fillMaxWidth()
             .padding(top = 40.dp, bottom = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Surface(
             modifier = Modifier.size(80.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceVariant
+            color = MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Default.AutoAwesome,
                     null,
                     modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -249,11 +246,10 @@ private fun EmptyStateSection() {
         Text(
             text = "Belum ada memori.",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
-
 
 @Composable
 private fun BackgroundAIStatus() {
@@ -266,29 +262,29 @@ private fun BackgroundAIStatus() {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
                 Text(
                     text = "AI Blissie sedang bekerja...",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth().height(4.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
             )
         }
     }

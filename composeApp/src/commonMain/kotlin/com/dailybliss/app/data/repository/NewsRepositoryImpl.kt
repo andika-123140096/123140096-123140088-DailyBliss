@@ -19,9 +19,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.supervisorScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
@@ -185,7 +183,11 @@ class NewsRepositoryImpl(
                     val isPrabowo = title.contains("prabowo") || snippet.contains("prabowo")
 
                     val date = item.isoDate?.let {
-                        try { Instant.parse(it) } catch (_: Exception) { null }
+                        try {
+                            Instant.parse(it)
+                        } catch (_: Exception) {
+                            null
+                        }
                     }
                     val isRecent = if (date != null) {
                         (now - date.toEpochMilliseconds()) <= 7 * 24 * 60 * 60 * 1000L
@@ -222,7 +224,7 @@ class NewsRepositoryImpl(
         private const val KEY_CURRENCY = "cache_currency_v2"
 
         private const val TTL_WEATHER = 3600000L // 1 Jam
-        private const val TTL_NEWS = 14400000L    // 4 Jam
+        private const val TTL_NEWS = 14400000L // 4 Jam
         private const val TTL_CURRENCY = 43200000L // 12 Jam
     }
 }

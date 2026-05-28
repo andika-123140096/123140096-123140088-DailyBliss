@@ -11,14 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.presentation.components.CalendarView
 import org.koin.compose.viewmodel.koinViewModel
-
-import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +35,7 @@ fun CalendarScreen(
             viewModel.onDateSelected(date)
             val dateStr = "${date.year}-${date.monthNumber.toString().padStart(2, '0')}-${date.dayOfMonth.toString().padStart(2, '0')}"
             onNavigateToDailyMoments(dateStr)
-        }
+        },
     )
 }
 
@@ -84,7 +83,7 @@ fun CalendarScreenContent(
             ) {
                 IconButton(
                     onClick = onPreviousMonth,
-                    modifier = Modifier.testTag("PREV_MONTH_BUTTON")
+                    modifier = Modifier.testTag("PREV_MONTH_BUTTON"),
                 ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous")
                 }
@@ -92,12 +91,12 @@ fun CalendarScreenContent(
                 Text(
                     text = "${uiState.currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${uiState.currentMonth.year}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.testTag("CURRENT_MONTH_TEXT")
+                    modifier = Modifier.testTag("CURRENT_MONTH_TEXT"),
                 )
 
                 IconButton(
                     onClick = onNextMonth,
-                    modifier = Modifier.testTag("NEXT_MONTH_BUTTON")
+                    modifier = Modifier.testTag("NEXT_MONTH_BUTTON"),
                 ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next")
                 }

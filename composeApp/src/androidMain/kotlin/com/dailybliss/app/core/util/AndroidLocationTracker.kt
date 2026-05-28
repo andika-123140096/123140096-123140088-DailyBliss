@@ -40,7 +40,7 @@ class AndroidLocationTracker(private val context: PlatformContext) : LocationTra
         } catch (e: Exception) {
             null
         } ?: return null
-        
+
         var bestLocation: android.location.Location? = null
 
         for (provider in providers) {

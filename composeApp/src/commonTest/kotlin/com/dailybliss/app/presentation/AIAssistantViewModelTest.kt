@@ -44,7 +44,7 @@ class AIAssistantViewModelTest {
 
             viewModel.sendMessage()
             advanceUntilIdle()
-            
+
             val stateAfterSend = expectMostRecentItem()
             assertEquals("", stateAfterSend.input)
             assertEquals(2, stateAfterSend.messages.size)

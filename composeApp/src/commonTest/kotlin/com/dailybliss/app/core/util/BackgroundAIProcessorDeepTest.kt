@@ -1,6 +1,5 @@
 package com.dailybliss.app.core.util
 
-import app.cash.turbine.test
 import com.dailybliss.app.data.local.datastore.FakeUserPreferences
 import com.dailybliss.app.data.repository.FakeAIRepository
 import com.dailybliss.app.data.repository.FakeMomentRepository
@@ -11,7 +10,6 @@ import kotlinx.coroutines.test.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackgroundAIProcessorDeepTest {
@@ -28,13 +26,13 @@ class BackgroundAIProcessorDeepTest {
         momentRepository = FakeMomentRepository()
         userPreferences = FakeUserPreferences()
         fileStorage = FakeFileStorage()
-        
+
         processor = BackgroundAIProcessorImpl(
             aiRepository = aiRepository,
             momentRepository = momentRepository,
             userPreferences = userPreferences,
             fileStorage = fileStorage,
-            applicationScope = testScope
+            applicationScope = testScope,
         )
     }
 

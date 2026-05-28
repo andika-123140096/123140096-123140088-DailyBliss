@@ -34,11 +34,11 @@ class HomeViewModelTest {
         momentRepository = FakeMomentRepository()
         userPreferences = FakeUserPreferences()
         backgroundAIProcessor = FakeBackgroundAIProcessor()
-        
+
         viewModel = HomeViewModel(
             momentRepository = momentRepository,
             userPreferences = userPreferences,
-            backgroundAIProcessor = backgroundAIProcessor
+            backgroundAIProcessor = backgroundAIProcessor,
         )
     }
 
@@ -56,13 +56,13 @@ class HomeViewModelTest {
         viewModel.uiState.test {
             advanceUntilIdle()
             val state = expectMostRecentItem()
-            
+
             assertEquals("Andika", state.nickname)
             assertEquals("Semangat!", state.dailyInsight)
             assertEquals(1, state.totalMoments)
             assertEquals(1, state.moodStats["😊"])
             assertEquals(false, state.isLoading)
-            
+
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -70,7 +70,7 @@ class HomeViewModelTest {
     @Test
     fun `isAiProcessing should react to backgroundAIProcessor`() = runTest {
         backgroundAIProcessor.setProcessing(true)
-        
+
         viewModel.uiState.test {
             advanceUntilIdle()
             val state = expectMostRecentItem()

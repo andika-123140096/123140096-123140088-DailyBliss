@@ -16,7 +16,7 @@ class MomentDetailScreenTest {
     @Test
     fun momentDetailScreen_displaysMomentInfo() {
         val moment = Moment(title = "Detail Title", content = "Detail Content")
-        
+
         composeTestRule.setContent {
             DailyBlissTheme {
                 MomentDetailScreen(
@@ -26,7 +26,7 @@ class MomentDetailScreenTest {
                     onAddImage = {},
                     onSaveChanges = {},
                     onDeleteMoment = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }

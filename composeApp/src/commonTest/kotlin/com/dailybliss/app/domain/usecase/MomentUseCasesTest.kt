@@ -49,7 +49,7 @@ class MomentUseCasesTest {
     @Test
     fun `GetMomentByIdUseCase should return correct moment`() = runTest {
         val id = repository.insertMoment(Moment(title = "Target", content = "Content"))
-        
+
         getMomentByIdUseCase(id).test {
             val result = awaitItem()
             assertEquals("Target", result?.title)
@@ -60,9 +60,9 @@ class MomentUseCasesTest {
     @Test
     fun `SaveMomentUseCase should insert new moment and update AI summary`() = runTest {
         val moment = Moment(title = "New", content = "Content")
-        
+
         val id = saveMomentUseCase(moment)
-        
+
         assertTrue(id > 0)
         assertTrue(aiProcessor.updateGlobalSummaryCalled)
         repository.getMomentById(id).test {
@@ -75,9 +75,9 @@ class MomentUseCasesTest {
     fun `SaveMomentUseCase should update existing moment and update AI summary`() = runTest {
         val id = repository.insertMoment(Moment(title = "Old", content = "Content"))
         val moment = Moment(id = id, title = "Updated", content = "Content")
-        
+
         saveMomentUseCase(moment)
-        
+
         assertTrue(aiProcessor.updateGlobalSummaryCalled)
         repository.getMomentById(id).test {
             assertEquals("Updated", awaitItem()?.title)
@@ -88,9 +88,9 @@ class MomentUseCasesTest {
     @Test
     fun `DeleteMomentUseCase should remove moment and update AI summary`() = runTest {
         val id = repository.insertMoment(Moment(title = "Delete", content = "Content"))
-        
+
         deleteMomentUseCase(id)
-        
+
         assertTrue(aiProcessor.updateGlobalSummaryCalled)
         repository.getMomentById(id).test {
             assertEquals(null, awaitItem())
@@ -104,7 +104,7 @@ class MomentUseCasesTest {
         val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
         val createdAt = kotlinx.datetime.LocalDateTime(2023, 10, 27, 12, 0)
             .toInstant(tz)
-        
+
         repository.insertMoment(Moment(title = "On Date", content = "Content", createdAt = createdAt))
         repository.insertMoment(Moment(title = "Other Date", content = "Content", createdAt = Clock.System.now()))
 

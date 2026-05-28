@@ -18,7 +18,7 @@ class CalendarScreenTest {
     @Test
     fun calendarScreen_displaysCurrentMonth() {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        
+
         composeTestRule.setContent {
             DailyBlissTheme {
                 CalendarScreen(
@@ -26,7 +26,7 @@ class CalendarScreenTest {
                     onPreviousMonth = {},
                     onNextMonth = {},
                     onNavigateToDailyMoments = {},
-                    onNavigateBack = {}
+                    onNavigateBack = {},
                 )
             }
         }

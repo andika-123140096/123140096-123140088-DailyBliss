@@ -28,7 +28,7 @@ class NewsViewModel(
 
     fun loadNewsData() {
         if (_uiState.value.isLoading) return
-        
+
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
@@ -48,10 +48,12 @@ class NewsViewModel(
                                 val news = newsRepository.getPrabowoNews()
                                 val finalNews = if (news.isEmpty()) {
                                     listOf(NewsArticle("Info", "Belum ada berita Prabowo terbaru.", "", ""))
-                                } else news
+                                } else {
+                                    news
+                                }
                                 _uiState.update { it.copy(news = finalNews) }
                             } catch (e: Exception) {
-                                _uiState.update { 
+                                _uiState.update {
                                     it.copy(news = listOf(NewsArticle("Info", "Gagal memuat berita saat ini.", "", "")))
                                 }
                             }
@@ -64,9 +66,9 @@ class NewsViewModel(
                             } catch (e: Exception) {
                                 _uiState.update { it.copy(currencyRates = CurrencyRates(16000.0, 12000.0)) }
                             }
-                        }
+                        },
                     )
-                    
+
                     // Give a standard 500ms delay for visual feedback
                     delay(500)
                     jobs.joinAll()

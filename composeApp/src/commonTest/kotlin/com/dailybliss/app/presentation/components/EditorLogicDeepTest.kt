@@ -10,7 +10,7 @@ class EditorLogicDeepTest {
     fun `splitHtml with multiple nested image groups and text`() {
         val html = "T1<div class=\"image-group\"><img src=\"1\" /></div>T2<div class=\"image-group\"><img src=\"2\" /><img src=\"3\" /></div>T3"
         val parts = splitHtml(html)
-        
+
         assertEquals(5, parts.size)
         assertEquals("T1", (parts[0] as HtmlPart.Text).content)
         assertEquals(listOf("1"), (parts[1] as HtmlPart.ImageGroup).urls)
@@ -34,10 +34,10 @@ class EditorLogicDeepTest {
             HtmlPart.ImageGroup(listOf("url")),
             HtmlPart.Text("45"),
             HtmlPart.ImageGroup(listOf("url2", "url3")),
-            HtmlPart.Text("6")
+            HtmlPart.Text("6"),
         )
         val offsets = calculateTextOffsets(parts)
-        // Offsets: 
+        // Offsets:
         // 0: start of "123"
         // 3: end of "123", start of group1 (placeholder len 1)
         // 4: end of group1, start of "45"

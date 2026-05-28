@@ -51,7 +51,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
         onAddImage = viewModel::addImage,
         onSaveMoment = viewModel::saveMoment,
         onNavigateBack = onNavigateBack,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -84,7 +84,7 @@ fun CreateMomentScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .testTag("CREATE_MOMENT_SCREEN")
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
     ) {
         if (uiState.isLoading) {
             Box(modifier = Modifier.testTag("LOADING_INDICATOR")) {
@@ -101,7 +101,7 @@ fun CreateMomentScreenContent(
                 ) {
                     IconButton(
                         onClick = onNavigateBack,
-                        modifier = Modifier.testTag("BACK_BUTTON")
+                        modifier = Modifier.testTag("BACK_BUTTON"),
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
@@ -187,9 +187,9 @@ fun CreateMomentScreenContent(
                                     modifier = Modifier.testTag("MOOD_CHIP"),
                                     colors = SuggestionChipDefaults.suggestionChipColors(
                                         labelColor = MaterialTheme.colorScheme.primary,
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                                     ),
-                                    border = null
+                                    border = null,
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
@@ -206,7 +206,7 @@ fun CreateMomentScreenContent(
                                         ),
                                         border = null,
                                         shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.testTag("TAG_CHIP_$tag")
+                                        modifier = Modifier.testTag("TAG_CHIP_$tag"),
                                     )
                                 }
                             }

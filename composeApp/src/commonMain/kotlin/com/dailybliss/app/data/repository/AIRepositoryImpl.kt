@@ -1,6 +1,9 @@
 package com.dailybliss.app.data.repository
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import com.dailybliss.app.core.util.toBase64
+import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.remote.api.GeminiService
 import com.dailybliss.app.data.remote.api.SystemPrompts
@@ -8,28 +11,76 @@ import com.dailybliss.app.data.remote.dto.GeminiContent
 import com.dailybliss.app.data.remote.dto.GeminiInlineData
 import com.dailybliss.app.data.remote.dto.GeminiPart
 import com.dailybliss.app.domain.model.ChatMessage
+import com.dailybliss.app.domain.model.ChatSession
 import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.repository.MoodResult
+import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 class AIRepositoryImpl(
     private val geminiService: GeminiService,
     private val userPreferences: UserPreferences,
+    private val database: BlissDatabase,
+    private val fileStorage: FileStorage,
     private val applicationScope: CoroutineScope,
 ) : AIRepository {
     private val json = Json { ignoreUnknownKeys = true }
+    private val chatQueries = database.chatQueries
 
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     override val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
 
+    private val _currentSessionId = MutableStateFlow<Long?>(null)
+    override val currentSessionId: StateFlow<Long?> = _currentSessionId.asStateFlow()
+
     private val _isChatLoading = MutableStateFlow(false)
     override val isChatLoading: StateFlow<Boolean> = _isChatLoading.asStateFlow()
+
+    override fun getAllChatSessions(): Flow<List<ChatSession>> {
+        return chatQueries.getAllChatSessions { id, title, createdAt, updatedAt ->
+            ChatSession(id, title, createdAt, updatedAt)
+        }.asFlow().mapToList(Dispatchers.Default)
+    }
+
+    override fun loadSession(sessionId: Long) {
+        applicationScope.launch {
+            val entities = chatQueries.getMessagesBySessionId(sessionId).executeAsList()
+            val messages = entities.map { entity ->
+                val imageBytes = entity.image_path?.let { fileStorage.loadImage(it) }
+                ChatMessage(
+                    role = entity.role,
+                    text = entity.text_content,
+                    imageBytes = imageBytes,
+                    imagePath = entity.image_path,
+                    isError = entity.is_error != 0L,
+                )
+            }
+
+            _chatMessages.value = messages
+            _currentSessionId.value = sessionId
+        }
+    }
+
+    override suspend fun deleteSession(sessionId: Long) {
+        chatQueries.deleteChatSession(sessionId)
+        if (_currentSessionId.value == sessionId) {
+            startNewSession()
+        }
+    }
+
+    override fun startNewSession() {
+        _chatMessages.value = emptyList()
+        _currentSessionId.value = null
+        _isChatLoading.value = false
+    }
 
     override suspend fun chat(messages: List<ChatMessage>): String {
         val geminiContents = mapToGeminiContents(messages)
@@ -41,25 +92,60 @@ class AIRepositoryImpl(
     }
 
     override fun sendMessage(text: String, imageBytes: ByteArray?) {
-        val userMessage = ChatMessage(
-            role = "user",
-            text = text.trim(),
-            imageBytes = imageBytes,
-        )
-
-        val placeholderModelMessage = ChatMessage(role = "model", text = "")
-
-        _chatMessages.update { it + userMessage + placeholderModelMessage }
-        _isChatLoading.value = true
-
         applicationScope.launch {
+            var sessionId = _currentSessionId.value
+            val now = Clock.System.now().toEpochMilliseconds()
+
+            if (sessionId == null) {
+                // Create new session
+                val title = generateChatTitle(text) ?: text.take(30).ifBlank { "Gambar" }
+                chatQueries.insertChatSession(title, now, now)
+                sessionId = chatQueries.lastInsertId().executeAsOne()
+                _currentSessionId.value = sessionId
+            }
+
+            val imagePath = imageBytes?.let { fileStorage.saveImage(it) }
+
+            val userMessage = ChatMessage(
+                role = "user",
+                text = text.trim(),
+                imageBytes = imageBytes,
+                imagePath = imagePath,
+            )
+
+            // Save user message
+            chatQueries.insertChatMessage(
+                session_id = sessionId!!,
+                role = userMessage.role,
+                text_content = userMessage.text,
+                image_path = userMessage.imagePath,
+                is_error = 0,
+                created_at = now,
+            )
+            chatQueries.updateChatSessionTimestamp(now, sessionId)
+
+            val placeholderModelMessage = ChatMessage(role = "model", text = "")
+            _chatMessages.update { it + userMessage + placeholderModelMessage }
+            _isChatLoading.value = true
+
             yield() // Ensure test dispatcher can switch to this coroutine
             var attempt = 1
             while (true) {
                 try {
-                    // Send history excluding the placeholder (last message)
                     val history = _chatMessages.value.dropLast(1)
                     val fullResponse = chat(history)
+
+                    val modelMessage = ChatMessage(role = "model", text = fullResponse)
+                    
+                    // Save model message
+                    chatQueries.insertChatMessage(
+                        session_id = sessionId,
+                        role = modelMessage.role,
+                        text_content = modelMessage.text,
+                        image_path = null,
+                        is_error = 0,
+                        created_at = Clock.System.now().toEpochMilliseconds(),
+                    )
 
                     _chatMessages.update { messages ->
                         val updated = messages.toMutableList()
@@ -93,8 +179,16 @@ class AIRepositoryImpl(
     }
 
     override fun clearChat() {
-        _chatMessages.value = emptyList()
-        _isChatLoading.value = false
+        startNewSession()
+    }
+
+    private suspend fun generateChatTitle(firstMessage: String): String? {
+        val parts = listOf(GeminiPart(text = firstMessage))
+        return geminiService
+            .generateContent(
+                parts = parts,
+                systemPrompt = SystemPrompts.CHAT_TITLE_PROMPT,
+            ).getOrNull()?.trim()?.removeSurrounding("\"")
     }
 
     override suspend fun analyzeMood(content: String, imageBytes: ByteArray?): MoodResult? {

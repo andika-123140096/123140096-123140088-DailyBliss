@@ -28,6 +28,9 @@ sealed interface Route {
     data object Settings : Route
 
     @Serializable
+    data object ChatHistory : Route
+
+    @Serializable
     data class DailyMoments(val dateStr: String) : Route
 }
 
@@ -47,6 +50,8 @@ interface NavigationActions {
     fun navigateToMomentDetail(momentId: Long)
 
     fun navigateToAIAssistant()
+
+    fun navigateToChatHistory()
 
     fun navigateToSettings()
 

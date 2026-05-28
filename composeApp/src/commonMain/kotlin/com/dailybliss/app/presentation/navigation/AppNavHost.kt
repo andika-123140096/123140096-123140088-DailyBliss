@@ -18,7 +18,6 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -30,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentScreen
 import com.dailybliss.app.presentation.screens.ai.AIAssistantScreen
+import com.dailybliss.app.presentation.screens.ai.ChatHistoryScreen
 import com.dailybliss.app.presentation.screens.calendar.CalendarScreen
 import com.dailybliss.app.presentation.screens.calendar.DailyMomentsScreen
 import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
@@ -49,6 +49,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
         Route.MomentDetail::class,
         Route.Settings::class,
         Route.DailyMoments::class,
+        Route.ChatHistory::class,
     )
 
     val showBottomBar = hideBottomBarScreens.none { route ->
@@ -267,6 +268,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                 composable<Route.AIAssistant> {
                     AIAssistantScreen(
                         onNavigateBack = { actions.navigateBack() },
+                        onNavigateToHistory = { actions.navigateToChatHistory() },
+                    )
+                }
+
+                composable<Route.ChatHistory> {
+                    ChatHistoryScreen(
+                        onNavigateBack = { actions.navigateBack() },
                     )
                 }
 
@@ -341,6 +349,10 @@ internal class NavigationActionsImpl(private val navController: NavHostControlle
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    override fun navigateToChatHistory() {
+        navController.navigate(Route.ChatHistory)
     }
 
     override fun navigateToSettings() {
