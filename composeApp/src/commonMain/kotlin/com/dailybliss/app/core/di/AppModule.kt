@@ -8,13 +8,11 @@ import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.local.datastore.create
+import com.dailybliss.app.data.remote.api.CurrencyService
 import com.dailybliss.app.data.remote.api.GeminiService
-import com.dailybliss.app.data.repository.AIRepositoryImpl
-import com.dailybliss.app.data.repository.MomentRepositoryImpl
-import com.dailybliss.app.data.repository.NewsRepositoryImpl
-import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.domain.repository.MomentRepository
-import com.dailybliss.app.domain.repository.NewsRepository
+import com.dailybliss.app.data.remote.api.WeatherService
+import com.dailybliss.app.data.repository.*
+import com.dailybliss.app.domain.repository.*
 import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
@@ -50,6 +48,8 @@ val coreModule = module {
 val networkModule = module {
     single { HttpClientFactory.create(enableLogging = true) }
     singleOf(::GeminiService)
+    singleOf(::WeatherService)
+    singleOf(::CurrencyService)
 }
 
 // ==================== DATABASE MODULE ====================
@@ -72,8 +72,10 @@ val preferencesModule = module {
 
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
-    singleOf(::AIRepositoryImpl) bind AIRepository::class
     singleOf(::NewsRepositoryImpl) bind NewsRepository::class
+    singleOf(::WeatherRepositoryImpl) bind WeatherRepository::class
+    singleOf(::CurrencyRepositoryImpl) bind CurrencyRepository::class
+    singleOf(::AIRepositoryImpl) bind AIRepository::class
 }
 
 // ==================== USE CASE MODULE ====================

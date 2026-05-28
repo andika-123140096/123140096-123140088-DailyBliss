@@ -72,9 +72,10 @@ fun AIAssistantScreenContent(
         onResult = { bytesList -> onImageSelected(bytesList.firstOrNull()) },
     )
 
-    LaunchedEffect(uiState.messages.size) {
+    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            val targetIndex = if (uiState.isLoading) uiState.messages.size else uiState.messages.size - 1
+            listState.animateScrollToItem(targetIndex)
         }
     }
 

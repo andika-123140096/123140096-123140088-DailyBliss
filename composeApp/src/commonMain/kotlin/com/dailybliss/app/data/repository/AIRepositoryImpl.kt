@@ -7,13 +7,11 @@ import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.remote.api.GeminiService
 import com.dailybliss.app.data.remote.api.SystemPrompts
-import com.dailybliss.app.data.remote.dto.GeminiContent
-import com.dailybliss.app.data.remote.dto.GeminiInlineData
-import com.dailybliss.app.data.remote.dto.GeminiPart
+import com.dailybliss.app.data.remote.api.AITools
+import com.dailybliss.app.data.remote.dto.*
 import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.domain.model.ChatSession
-import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.domain.repository.MoodResult
+import com.dailybliss.app.domain.repository.*
 import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,17 +20,25 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 
 class AIRepositoryImpl(
     private val geminiService: GeminiService,
     private val userPreferences: UserPreferences,
     private val database: BlissDatabase,
     private val fileStorage: FileStorage,
+    private val momentRepository: MomentRepository,
+    private val newsRepository: NewsRepository,
+    private val weatherRepository: WeatherRepository,
+    private val currencyRepository: CurrencyRepository,
     private val applicationScope: CoroutineScope,
 ) : AIRepository {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { 
+        ignoreUnknownKeys = true 
+        encodeDefaults = true
+    }
     private val chatQueries = database.chatQueries
 
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
@@ -82,28 +88,22 @@ class AIRepositoryImpl(
         _isChatLoading.value = false
     }
 
-    override suspend fun chat(messages: List<ChatMessage>): String {
+    override suspend fun chat(
+        messages: List<ChatMessage>,
+        tools: List<GeminiTool>?
+    ): GeminiResponse {
         val geminiContents = mapToGeminiContents(messages)
         return geminiService
             .generateChat(
                 contents = geminiContents,
                 systemPrompt = getDynamicSystemPrompt(),
+                tools = tools
             ).getOrThrow()
     }
 
     override fun sendMessage(text: String, imageBytes: ByteArray?) {
         applicationScope.launch {
-            var sessionId = _currentSessionId.value
             val now = Clock.System.now().toEpochMilliseconds()
-
-            if (sessionId == null) {
-                // Create new session
-                val title = generateChatTitle(text) ?: text.take(30).ifBlank { "Gambar" }
-                chatQueries.insertChatSession(title, now, now)
-                sessionId = chatQueries.lastInsertId().executeAsOne()
-                _currentSessionId.value = sessionId
-            }
-
             val imagePath = imageBytes?.let { fileStorage.saveImage(it) }
 
             val userMessage = ChatMessage(
@@ -113,67 +113,110 @@ class AIRepositoryImpl(
                 imagePath = imagePath,
             )
 
-            // Save user message
-            chatQueries.insertChatMessage(
-                session_id = sessionId!!,
-                role = userMessage.role,
-                text_content = userMessage.text,
-                image_path = userMessage.imagePath,
-                is_error = 0,
-                created_at = now,
-            )
-            chatQueries.updateChatSessionTimestamp(now, sessionId)
-
+            // 1. Update UI immediately for instant feedback
             val placeholderModelMessage = ChatMessage(role = "model", text = "")
             _chatMessages.update { it + userMessage + placeholderModelMessage }
             _isChatLoading.value = true
 
-            yield() // Ensure test dispatcher can switch to this coroutine
-            var attempt = 1
-            while (true) {
-                try {
-                    val history = _chatMessages.value.dropLast(1)
-                    val fullResponse = chat(history)
+            try {
+                var sessionId = _currentSessionId.value
 
-                    val modelMessage = ChatMessage(role = "model", text = fullResponse)
+                // 2. Handle Session Creation in background
+                if (sessionId == null) {
+                    val title = text.take(30).ifBlank { "Gambar" }
+                    chatQueries.insertChatSession(title, now, now)
+                    sessionId = chatQueries.lastInsertId().executeAsOne()
+                    _currentSessionId.value = sessionId
                     
-                    // Save model message
-                    chatQueries.insertChatMessage(
-                        session_id = sessionId,
-                        role = modelMessage.role,
-                        text_content = modelMessage.text,
-                        image_path = null,
-                        is_error = 0,
-                        created_at = Clock.System.now().toEpochMilliseconds(),
-                    )
-
-                    _chatMessages.update { messages ->
-                        val updated = messages.toMutableList()
-                        if (updated.isNotEmpty()) {
-                            updated[updated.lastIndex] = updated.lastIndex.let {
-                                updated[it].copy(text = fullResponse, isError = false)
-                            }
+                    // Generate better title in background without blocking
+                    launch {
+                        generateChatTitle(text)?.let { betterTitle ->
+                            chatQueries.updateChatSessionTitle(betterTitle, now, sessionId)
                         }
-                        updated
                     }
-                    _isChatLoading.value = false
-                    break
-                } catch (e: Exception) {
-                    _chatMessages.update { messages ->
-                        val updated = messages.toMutableList()
-                        if (updated.isNotEmpty()) {
-                            updated[updated.lastIndex] = updated.lastIndex.let {
-                                updated[it].copy(
+                }
+
+                // 3. Save user message to DB
+                chatQueries.insertChatMessage(
+                    session_id = sessionId!!,
+                    role = userMessage.role,
+                    text_content = userMessage.text,
+                    image_path = userMessage.imagePath,
+                    is_error = 0,
+                    created_at = now,
+                )
+                chatQueries.updateChatSessionTimestamp(now, sessionId)
+
+                yield()
+                var attempt = 1
+                while (true) {
+                    try {
+                        val history = _chatMessages.value.dropLast(1)
+                        val messagesForAI = mapToGeminiContents(history).toMutableList()
+                        
+                        // Initial request with Tools
+                        var currentResponse: GeminiResponse = chat(messages = history, tools = AITools.ALL_TOOLS)
+                        
+                        var loopCount = 0
+                        while (currentResponse.getFunctionCall() != null && loopCount < 5) {
+                            val functionCall = currentResponse.getFunctionCall()!!
+                            messagesForAI.add(GeminiContent(role = "model", parts = listOf(GeminiPart(functionCall = functionCall))))
+                            
+                            val result = handleFunctionCall(functionCall)
+                            messagesForAI.add(GeminiContent(role = "function", parts = listOf(GeminiPart(functionResponse = GeminiFunctionResponse(functionCall.name, result)))))
+                            
+                            currentResponse = geminiService.generateChat(
+                                contents = messagesForAI,
+                                systemPrompt = getDynamicSystemPrompt(),
+                                tools = AITools.ALL_TOOLS
+                            ).getOrThrow()
+                            loopCount++
+                        }
+
+                        val fullResponse = currentResponse.getTextContent() ?: ""
+                        val modelMessage = ChatMessage(role = "model", text = fullResponse)
+                        
+                        // Save model response to DB
+                        chatQueries.insertChatMessage(
+                            session_id = sessionId,
+                            role = modelMessage.role,
+                            text_content = modelMessage.text,
+                            image_path = null,
+                            is_error = 0,
+                            created_at = Clock.System.now().toEpochMilliseconds(),
+                        )
+
+                        _chatMessages.update { messages ->
+                            val updated = messages.toMutableList()
+                            if (updated.isNotEmpty()) {
+                                updated[updated.lastIndex] = updated[updated.lastIndex].copy(text = fullResponse, isError = false)
+                            }
+                            updated
+                        }
+                        _isChatLoading.value = false
+                        break
+                    } catch (e: Exception) {
+                        _chatMessages.update { messages ->
+                            val updated = messages.toMutableList()
+                            if (updated.isNotEmpty()) {
+                                updated[updated.lastIndex] = updated[updated.lastIndex].copy(
                                     text = "Koneksi terputus (Percobaan $attempt): ${e.message}. Mencoba menghubungkan kembali...",
                                     isError = true,
                                 )
                             }
+                            updated
                         }
-                        updated
+                        attempt++
+                        if (attempt > 3) {
+                            _isChatLoading.value = false
+                            break
+                        }
+                        delay(2000)
                     }
-                    attempt++
-                    delay(3000)
                 }
+            } catch (e: Exception) {
+                _isChatLoading.value = false
+                // Handle session/db errors
             }
         }
     }
@@ -266,10 +309,68 @@ class AIRepositoryImpl(
     @Serializable
     private data class TagsResponse(val tags: List<String>)
 
+    private suspend fun handleFunctionCall(functionCall: GeminiFunctionCall): JsonObject {
+        val args = functionCall.args ?: JsonObject(emptyMap())
+        
+        return when (functionCall.name) {
+            "get_moments" -> {
+                val keyword = args["keyword"]?.jsonPrimitive?.contentOrNull
+                
+                val moments = momentRepository.getAllMoments().first().filter { 
+                    keyword == null || it.content.contains(keyword, ignoreCase = true) 
+                }
+                
+                buildJsonObject {
+                    put("moments", buildJsonArray {
+                        moments.take(5).forEach { moment ->
+                            addJsonObject {
+                                put("date", moment.createdAt.toString())
+                                put("content", moment.content)
+                                put("mood", moment.mood)
+                            }
+                        }
+                    })
+                }
+            }
+            "get_news" -> {
+                val news = newsRepository.getPrabowoNews()
+                
+                buildJsonObject {
+                    put("news", buildJsonArray {
+                        news.take(5).forEach { item ->
+                            addJsonObject {
+                                put("title", item.title)
+                                put("description", item.summary)
+                            }
+                        }
+                    })
+                }
+            }
+            "get_weather" -> {
+                val location = args["location"]?.jsonPrimitive?.contentOrNull ?: "Jakarta"
+                val weather = weatherRepository.getCurrentWeather(location)
+                buildJsonObject {
+                    put("result", weather)
+                }
+            }
+            "get_currency_rate" -> {
+                val base = args["base"]?.jsonPrimitive?.contentOrNull ?: "USD"
+                val target = args["target"]?.jsonPrimitive?.contentOrNull ?: "IDR"
+                val rate = currencyRepository.getExchangeRate(base, target)
+                buildJsonObject {
+                    put("result", rate)
+                }
+            }
+            else -> buildJsonObject { put("error", "Fungsi tidak ditemukan") }
+        }
+    }
+
     private suspend fun getDynamicSystemPrompt(): String {
         val nickname = userPreferences.nickname.first()
         val style = userPreferences.aiLanguageStyle.first()
         val journalSummary = userPreferences.journalSummary.first()
+        val nowInstant = Clock.System.now()
+        val currentDateTime = nowInstant.toString()
 
         val summaryContext = if (journalSummary.isNotBlank()) {
             """
@@ -282,6 +383,9 @@ class AIRepositoryImpl(
 
         return """
             ${SystemPrompts.CHAT_SYSTEM_PROMPT}
+
+            KONTEKS WAKTU SAAT INI: $currentDateTime
+            (Gunakan informasi ini untuk menjawab pertanyaan tentang 'hari ini', 'besok', atau 'saat ini').
 
             $summaryContext
 
@@ -329,7 +433,11 @@ class AIRepositoryImpl(
 
         GeminiContent(
             parts = parts,
-            role = if (chatMessage.role == "user") "user" else "model",
+            role = when (chatMessage.role) {
+                "user" -> "user"
+                "model" -> "model"
+                else -> "user" // Default to user if unknown
+            },
         )
     }
 }

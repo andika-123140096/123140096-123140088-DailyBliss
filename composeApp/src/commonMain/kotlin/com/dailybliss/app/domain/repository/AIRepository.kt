@@ -52,9 +52,12 @@ interface AIRepository {
     fun clearChat()
 
     /**
-     * Gets a full chat response from the AI assistant.
+     * Gets a full chat response from the AI assistant with optional tools.
      */
-    suspend fun chat(messages: List<ChatMessage>): String
+    suspend fun chat(
+        messages: List<ChatMessage>,
+        tools: List<com.dailybliss.app.data.remote.dto.GeminiTool>? = null
+    ): com.dailybliss.app.data.remote.dto.GeminiResponse
 
     /**
      * Analyzes the mood of a given journal content.
