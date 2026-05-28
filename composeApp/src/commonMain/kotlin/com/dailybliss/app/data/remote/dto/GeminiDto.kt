@@ -1,6 +1,5 @@
 package com.dailybliss.app.data.remote.dto
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 // ==================== REQUEST ====================
@@ -16,28 +15,28 @@ data class GeminiRequest(
 
 @Serializable
 data class GeminiTool(
-    val functionDeclarations: List<GeminiFunctionDeclaration>
+    val functionDeclarations: List<GeminiFunctionDeclaration>,
 )
 
 @Serializable
 data class GeminiFunctionDeclaration(
     val name: String,
     val description: String,
-    val parameters: GeminiFunctionParameters? = null
+    val parameters: GeminiFunctionParameters? = null,
 )
 
 @Serializable
 data class GeminiFunctionParameters(
     val type: String = "object",
     val properties: Map<String, GeminiFunctionProperty>? = null,
-    val required: List<String>? = null
+    val required: List<String>? = null,
 )
 
 @Serializable
 data class GeminiFunctionProperty(
     val type: String,
     val description: String? = null,
-    val enum: List<String>? = null
+    val enum: List<String>? = null,
 )
 
 @Serializable
@@ -58,13 +57,13 @@ data class GeminiPart(
 @Serializable
 data class GeminiFunctionCall(
     val name: String,
-    val args: kotlinx.serialization.json.JsonObject? = null
+    val args: kotlinx.serialization.json.JsonObject? = null,
 )
 
 @Serializable
 data class GeminiFunctionResponse(
     val name: String,
-    val response: kotlinx.serialization.json.JsonObject
+    val response: kotlinx.serialization.json.JsonObject,
 )
 
 @Serializable

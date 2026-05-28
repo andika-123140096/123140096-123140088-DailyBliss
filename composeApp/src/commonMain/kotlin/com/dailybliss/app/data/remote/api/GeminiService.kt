@@ -159,7 +159,7 @@ class GeminiService(
                     temperature = 0.85,
                     maxOutputTokens = 2000,
                 ),
-                tools = tools
+                tools = tools,
             )
 
             val response: HttpResponse = httpClient.post(url) {

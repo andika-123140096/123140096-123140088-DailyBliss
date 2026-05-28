@@ -56,7 +56,7 @@ interface AIRepository {
      */
     suspend fun chat(
         messages: List<ChatMessage>,
-        tools: List<com.dailybliss.app.data.remote.dto.GeminiTool>? = null
+        tools: List<com.dailybliss.app.data.remote.dto.GeminiTool>? = null,
     ): com.dailybliss.app.data.remote.dto.GeminiResponse
 
     /**

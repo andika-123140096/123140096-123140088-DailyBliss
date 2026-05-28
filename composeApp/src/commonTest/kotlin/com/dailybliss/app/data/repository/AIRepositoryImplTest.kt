@@ -1,5 +1,6 @@
 package com.dailybliss.app.data.repository
 
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import app.cash.turbine.test
 import com.dailybliss.app.core.network.FakeApiConfig
 import com.dailybliss.app.data.local.BlissDatabase
@@ -21,7 +22,6 @@ import kotlinx.serialization.json.Json
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AIRepositoryImplTest {
@@ -91,7 +91,7 @@ class AIRepositoryImplTest {
 
         repository.clearChat()
         advanceUntilIdle()
-        
+
         // clearChat should emit a new state
         assertEquals(0, repository.chatMessages.value.size)
     }

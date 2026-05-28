@@ -1,5 +1,6 @@
 package com.dailybliss.app.data.repository
 
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.dailybliss.app.core.network.FakeApiConfig
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.FakeUserPreferences
@@ -20,7 +21,6 @@ import kotlinx.serialization.json.Json
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AIRepositoryChatTest {

@@ -42,7 +42,7 @@ class ChatHistoryViewModelTest {
 
             val session = ChatSession(1, "Test Chat", 1000, 1000)
             aiRepository.addFakeSession(session)
-            
+
             assertEquals(listOf(session), awaitItem())
         }
     }
@@ -82,7 +82,7 @@ class ChatHistoryViewModelTest {
     fun `onDeleteSession should remove session from repository`() = runTest {
         val session = ChatSession(1, "Test Chat", 1000, 1000)
         aiRepository.addFakeSession(session)
-        
+
         viewModel.onDeleteSession(1L)
         advanceUntilIdle()
 

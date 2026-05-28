@@ -6,7 +6,7 @@ import com.dailybliss.app.domain.repository.CurrencyRepository
 import com.dailybliss.app.domain.repository.WeatherRepository
 
 class WeatherRepositoryImpl(
-    private val weatherService: WeatherService
+    private val weatherService: WeatherService,
 ) : WeatherRepository {
     override suspend fun getCurrentWeather(location: String): String {
         val (lat, lon) = when (location.lowercase()) {
@@ -29,19 +29,17 @@ class WeatherRepositoryImpl(
 }
 
 class CurrencyRepositoryImpl(
-    private val currencyService: CurrencyService
+    private val currencyService: CurrencyService,
 ) : CurrencyRepository {
-    override suspend fun getExchangeRate(base: String, target: String): String {
-        return try {
-            val rates = currencyService.getLatestRates(base.uppercase(), target.uppercase())
-            val rate = rates[target.uppercase()]
-            if (rate != null) {
-                "Kurs 1 $base = $rate $target"
-            } else {
-                "Kurs tidak ditemukan untuk $target"
-            }
-        } catch (e: Exception) {
-            "Gagal ambil data kurs: ${e.message}"
+    override suspend fun getExchangeRate(base: String, target: String): String = try {
+        val rates = currencyService.getLatestRates(base.uppercase(), target.uppercase())
+        val rate = rates[target.uppercase()]
+        if (rate != null) {
+            "Kurs 1 $base = $rate $target"
+        } else {
+            "Kurs tidak ditemukan untuk $target"
         }
+    } catch (e: Exception) {
+        "Gagal ambil data kurs: ${e.message}"
     }
 }

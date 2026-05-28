@@ -5,9 +5,9 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.dailybliss.app.core.util.toBase64
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.UserPreferences
+import com.dailybliss.app.data.remote.api.AITools
 import com.dailybliss.app.data.remote.api.GeminiService
 import com.dailybliss.app.data.remote.api.SystemPrompts
-import com.dailybliss.app.data.remote.api.AITools
 import com.dailybliss.app.data.remote.dto.*
 import com.dailybliss.app.domain.model.ChatMessage
 import com.dailybliss.app.domain.model.ChatSession
@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
@@ -35,8 +34,8 @@ class AIRepositoryImpl(
     private val currencyRepository: CurrencyRepository,
     private val applicationScope: CoroutineScope,
 ) : AIRepository {
-    private val json = Json { 
-        ignoreUnknownKeys = true 
+    private val json = Json {
+        ignoreUnknownKeys = true
         encodeDefaults = true
     }
     private val chatQueries = database.chatQueries
@@ -50,11 +49,9 @@ class AIRepositoryImpl(
     private val _isChatLoading = MutableStateFlow(false)
     override val isChatLoading: StateFlow<Boolean> = _isChatLoading.asStateFlow()
 
-    override fun getAllChatSessions(): Flow<List<ChatSession>> {
-        return chatQueries.getAllChatSessions { id, title, createdAt, updatedAt ->
-            ChatSession(id, title, createdAt, updatedAt)
-        }.asFlow().mapToList(Dispatchers.Default)
-    }
+    override fun getAllChatSessions(): Flow<List<ChatSession>> = chatQueries.getAllChatSessions { id, title, createdAt, updatedAt ->
+        ChatSession(id, title, createdAt, updatedAt)
+    }.asFlow().mapToList(Dispatchers.Default)
 
     override fun loadSession(sessionId: Long) {
         applicationScope.launch {
@@ -90,14 +87,14 @@ class AIRepositoryImpl(
 
     override suspend fun chat(
         messages: List<ChatMessage>,
-        tools: List<GeminiTool>?
+        tools: List<GeminiTool>?,
     ): GeminiResponse {
         val geminiContents = mapToGeminiContents(messages)
         return geminiService
             .generateChat(
                 contents = geminiContents,
                 systemPrompt = getDynamicSystemPrompt(),
-                tools = tools
+                tools = tools,
             ).getOrThrow()
     }
 
@@ -127,7 +124,7 @@ class AIRepositoryImpl(
                     chatQueries.insertChatSession(title, now, now)
                     sessionId = chatQueries.lastInsertId().executeAsOne()
                     _currentSessionId.value = sessionId
-                    
+
                     // Generate better title in background without blocking
                     launch {
                         generateChatTitle(text)?.let { betterTitle ->
@@ -153,29 +150,29 @@ class AIRepositoryImpl(
                     try {
                         val history = _chatMessages.value.dropLast(1)
                         val messagesForAI = mapToGeminiContents(history).toMutableList()
-                        
+
                         // Initial request with Tools
                         var currentResponse: GeminiResponse = chat(messages = history, tools = AITools.ALL_TOOLS)
-                        
+
                         var loopCount = 0
                         while (currentResponse.getFunctionCall() != null && loopCount < 5) {
                             val functionCall = currentResponse.getFunctionCall()!!
                             messagesForAI.add(GeminiContent(role = "model", parts = listOf(GeminiPart(functionCall = functionCall))))
-                            
+
                             val result = handleFunctionCall(functionCall)
                             messagesForAI.add(GeminiContent(role = "function", parts = listOf(GeminiPart(functionResponse = GeminiFunctionResponse(functionCall.name, result)))))
-                            
+
                             currentResponse = geminiService.generateChat(
                                 contents = messagesForAI,
                                 systemPrompt = getDynamicSystemPrompt(),
-                                tools = AITools.ALL_TOOLS
+                                tools = AITools.ALL_TOOLS,
                             ).getOrThrow()
                             loopCount++
                         }
 
                         val fullResponse = currentResponse.getTextContent() ?: ""
                         val modelMessage = ChatMessage(role = "model", text = fullResponse)
-                        
+
                         // Save model response to DB
                         chatQueries.insertChatMessage(
                             session_id = sessionId,
@@ -311,39 +308,45 @@ class AIRepositoryImpl(
 
     private suspend fun handleFunctionCall(functionCall: GeminiFunctionCall): JsonObject {
         val args = functionCall.args ?: JsonObject(emptyMap())
-        
+
         return when (functionCall.name) {
             "get_moments" -> {
                 val keyword = args["keyword"]?.jsonPrimitive?.contentOrNull
-                
-                val moments = momentRepository.getAllMoments().first().filter { 
-                    keyword == null || it.content.contains(keyword, ignoreCase = true) 
+
+                val moments = momentRepository.getAllMoments().first().filter {
+                    keyword == null || it.content.contains(keyword, ignoreCase = true)
                 }
-                
+
                 buildJsonObject {
-                    put("moments", buildJsonArray {
-                        moments.take(5).forEach { moment ->
-                            addJsonObject {
-                                put("date", moment.createdAt.toString())
-                                put("content", moment.content)
-                                put("mood", moment.mood)
+                    put(
+                        "moments",
+                        buildJsonArray {
+                            moments.take(5).forEach { moment ->
+                                addJsonObject {
+                                    put("date", moment.createdAt.toString())
+                                    put("content", moment.content)
+                                    put("mood", moment.mood)
+                                }
                             }
-                        }
-                    })
+                        },
+                    )
                 }
             }
             "get_news" -> {
                 val news = newsRepository.getPrabowoNews()
-                
+
                 buildJsonObject {
-                    put("news", buildJsonArray {
-                        news.take(5).forEach { item ->
-                            addJsonObject {
-                                put("title", item.title)
-                                put("description", item.summary)
+                    put(
+                        "news",
+                        buildJsonArray {
+                            news.take(5).forEach { item ->
+                                addJsonObject {
+                                    put("title", item.title)
+                                    put("description", item.summary)
+                                }
                             }
-                        }
-                    })
+                        },
+                    )
                 }
             }
             "get_weather" -> {

@@ -17,7 +17,7 @@ class FakeAIRepository : AIRepository {
     private val _isChatLoading = MutableStateFlow(false)
     override val isChatLoading: StateFlow<Boolean> = _isChatLoading.asStateFlow()
 
-    private val _sessions = MutableStateFlow<List<ChatSession>>(emptyList())
+    private val sessions = MutableStateFlow<List<ChatSession>>(emptyList())
     private val sessionMessages = mutableMapOf<Long, List<ChatMessage>>()
 
     var mockChatResponse: String = "Mock AI Response"
@@ -37,7 +37,7 @@ class FakeAIRepository : AIRepository {
         }
     }
 
-    override fun getAllChatSessions(): Flow<List<ChatSession>> = _sessions.asStateFlow()
+    override fun getAllChatSessions(): Flow<List<ChatSession>> = sessions.asStateFlow()
 
     override fun loadSession(sessionId: Long) {
         _currentSessionId.value = sessionId
@@ -45,7 +45,7 @@ class FakeAIRepository : AIRepository {
     }
 
     override suspend fun deleteSession(sessionId: Long) {
-        _sessions.update { it.filter { s -> s.id != sessionId } }
+        sessions.update { it.filter { s -> s.id != sessionId } }
         sessionMessages.remove(sessionId)
         if (_currentSessionId.value == sessionId) {
             startNewSession()
@@ -62,10 +62,10 @@ class FakeAIRepository : AIRepository {
         if (shouldThrowError) return
 
         if (_currentSessionId.value == null) {
-            val id = (_sessions.value.maxOfOrNull { it.id } ?: 0L) + 1
+            val id = (sessions.value.maxOfOrNull { it.id } ?: 0L) + 1
             val now = Clock.System.now().toEpochMilliseconds()
             val newSession = ChatSession(id, text.take(10), now, now)
-            _sessions.update { it + newSession }
+            sessions.update { it + newSession }
             _currentSessionId.value = id
         }
 
@@ -113,7 +113,7 @@ class FakeAIRepository : AIRepository {
 
     // Helper for testing
     fun addFakeSession(session: ChatSession, messages: List<ChatMessage> = emptyList()) {
-        _sessions.update { it + session }
+        sessions.update { it + session }
         sessionMessages[session.id] = messages
     }
 }

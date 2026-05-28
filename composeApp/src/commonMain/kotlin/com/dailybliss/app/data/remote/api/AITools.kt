@@ -13,14 +13,14 @@ object AITools {
                         properties = mapOf(
                             "date" to GeminiFunctionProperty(
                                 type = "string",
-                                description = "Tanggal momen dalam format YYYY-MM-DD (contoh: 2024-05-20)."
+                                description = "Tanggal momen dalam format YYYY-MM-DD (contoh: 2024-05-20).",
                             ),
                             "keyword" to GeminiFunctionProperty(
                                 type = "string",
-                                description = "Kata kunci untuk mencari di isi momen."
-                            )
-                        )
-                    )
+                                description = "Kata kunci untuk mencari di isi momen.",
+                            ),
+                        ),
+                    ),
                 ),
                 GeminiFunctionDeclaration(
                     name = "get_news",
@@ -30,10 +30,10 @@ object AITools {
                             "category" to GeminiFunctionProperty(
                                 type = "string",
                                 description = "Kategori berita (contoh: technology, business, sports).",
-                                enum = listOf("general", "technology", "business", "sports", "entertainment", "health", "science")
-                            )
-                        )
-                    )
+                                enum = listOf("general", "technology", "business", "sports", "entertainment", "health", "science"),
+                            ),
+                        ),
+                    ),
                 ),
                 GeminiFunctionDeclaration(
                     name = "get_weather",
@@ -42,11 +42,11 @@ object AITools {
                         properties = mapOf(
                             "location" to GeminiFunctionProperty(
                                 type = "string",
-                                description = "Nama kota atau lokasi (contoh: Jakarta, Tokyo)."
-                            )
+                                description = "Nama kota atau lokasi (contoh: Jakarta, Tokyo).",
+                            ),
                         ),
-                        required = listOf("location")
-                    )
+                        required = listOf("location"),
+                    ),
                 ),
                 GeminiFunctionDeclaration(
                     name = "get_currency_rate",
@@ -55,17 +55,17 @@ object AITools {
                         properties = mapOf(
                             "base" to GeminiFunctionProperty(
                                 type = "string",
-                                description = "Mata uang asal (contoh: USD, EUR, IDR)."
+                                description = "Mata uang asal (contoh: USD, EUR, IDR).",
                             ),
                             "target" to GeminiFunctionProperty(
                                 type = "string",
-                                description = "Mata uang tujuan (contoh: IDR, JPY, SGD)."
-                            )
+                                description = "Mata uang tujuan (contoh: IDR, JPY, SGD).",
+                            ),
                         ),
-                        required = listOf("base", "target")
-                    )
-                )
-            )
-        )
+                        required = listOf("base", "target"),
+                    ),
+                ),
+            ),
+        ),
     )
 }
