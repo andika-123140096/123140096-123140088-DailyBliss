@@ -6,10 +6,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +29,31 @@ fun ChatHistoryScreen(
     viewModel: ChatHistoryViewModel = koinViewModel(),
 ) {
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
+    var sessionToDelete by remember { mutableStateOf<ChatSession?>(null) }
+
+    if (sessionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { sessionToDelete = null },
+            title = { Text("Hapus Percakapan?") },
+            text = { Text("Apakah Anda yakin ingin menghapus percakapan '${sessionToDelete?.title}'?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sessionToDelete?.let { viewModel.onDeleteSession(it.id) }
+                        sessionToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { sessionToDelete = null }) {
+                    Text("Batal")
+                }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -64,7 +89,7 @@ fun ChatHistoryScreen(
                     ChatSessionItem(
                         session = session,
                         onClick = { viewModel.onSessionSelected(session, onNavigateBack) },
-                        onDelete = { viewModel.onDeleteSession(session.id) },
+                        onDelete = { sessionToDelete = session },
                     )
                 }
             }
@@ -81,14 +106,33 @@ fun ChatSessionItem(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Surface(
+                shape = androidx.compose.foundation.shape.CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                modifier = Modifier.size(40.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = session.title,

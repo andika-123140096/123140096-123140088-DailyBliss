@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,8 +12,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -41,6 +42,7 @@ fun JournalScreen(
         query = query,
         onSearchQueryChange = viewModel::onSearchQueryChange,
         onClearSearch = viewModel::clearSearch,
+        onLoadMore = viewModel::loadMore,
         onNavigateToCreateMoment = onNavigateToCreateMoment,
         onNavigateToMomentDetail = onNavigateToMomentDetail,
         onNavigateBack = onNavigateBack,
@@ -54,10 +56,32 @@ fun JournalScreenContent(
     query: String,
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
+    onLoadMore: () -> Unit,
     onNavigateToCreateMoment: () -> Unit,
     onNavigateToMomentDetail: (Long) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+
+    val isAtBottom by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (layoutInfo.totalItemsCount == 0) {
+                false
+            } else {
+                val lastVisibleItem = visibleItemsInfo.lastOrNull()
+                lastVisibleItem != null && (lastVisibleItem.index + 1 >= layoutInfo.totalItemsCount)
+            }
+        }
+    }
+
+    LaunchedEffect(isAtBottom) {
+        if (isAtBottom && uiState is JournalUiState.Success && !uiState.isLastPage) {
+            onLoadMore()
+        }
+    }
+
     Scaffold(
         modifier = Modifier.testTag("JOURNAL_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
@@ -137,6 +161,7 @@ fun JournalScreenContent(
                     is JournalUiState.Loading -> LoadingIndicator()
                     is JournalUiState.Success -> {
                         LazyColumn(
+                            state = listState,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("JOURNAL_LIST"),
@@ -152,6 +177,22 @@ fun JournalScreenContent(
                                         moment = moment,
                                         onClick = { onNavigateToMomentDetail(moment.id) },
                                     )
+                                }
+                            }
+
+                            if (!state.isLastPage) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp,
+                                        )
+                                    }
                                 }
                             }
                         }
