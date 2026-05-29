@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -42,6 +43,21 @@ fun MomentDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
+    var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
+    var targetOffset by remember { mutableStateOf(-1) }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is MomentDetailEvent.ImageInserted -> {
+                    targetOffset = event.index
+                }
+                is MomentDetailEvent.Error -> { /* Handle error */ }
+            }
+        }
+    }
+
     MomentDetailScreenContent(
         uiState = uiState,
         onTitleChange = viewModel::updateTitle,
@@ -55,6 +71,12 @@ fun MomentDetailScreen(
         onNavigateBack = onNavigateBack,
         showDeleteDialog = showDeleteDialog,
         onDismissDeleteDialog = { showDeleteDialog = false },
+        focusedValue = focusedValue,
+        onFocusedValueChange = { focusedValue = it },
+        updateFocusedValue = updateFocusedValue,
+        onUpdateFocusedValueChange = { updateFocusedValue = it },
+        targetOffset = targetOffset,
+        onTargetOffsetReset = { targetOffset = -1 },
     )
 }
 
@@ -71,9 +93,13 @@ fun MomentDetailScreenContent(
     onNavigateBack: () -> Unit,
     showDeleteDialog: Boolean,
     onDismissDeleteDialog: () -> Unit,
+    focusedValue: TextFieldValue?,
+    onFocusedValueChange: (TextFieldValue?) -> Unit,
+    updateFocusedValue: ((TextFieldValue) -> Unit)?,
+    onUpdateFocusedValueChange: (((TextFieldValue) -> Unit)?) -> Unit,
+    targetOffset: Int,
+    onTargetOffsetReset: () -> Unit,
 ) {
-    var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
-    var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
     var currentBlockOffset by remember { mutableStateOf(0) }
     var lastCursorPosition by remember { mutableStateOf(-1) }
@@ -262,12 +288,14 @@ fun MomentDetailScreenContent(
                                 onHtmlChange = onContentChange,
                                 activeStyles = activeStyles,
                                 onFocusValueChange = { value, styles, update, offset ->
-                                    focusedValue = value
+                                    onFocusedValueChange(value)
                                     activeStyles = styles
-                                    updateFocusedValue = update
+                                    onUpdateFocusedValueChange(update)
                                     currentBlockOffset = offset
+                                    if (targetOffset != -1) onTargetOffsetReset()
                                 },
                                 enabled = true,
+                                targetOffset = targetOffset,
                             )
                         }
 
@@ -284,7 +312,7 @@ fun MomentDetailScreenContent(
                                     activeStyles + style
                                 }
 
-                                focusedValue?.let { value ->
+                                focusedValue.let { value ->
                                     if (!value.selection.collapsed) {
                                         val spanStyle = when (style) {
                                             "b" -> SpanStyle(fontWeight = FontWeight.Bold)
@@ -298,11 +326,7 @@ fun MomentDetailScreenContent(
                                 }
                             },
                             onGalleryClick = {
-                                lastCursorPosition = if (focusedValue != null) {
-                                    currentBlockOffset + focusedValue!!.selection.start
-                                } else {
-                                    -1
-                                }
+                                lastCursorPosition = currentBlockOffset + focusedValue.selection.start
                                 imagePicker.launch()
                             },
                             modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),

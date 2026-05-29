@@ -22,6 +22,9 @@ class MomentDetailViewModel(
     private val _uiState = MutableStateFlow(MomentDetailUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _events = MutableSharedFlow<MomentDetailEvent>()
+    val events = _events.asSharedFlow()
+
     private var originalMoment: com.dailybliss.app.domain.model.Moment? = null
 
     init {
@@ -71,16 +74,19 @@ class MomentDetailViewModel(
                 "</div>"
 
             val currentContent = currentMoment.content
-            val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
-                currentContent + imagesHtml
-            } else {
-                // Find actual HTML index corresponding to text index
+            val newContent = run {
                 var htmlIdx = 0
                 var textCount = 0
-                while (htmlIdx < currentContent.length && textCount < insertionIndex) {
+                val targetCount = if (insertionIndex <= 0) 0 else if (insertionIndex == -1) Int.MAX_VALUE else insertionIndex
+
+                while (htmlIdx < currentContent.length && textCount < targetCount) {
                     if (currentContent[htmlIdx] == '<') {
                         val end = currentContent.indexOf('>', htmlIdx)
                         if (end != -1) {
+                            val tag = currentContent.substring(htmlIdx, end + 1)
+                            if (tag == "<br/>" || tag == "<br>" || tag == "<br />") {
+                                textCount++
+                            }
                             htmlIdx = end + 1
                             continue
                         }
@@ -88,7 +94,29 @@ class MomentDetailViewModel(
                     htmlIdx++
                     textCount++
                 }
-                currentContent.substring(0, htmlIdx) + imagesHtml + currentContent.substring(htmlIdx)
+
+                val before = currentContent.substring(0, htmlIdx)
+                val after = currentContent.substring(htmlIdx)
+
+                var trimmedBefore = before
+                // Strip trailing newlines from 'before'
+                while (true) {
+                    if (trimmedBefore.endsWith("<br/>")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 5)
+                    else if (trimmedBefore.endsWith("<br>")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 4)
+                    else if (trimmedBefore.endsWith("<br />")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 6)
+                    else break
+                }
+
+                var trimmedAfter = after
+                // Strip leading newlines from 'after'
+                while (true) {
+                    if (trimmedAfter.startsWith("<br/>")) trimmedAfter = trimmedAfter.substring(5)
+                    else if (trimmedAfter.startsWith("<br>")) trimmedAfter = trimmedAfter.substring(4)
+                    else if (trimmedAfter.startsWith("<br />")) trimmedAfter = trimmedAfter.substring(6)
+                    else break
+                }
+
+                trimmedBefore + imagesHtml + trimmedAfter
             }
 
             val updated = currentMoment.copy(
@@ -96,6 +124,7 @@ class MomentDetailViewModel(
                 imageUrl = extractFirstImage(newContent),
             )
             _uiState.update { it.copy(moment = updated, isDirty = checkIfDirty(updated)) }
+            _events.emit(MomentDetailEvent.ImageInserted(insertionIndex))
         }
     }
 
@@ -134,3 +163,8 @@ data class MomentDetailUiState(
     val isDirty: Boolean = false,
     val error: String? = null,
 )
+
+sealed interface MomentDetailEvent {
+    data class ImageInserted(val index: Int) : MomentDetailEvent
+    data class Error(val message: String) : MomentDetailEvent
+}

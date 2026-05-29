@@ -56,6 +56,7 @@ fun HtmlBlockItem(
     activeStyles: Set<String> = emptySet(),
     onFocusValueChange: (TextFieldValue, Set<String>, (TextFieldValue) -> Unit, Int) -> Unit = { _, _, _, _ -> },
     focusRequester: FocusRequester = remember { FocusRequester() },
+    targetOffset: Int = -1,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +71,19 @@ fun HtmlBlockItem(
             }
         }
         offsets
+    }
+
+    val focusRequesters = remember(parts.size) { List(parts.size) { FocusRequester() } }
+
+    LaunchedEffect(targetOffset, textOffsets) {
+        if (targetOffset != -1) {
+            val index = textOffsets.indexOfLast { it <= targetOffset }
+            if (index != -1 && index < focusRequesters.size && parts[index] is HtmlPart.Text) {
+                focusRequesters[index].requestFocus()
+            } else if (index != -1 && index + 1 < focusRequesters.size && parts[index + 1] is HtmlPart.Text) {
+                focusRequesters[index + 1].requestFocus()
+            }
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -87,7 +101,7 @@ fun HtmlBlockItem(
                         onFocusValueChange = { value, styles, update ->
                             onFocusValueChange(value, styles, update, textOffsets[index])
                         },
-                        focusRequester = if (index == 0) focusRequester else remember { FocusRequester() },
+                        focusRequester = if (index == 0 && parts.size == 1 && targetOffset == -1) focusRequester else focusRequesters[index],
                         isPlaceholderVisible = index == 0 && parts.size == 1,
                         enabled = enabled,
                     )
@@ -98,6 +112,23 @@ fun HtmlBlockItem(
                         onRemove = {
                             if (enabled) {
                                 val newParts = parts.toMutableList()
+
+                                // Ensure newline if image was between text parts that don't have one
+                                if (index > 0 && index < parts.size - 1) {
+                                    val before = parts[index - 1] as? HtmlPart.Text
+                                    val after = parts[index + 1] as? HtmlPart.Text
+                                    if (before != null && after != null) {
+                                        val beforeContent = before.content
+                                        val afterContent = after.content
+
+                                        if (beforeContent.isNotEmpty() && afterContent.isNotEmpty() &&
+                                            !beforeContent.endsWith("<br/>") && !afterContent.startsWith("<br/>")
+                                        ) {
+                                            newParts[index - 1] = HtmlPart.Text(beforeContent + "<br/>")
+                                        }
+                                    }
+                                }
+
                                 newParts.removeAt(index)
                                 onHtmlChange(joinParts(newParts))
                             }
