@@ -51,8 +51,8 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
                     MomentSortBy.UPDATED_DESC -> filtered.sortedByDescending { it.updatedAt }
                 }
 
-            val isLastPage = filtered.size <= pageSize
-            val paged = filtered.take(pageSize)
+            val isLastPage = filtered.size <= size
+            val paged = filtered.take(size)
 
             if (filtered.isEmpty()) {
                 JournalUiState.Empty(query)
@@ -67,16 +67,16 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
 
     fun onSearchQueryChange(newQuery: String) {
         _query.value = newQuery
-        _pageSize.value = 10
+        pageSize.value = 10
     }
 
     fun clearSearch() {
         _query.value = ""
-        _pageSize.value = 10
+        pageSize.value = 10
     }
 
     fun loadMore() {
-        _pageSize.value += 10
+        pageSize.value += 10
     }
 }
 
