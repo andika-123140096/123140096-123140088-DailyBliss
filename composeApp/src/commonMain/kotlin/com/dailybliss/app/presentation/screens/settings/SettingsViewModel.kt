@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,7 +15,10 @@ data class SettingsUiState(
     val dailyInsight: String = "",
 )
 
-class SettingsViewModel(private val userPreferences: UserPreferences) : ViewModel() {
+class SettingsViewModel(
+    private val userPreferences: UserPreferences,
+    private val backgroundAIProcessor: BackgroundAIProcessor,
+) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferences.nickname,
@@ -29,12 +33,14 @@ class SettingsViewModel(private val userPreferences: UserPreferences) : ViewMode
     fun updateNickname(name: String) {
         viewModelScope.launch {
             userPreferences.setNickname(name)
+            backgroundAIProcessor.updateGlobalSummary()
         }
     }
 
     fun updateAiStyle(style: String) {
         viewModelScope.launch {
             userPreferences.setAiLanguageStyle(style)
+            backgroundAIProcessor.updateGlobalSummary()
         }
     }
 

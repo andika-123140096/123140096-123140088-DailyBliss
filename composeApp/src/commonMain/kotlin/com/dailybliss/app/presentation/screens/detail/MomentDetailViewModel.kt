@@ -77,7 +77,7 @@ class MomentDetailViewModel(
             val newContent = run {
                 var htmlIdx = 0
                 var textCount = 0
-                val targetCount = if (insertionIndex <= 0) 0 else if (insertionIndex == -1) Int.MAX_VALUE else insertionIndex
+                val targetCount = if (insertionIndex == -1) Int.MAX_VALUE else if (insertionIndex < 0) 0 else insertionIndex
 
                 while (htmlIdx < currentContent.length && textCount < targetCount) {
                     if (currentContent[htmlIdx] == '<') {

@@ -3,7 +3,7 @@ package com.dailybliss.app
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.presentation.screens.home.JournalScreen
+import com.dailybliss.app.presentation.screens.home.JournalScreenContent
 import com.dailybliss.app.presentation.screens.home.JournalUiState
 import com.dailybliss.app.presentation.theme.DailyBlissTheme
 import org.junit.Rule
@@ -22,10 +22,12 @@ class JournalScreenTest {
 
         composeTestRule.setContent {
             DailyBlissTheme {
-                JournalScreen(
+                JournalScreenContent(
                     uiState = JournalUiState.Success(moments),
+                    query = "",
                     onSearchQueryChange = {},
                     onClearSearch = {},
+                    onLoadMore = {},
                     onNavigateToCreateMoment = {},
                     onNavigateToMomentDetail = {},
                     onNavigateBack = {},
@@ -41,10 +43,12 @@ class JournalScreenTest {
     fun journalScreen_displaysEmptyState() {
         composeTestRule.setContent {
             DailyBlissTheme {
-                JournalScreen(
+                JournalScreenContent(
                     uiState = JournalUiState.Empty("cari apa"),
+                    query = "",
                     onSearchQueryChange = {},
                     onClearSearch = {},
+                    onLoadMore = {},
                     onNavigateToCreateMoment = {},
                     onNavigateToMomentDetail = {},
                     onNavigateBack = {},

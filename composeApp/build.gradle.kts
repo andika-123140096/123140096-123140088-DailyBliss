@@ -209,3 +209,28 @@ sqldelight {
 dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "com.dailybliss.app.presentation.*",
+                    "com.dailybliss.app.AppKt*",
+                    "com.dailybliss.app.MainActivity*",
+                    "com.dailybliss.app.DailyBlissApplication*",
+                    "com.dailybliss.app.BuildConfig*",
+                    "com.dailybliss.app.core.di.*",
+                    "com.dailybliss.app.core.network.*",
+                    "*ComposableSingletons*",
+                    "com.dailybliss.app.data.repository.*",
+                    "com.dailybliss.app.data.remote.*",
+                    "com.dailybliss.app.data.local.*",
+                    "com.dailybliss.app.core.util.*",
+                    "dailybliss.composeapp.generated.*",
+                    "com.dailybliss.app.domain.repository.AIRepository${'$'}DefaultImpls"
+                )
+            }
+        }
+    }
+}

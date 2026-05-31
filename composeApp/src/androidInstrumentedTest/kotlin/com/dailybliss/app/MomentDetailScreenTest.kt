@@ -3,7 +3,7 @@ package com.dailybliss.app
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.presentation.screens.detail.MomentDetailScreen
+import com.dailybliss.app.presentation.screens.detail.MomentDetailScreenContent
 import com.dailybliss.app.presentation.screens.detail.MomentDetailUiState
 import com.dailybliss.app.presentation.theme.DailyBlissTheme
 import org.junit.Rule
@@ -19,14 +19,23 @@ class MomentDetailScreenTest {
 
         composeTestRule.setContent {
             DailyBlissTheme {
-                MomentDetailScreen(
+                MomentDetailScreenContent(
                     uiState = MomentDetailUiState(moment = moment),
                     onTitleChange = {},
                     onContentChange = {},
-                    onAddImage = {},
+                    onAddImage = { _, _ -> },
                     onSaveChanges = {},
                     onDeleteMoment = {},
+                    onConfirmDelete = {},
                     onNavigateBack = {},
+                    showDeleteDialog = false,
+                    onDismissDeleteDialog = {},
+                    focusedValue = null,
+                    onFocusedValueChange = {},
+                    updateFocusedValue = null,
+                    onUpdateFocusedValueChange = {},
+                    targetOffset = -1,
+                    onTargetOffsetReset = {}
                 )
             }
         }

@@ -16,8 +16,8 @@ class NewsScreenTest {
     @Test
     fun newsScreen_displaysNewsArticles() {
         val news = listOf(
-            NewsArticle(title = "Berita 1", summary = "S 1", url = "u1"),
-            NewsArticle(title = "Berita 2", summary = "S 2", url = "u2"),
+            NewsArticle(title = "Berita 1", summary = "S 1", imageUrl = "", url = "u1"),
+            NewsArticle(title = "Berita 2", summary = "S 2", imageUrl = "", url = "u2"),
         )
 
         composeTestRule.setContent {
