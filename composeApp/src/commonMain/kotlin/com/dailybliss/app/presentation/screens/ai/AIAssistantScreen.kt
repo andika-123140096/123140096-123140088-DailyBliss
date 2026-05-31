@@ -1,6 +1,7 @@
 package com.dailybliss.app.presentation.screens.ai
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,21 +39,48 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewModel = koinViewModel()) {
+fun AIAssistantScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    viewModel: AIAssistantViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    AIAssistantScreenContent(
+        uiState = uiState,
+        onInputChange = viewModel::onInputChange,
+        onSendMessage = viewModel::sendMessage,
+        onImageSelected = viewModel::onImageSelected,
+        onNavigateBack = onNavigateBack,
+        onNavigateToHistory = onNavigateToHistory,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AIAssistantScreenContent(
+    uiState: AIAssistantUiState,
+    onInputChange: (String) -> Unit,
+    onSendMessage: () -> Unit,
+    onImageSelected: (ByteArray?) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+) {
     val listState = rememberLazyListState()
 
     val imagePicker = rememberImagePickerLauncher(
-        onResult = { bytesList -> viewModel.onImageSelected(bytesList.firstOrNull()) },
+        onResult = { bytesList -> onImageSelected(bytesList.firstOrNull()) },
     )
 
-    LaunchedEffect(uiState.messages.size) {
+    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            val targetIndex = if (uiState.isLoading) uiState.messages.size else uiState.messages.size - 1
+            listState.animateScrollToItem(targetIndex)
         }
     }
 
     Scaffold(
+        modifier = Modifier.testTag("AI_ASSISTANT_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
@@ -74,8 +104,13 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("BACK_BUTTON")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToHistory, modifier = Modifier.testTag("HISTORY_BUTTON")) {
+                        Icon(Icons.Default.History, "History")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -100,7 +135,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                 } else {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().testTag("CHAT_LIST"),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
@@ -124,7 +159,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
             ) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     uiState.selectedImageBytes?.let { bytes ->
-                        Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                        Box(modifier = Modifier.padding(bottom = 8.dp).testTag("SELECTED_IMAGE_PREVIEW")) {
                             SubcomposeAsyncImage(
                                 model = bytes,
                                 contentDescription = null,
@@ -165,11 +200,12 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 }
                             }
                             IconButton(
-                                onClick = { viewModel.onImageSelected(null) },
+                                onClick = { onImageSelected(null) },
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .padding(4.dp)
-                                    .size(24.dp),
+                                    .size(24.dp)
+                                    .testTag("REMOVE_IMAGE_BUTTON"),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -185,9 +221,12 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                     ) {
-                        IconButton(onClick = { imagePicker.launch() }, modifier = Modifier.size(40.dp)) {
+                        IconButton(
+                            onClick = { imagePicker.launch() },
+                            modifier = Modifier.size(40.dp).testTag("GALLERY_BUTTON"),
+                        ) {
                             Icon(
-                                Icons.Default.AutoAwesome,
+                                Icons.Default.Image, // Changed to Image icon for clarity
                                 "Add Image",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
@@ -196,12 +235,18 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
 
                         androidx.compose.foundation.text.BasicTextField(
                             value = uiState.input,
-                            onValueChange = viewModel::onInputChange,
+                            onValueChange = onInputChange,
                             modifier = Modifier
                                 .weight(1f)
+                                .testTag("AI_INPUT_FIELD")
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    MaterialTheme.colorScheme.surfaceVariant,
                                     RoundedCornerShape(20.dp),
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(20.dp),
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -213,7 +258,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                     Text(
                                         "Ketik pesan...",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                                 innerTextField()
@@ -224,9 +269,9 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                         Spacer(modifier = Modifier.width(4.dp))
 
                         IconButton(
-                            onClick = { viewModel.sendMessage() },
+                            onClick = onSendMessage,
                             enabled = uiState.input.isNotBlank() || uiState.selectedImageBytes != null,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(40.dp).testTag("SEND_BUTTON"),
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.Send,
@@ -235,7 +280,7 @@ fun AIAssistantScreen(onNavigateBack: () -> Unit, viewModel: AIAssistantViewMode
                                 tint = if (uiState.input.isNotBlank() || uiState.selectedImageBytes != null) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
-                                    Color.Gray
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                 },
                             )
                         }

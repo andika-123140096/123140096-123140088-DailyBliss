@@ -15,6 +15,7 @@ data class NewsArticle(
     val summary: String,
     val imageUrl: String,
     val url: String,
+    val publishedAt: Long = 0L,
 )
 
 @Serializable

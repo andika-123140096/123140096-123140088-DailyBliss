@@ -2,58 +2,68 @@ package com.dailybliss.app.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailybliss.app.domain.model.CurrencyRates
-import com.dailybliss.app.domain.model.NewsArticle
-import com.dailybliss.app.domain.model.WeatherInfo
-import com.dailybliss.app.domain.repository.HomeRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.data.local.datastore.UserPreferences
+import com.dailybliss.app.domain.model.Moment
+import com.dailybliss.app.domain.repository.MomentRepository
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val weather: WeatherInfo? = null,
-    val news: List<NewsArticle> = emptyList(),
-    val currencyRates: CurrencyRates? = null,
+    val nickname: String = "",
+    val totalMoments: Int = 0,
+    val moodStats: Map<String, Int> = emptyMap(),
+    val recentMoments: List<Moment> = emptyList(),
+    val dailyInsight: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val isAiProcessing: Boolean = false,
 )
 
 class HomeViewModel(
-    private val homeRepository: HomeRepository,
+    private val momentRepository: MomentRepository,
+    private val userPreferences: UserPreferences,
+    private val backgroundAIProcessor: BackgroundAIProcessor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun loadHomeData() {
+    init {
+        loadData()
+    }
+
+    private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            try {
-                val weatherDeferred = async { homeRepository.getWeather() }
-                val newsDeferred = async { homeRepository.getPrabowoNews() }
-                val currencyDeferred = async { homeRepository.getCurrencyRates() }
+            _uiState.update { it.copy(isLoading = true) }
 
-                val weather = weatherDeferred.await()
-                val news = newsDeferred.await()
-                val currency = currencyDeferred.await()
+            // Combine flows for efficiency
+            combine(
+                userPreferences.nickname,
+                userPreferences.dailyInsight,
+                momentRepository.getAllMoments(),
+                backgroundAIProcessor.isProcessing,
+            ) { nickname, insight, moments, isAiProcessing ->
+                val moodCounts = moments.mapNotNull { it.mood?.split(" ")?.lastOrNull() }
+                    .groupingBy { it }
+                    .eachCount()
 
-                _uiState.update {
-                    it.copy(
-                        weather = weather,
-                        news = news,
-                        currencyRates = currency,
-                        isLoading = false,
-                    )
+                val finalInsight = if (insight.isNotBlank()) {
+                    insight
+                } else {
+                    "Mulai menulis jurnal hari ini untuk mendapatkan insight personal dari AI!"
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Gagal memuat data: ${e.message}",
-                    )
-                }
+
+                HomeUiState(
+                    nickname = nickname,
+                    totalMoments = moments.size,
+                    moodStats = moodCounts,
+                    recentMoments = moments.take(3),
+                    dailyInsight = finalInsight,
+                    isLoading = false,
+                    isAiProcessing = isAiProcessing,
+                )
+            }.collect { newState ->
+                _uiState.value = newState
             }
         }
     }

@@ -89,12 +89,19 @@ kotlin {
             // Coil
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
+
+            // Peekaboo
+            implementation(libs.peekaboo.image.picker)
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
+            implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.mockk)
+            implementation(libs.koin.test)
         }
 
         androidMain.dependencies {
@@ -103,6 +110,15 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.robolectric)
+                implementation(libs.androidx.compose.ui.test.junit4)
+                implementation(libs.androidx.compose.ui.test.manifest)
+            }
         }
 
         val androidInstrumentedTest by getting {
@@ -176,6 +192,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 sqldelight {
@@ -188,4 +208,29 @@ sqldelight {
 
 dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "com.dailybliss.app.presentation.*",
+                    "com.dailybliss.app.AppKt*",
+                    "com.dailybliss.app.MainActivity*",
+                    "com.dailybliss.app.DailyBlissApplication*",
+                    "com.dailybliss.app.BuildConfig*",
+                    "com.dailybliss.app.core.di.*",
+                    "com.dailybliss.app.core.network.*",
+                    "*ComposableSingletons*",
+                    "com.dailybliss.app.data.repository.*",
+                    "com.dailybliss.app.data.remote.*",
+                    "com.dailybliss.app.data.local.*",
+                    "com.dailybliss.app.core.util.*",
+                    "dailybliss.composeapp.generated.*",
+                    "com.dailybliss.app.domain.repository.AIRepository${'$'}DefaultImpls",
+                )
+            }
+        }
+    }
 }

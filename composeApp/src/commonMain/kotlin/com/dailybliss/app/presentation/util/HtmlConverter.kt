@@ -174,7 +174,7 @@ object HtmlConverter {
         return value.copy(annotatedString = newAnnotatedString)
     }
 
-    private fun isSimilarStyle(s1: SpanStyle, s2: SpanStyle): Boolean {
+    internal fun isSimilarStyle(s1: SpanStyle, s2: SpanStyle): Boolean {
         if (s1.fontWeight == FontWeight.Bold && s2.fontWeight == FontWeight.Bold) return true
         if (s1.fontStyle == FontStyle.Italic && s2.fontStyle == FontStyle.Italic) return true
         if (s1.textDecoration == TextDecoration.Underline && s2.textDecoration == TextDecoration.Underline) return true

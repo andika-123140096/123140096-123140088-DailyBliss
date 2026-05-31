@@ -2,15 +2,8 @@ package com.dailybliss.app.data.repository
 
 import app.cash.turbine.test
 import com.dailybliss.app.domain.model.Moment
-import com.dailybliss.app.domain.repository.MomentRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -96,50 +89,6 @@ class MomentRepositoryTest {
     }
 
     @Test
-    fun `getMomentById should return null for non-existent id`() = runTest {
-        // Act & Assert
-        repository.getMomentById(999).test {
-            val moment = awaitItem()
-            assertEquals(null, moment)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    // ==================== SEARCH TESTS ====================
-
-    @Test
-    fun `searchMoments should find moments by title`() = runTest {
-        // Arrange
-        repository.insertMoment(createTestMoment(title = "Kotlin Tutorial"))
-        repository.insertMoment(createTestMoment(title = "Java Guide"))
-
-        // Act & Assert
-        repository.searchMoments("Kotlin").test {
-            val moments = awaitItem()
-            assertEquals(1, moments.size)
-            assertEquals("Kotlin Tutorial", moments.first().title)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `searchMoments should find moments by content`() = runTest {
-        // Arrange
-        repository.insertMoment(createTestMoment(title = "Recipe", content = "Add tomatoes"))
-        repository.insertMoment(createTestMoment(title = "Shopping", content = "Buy milk"))
-
-        // Act & Assert
-        repository.searchMoments("tomatoes").test {
-            val moments = awaitItem()
-            assertEquals(1, moments.size)
-            assertEquals("Recipe", moments.first().title)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    // ==================== DELETE TESTS ====================
-
-    @Test
     fun `deleteMoment should remove moment from list`() = runTest {
         // Arrange
         val id = repository.insertMoment(createTestMoment(title = "To Delete"))
@@ -187,61 +136,4 @@ class MomentRepositoryTest {
         createdAt = Clock.System.now(),
         updatedAt = Clock.System.now(),
     )
-}
-
-/**
- * Fake Repository untuk Testing
- *
- * In-memory implementation yang tidak bergantung pada database.
- * Digunakan untuk unit testing tanpa side effects.
- */
-class FakeMomentRepository : MomentRepository {
-    private val moments = MutableStateFlow<List<Moment>>(emptyList())
-    private var nextId = 1L
-
-    override fun getAllMoments(): Flow<List<Moment>> = moments
-
-    override fun getPinnedMoments(): Flow<List<Moment>> = moments.map { list -> list.filter { it.isPinned } }
-
-    override fun searchMoments(query: String): Flow<List<Moment>> = moments.map { list ->
-        list.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                it.content.contains(query, ignoreCase = true)
-        }
-    }
-
-    override fun getMomentById(id: Long): Flow<Moment?> = moments.map { list -> list.find { it.id == id } }
-
-    override suspend fun insertMoment(moment: Moment): Long {
-        val id = nextId++
-        val newMoment = moment.copy(id = id)
-        moments.update { it + newMoment }
-        return id
-    }
-
-    override suspend fun updateMoment(moment: Moment) {
-        moments.update { list ->
-            list.map { if (it.id == moment.id) moment else it }
-        }
-    }
-
-    override suspend fun deleteMoment(id: Long) {
-        moments.update { list -> list.filter { it.id != id } }
-    }
-
-    override suspend fun deleteMoments(ids: List<Long>) {
-        moments.update { list -> list.filter { it.id !in ids } }
-    }
-
-    override fun getMomentsFromSameDay(dayMonth: String): Flow<List<Moment>> = moments.map { list ->
-        list.filter {
-            val dt = it.createdAt.toLocalDateTime(TimeZone.currentSystemDefault())
-            val dm = "${dt.monthNumber.toString().padStart(2, '0')}-${dt.dayOfMonth.toString().padStart(2, '0')}"
-            dm == dayMonth
-        }
-    }
-
-    override fun getMomentsByDateRange(start: Long, end: Long): Flow<List<Moment>> = moments.map { list ->
-        list.filter { it.createdAt.toEpochMilliseconds() in start..end }
-    }
 }

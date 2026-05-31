@@ -1,54 +1,53 @@
 package com.dailybliss.app.presentation.screens.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.dailybliss.app.core.util.formatCurrency
-import com.dailybliss.app.domain.model.CurrencyRates
-import com.dailybliss.app.domain.model.NewsArticle
-import com.dailybliss.app.domain.model.WeatherInfo
-import com.dailybliss.app.presentation.util.LocationPermissionEffect
+import com.dailybliss.app.presentation.components.BlissCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToMomentDetail: (Long) -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Minta izin lokasi dan muat data
-    LocationPermissionEffect(
-        onPermissionResult = {
-            viewModel.loadHomeData()
-        },
+    HomeScreenContent(
+        uiState = uiState,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToMomentDetail = onNavigateToMomentDetail,
     )
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreenContent(
+    uiState: HomeUiState,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToMomentDetail: (Long) -> Unit,
+) {
     Scaffold(
+        modifier = Modifier.testTag("HOME_SCREEN"),
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -56,12 +55,14 @@ fun HomeScreen(
                         "DailyBliss",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = (-0.5).sp,
                         ),
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettings) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.testTag("SETTINGS_BUTTON"),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
@@ -75,65 +76,75 @@ fun HomeScreen(
             )
         },
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.error != null) {
-                Text(
-                    text = uiState.error ?: "Terjadi kesalahan",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("LOADING_INDICATOR"),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .testTag("HOME_CONTENT_LIST"),
+                contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                // Greeting & Header Section
+                item {
+                    HeaderSection(nickname = uiState.nickname)
+                }
+
+                // AI Daily Insight Card (Refined & Modern)
+                item {
+                    ModernInsightSection(insight = uiState.dailyInsight)
+                }
+
+                // AI Processing Indicator
+                if (uiState.isAiProcessing) {
                     item {
-                        uiState.weather?.let {
-                            WeatherCard(it)
+                        BackgroundAIStatus()
+                    }
+                }
+
+                // Recent Memories Section
+                if (uiState.recentMoments.isNotEmpty()) {
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "Momen Terbaru",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
                         }
                     }
 
-                    item {
-                        uiState.currencyRates?.let {
-                            CurrencyCard(it)
+                    items(uiState.recentMoments) { moment ->
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .testTag("MOMENT_ITEM_${moment.id}"),
+                        ) {
+                            BlissCard(
+                                moment = moment,
+                                onClick = { onNavigateToMomentDetail(moment.id) },
+                            )
                         }
                     }
-
+                } else {
                     item {
-                        Text(
-                            text = "Berita Terbaru",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
-
-                    if (uiState.news.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 32.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "Tidak ada berita Prabowo saat ini.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-
-                    items(uiState.news) { article ->
-                        NewsItemCard(article)
+                        EmptyStateSection()
                     }
                 }
             }
@@ -142,148 +153,139 @@ fun HomeScreen(
 }
 
 @Composable
-fun WeatherCard(weather: WeatherInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = weather.city,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = weather.temperature,
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = "Angin: ${weather.windSpeed}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.Cloud,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        }
-    }
-}
-
-@Composable
-fun CurrencyCard(rates: CurrencyRates) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "USD / IDR",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = rates.usdToIdr.formatCurrency(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-
-            VerticalDivider(
-                modifier = Modifier.height(40.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
-            )
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "SGD / IDR",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = rates.sgdToIdr.formatCurrency(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun NewsItemCard(article: NewsArticle) {
-    val uriHandler = LocalUriHandler.current
-    Card(
+private fun HeaderSection(nickname: String) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                try {
-                    uriHandler.openUri(article.url)
-                } catch (ignore: Exception) {}
-            },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text = "Halo, $nickname",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.5).sp,
+            ),
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text = "Sudahkah kamu bersyukur hari ini?",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+        )
+    }
+}
+
+@Composable
+private fun ModernInsightSection(insight: String) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            AsyncImage(
-                model = article.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surface),
-                contentScale = ContentScale.Crop,
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = article.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = article.summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
+                    text = "BLISS INSIGHT",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        letterSpacing = 1.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
+
+            Text(
+                text = insight,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    lineHeight = 28.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                ),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 40.dp, bottom = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Surface(
+            modifier = Modifier.size(80.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.AutoAwesome,
+                    null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Belum ada memori.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun BackgroundAIStatus() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = "AI Blissie sedang bekerja...",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            )
         }
     }
 }

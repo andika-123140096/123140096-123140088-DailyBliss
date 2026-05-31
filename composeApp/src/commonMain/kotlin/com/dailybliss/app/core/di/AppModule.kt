@@ -2,26 +2,27 @@ package com.dailybliss.app.core.di
 
 import com.dailybliss.app.core.network.HttpClientFactory
 import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.core.util.BackgroundAIProcessorImpl
 import com.dailybliss.app.core.util.DatabaseDriverFactory
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
 import com.dailybliss.app.data.local.datastore.UserPreferences
 import com.dailybliss.app.data.local.datastore.create
+import com.dailybliss.app.data.remote.api.CurrencyService
 import com.dailybliss.app.data.remote.api.GeminiService
-import com.dailybliss.app.data.repository.AIRepositoryImpl
-import com.dailybliss.app.data.repository.HomeRepositoryImpl
-import com.dailybliss.app.data.repository.MomentRepositoryImpl
-import com.dailybliss.app.domain.repository.AIRepository
-import com.dailybliss.app.domain.repository.HomeRepository
-import com.dailybliss.app.domain.repository.MomentRepository
+import com.dailybliss.app.data.remote.api.WeatherService
+import com.dailybliss.app.data.repository.*
+import com.dailybliss.app.domain.repository.*
 import com.dailybliss.app.domain.usecase.*
 import com.dailybliss.app.presentation.screens.addnote.CreateMomentViewModel
 import com.dailybliss.app.presentation.screens.ai.AIAssistantViewModel
+import com.dailybliss.app.presentation.screens.ai.ChatHistoryViewModel
 import com.dailybliss.app.presentation.screens.calendar.CalendarViewModel
 import com.dailybliss.app.presentation.screens.calendar.DailyMomentsViewModel
 import com.dailybliss.app.presentation.screens.detail.MomentDetailViewModel
 import com.dailybliss.app.presentation.screens.home.HomeViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
+import com.dailybliss.app.presentation.screens.news.NewsViewModel
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +40,7 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
-    single { BackgroundAIProcessor(get(), get(), get(), get(), get()) }
+    single<BackgroundAIProcessor> { BackgroundAIProcessorImpl(get(), get(), get(), get(), get()) }
 }
 
 // ==================== NETWORK MODULE ====================
@@ -47,6 +48,8 @@ val coreModule = module {
 val networkModule = module {
     single { HttpClientFactory.create(enableLogging = true) }
     singleOf(::GeminiService)
+    singleOf(::WeatherService)
+    singleOf(::CurrencyService)
 }
 
 // ==================== DATABASE MODULE ====================
@@ -62,28 +65,27 @@ val databaseModule = module {
 
 val preferencesModule = module {
     single { get<DataStoreFactory>().create() }
-    single { UserPreferences(get()) }
+    single<UserPreferences> { com.dailybliss.app.data.local.datastore.DataStoreUserPreferences(get()) }
 }
 
 // ==================== REPOSITORY MODULE ====================
 
 val repositoryModule = module {
     singleOf(::MomentRepositoryImpl) bind MomentRepository::class
-    single { AIRepositoryImpl(get(), get(), get()) } bind AIRepository::class
-    single { HomeRepositoryImpl(get(), get(), get()) } bind HomeRepository::class
+    singleOf(::NewsRepositoryImpl) bind NewsRepository::class
+    singleOf(::WeatherRepositoryImpl) bind WeatherRepository::class
+    singleOf(::CurrencyRepositoryImpl) bind CurrencyRepository::class
+    singleOf(::AIRepositoryImpl) bind AIRepository::class
 }
 
 // ==================== USE CASE MODULE ====================
 
 val useCaseModule = module {
     singleOf(::GetAllMomentsUseCase)
-    singleOf(::SearchMomentsUseCase)
     singleOf(::SaveMomentUseCase)
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
-    singleOf(::GetMomentsFromSameDayUseCase)
     singleOf(::GetMomentsForDateUseCase)
-    singleOf(::GetMomentsByDateRangeUseCase)
 }
 
 // ==================== VIEWMODEL MODULE ====================
@@ -91,11 +93,13 @@ val useCaseModule = module {
 val viewModelModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::JournalViewModel)
+    viewModelOf(::NewsViewModel)
     viewModelOf(::CalendarViewModel)
     viewModel { parameters -> DailyMomentsViewModel(dateStr = parameters.get(), get()) }
     viewModelOf(::CreateMomentViewModel)
     viewModelOf(::MomentDetailViewModel)
     viewModelOf(::AIAssistantViewModel)
+    viewModelOf(::ChatHistoryViewModel)
     viewModelOf(::SettingsViewModel)
 }
 

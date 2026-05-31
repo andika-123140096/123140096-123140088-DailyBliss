@@ -14,8 +14,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,113 +25,9 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.dailybliss.app.domain.model.Moment
 
-@Composable
-fun MomentCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (!moment.imageUrl.isNullOrBlank()) {
-                SubcomposeAsyncImage(
-                    model = moment.imageUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop,
-                ) {
-                    when (val state = painter.state) {
-                        is AsyncImagePainter.State.Loading -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                )
-                            }
-                        }
-                        is AsyncImagePainter.State.Error -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Image,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                )
-                            }
-                        }
-                        else -> {
-                            SubcomposeAsyncImageContent()
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = moment.title.ifBlank { "Momen Tanpa Judul" },
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Text(
-                    text = moment.preview,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
-                if (moment.tags.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        moment.tags.take(3).forEach { tag ->
-                            Text(
-                                text = "#$tag",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                            )
-                        }
-                    }
-                }
-            }
-
-            moment.mood?.split(" ")?.getOrNull(0)?.let { emoji ->
-                Text(
-                    text = emoji,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun BlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -141,9 +35,9 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column {
             if (!moment.imageUrl.isNullOrBlank()) {
@@ -221,7 +115,7 @@ fun PremiumBlissCard(moment: Moment, onClick: () -> Unit, modifier: Modifier = M
                     Text(
                         text = previewText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray, // Grey text as requested
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -319,13 +213,8 @@ fun EmptyState(title: String, message: String) {
         Text(
             text = message,
             textAlign = TextAlign.Center,
-            color = Color.Gray, // Grey text as requested
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
         )
     }
-}
-
-@Composable
-fun MomentItem(moment: Moment, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    MomentCard(moment, onClick, modifier)
 }

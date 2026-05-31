@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -32,8 +33,57 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
+    var targetOffset by remember { mutableStateOf(-1) }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is CreateMomentEvent.MomentSaved -> onNavigateBack()
+                is CreateMomentEvent.ImageInserted -> {
+                    targetOffset = event.index
+                }
+                is CreateMomentEvent.Error -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
+
+    CreateMomentScreenContent(
+        uiState = uiState,
+        onTitleChange = viewModel::onTitleChange,
+        onContentChange = viewModel::onContentChange,
+        onAddImage = viewModel::addImage,
+        onSaveMoment = viewModel::saveMoment,
+        onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
+        focusedValue = focusedValue,
+        onFocusedValueChange = { focusedValue = it },
+        updateFocusedValue = updateFocusedValue,
+        onUpdateFocusedValueChange = { updateFocusedValue = it },
+        targetOffset = targetOffset,
+        onTargetOffsetReset = { targetOffset = -1 },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun CreateMomentScreenContent(
+    uiState: CreateMomentUiState,
+    onTitleChange: (String) -> Unit,
+    onContentChange: (String) -> Unit,
+    onAddImage: (List<ByteArray>, Int) -> Unit,
+    onSaveMoment: () -> Unit,
+    onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+    focusedValue: TextFieldValue?,
+    onFocusedValueChange: (TextFieldValue?) -> Unit,
+    updateFocusedValue: ((TextFieldValue) -> Unit)?,
+    onUpdateFocusedValueChange: (((TextFieldValue) -> Unit)?) -> Unit,
+    targetOffset: Int,
+    onTargetOffsetReset: () -> Unit,
+) {
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
     var currentBlockOffset by remember { mutableStateOf(0) }
 
@@ -41,24 +91,21 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
     val imagePicker = rememberImagePickerLauncher(
         onResult = { bytesList ->
             if (bytesList.isNotEmpty()) {
-                viewModel.addImage(bytesList, lastCursorPosition)
+                onAddImage(bytesList, lastCursorPosition)
             }
         },
     )
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is CreateMomentEvent.MomentSaved -> onNavigateBack()
-                is CreateMomentEvent.Error -> snackbarHostState.showSnackbar(event.message)
-                else -> {}
-            }
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("CREATE_MOMENT_SCREEN")
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         if (uiState.isLoading) {
-            LoadingIndicator()
+            Box(modifier = Modifier.testTag("LOADING_INDICATOR")) {
+                LoadingIndicator()
+            }
         } else {
             Column(modifier = Modifier.fillMaxSize().imePadding()) {
                 // Top Bar
@@ -68,7 +115,10 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.testTag("BACK_BUTTON"),
+                    ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             "Back",
@@ -80,14 +130,18 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
 
                     if (uiState.isSaving) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp).padding(end = 16.dp),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(end = 16.dp)
+                                .testTag("SAVING_INDICATOR"),
                             strokeWidth = 2.dp,
                         )
                     }
 
                     TextButton(
-                        onClick = { viewModel.saveMoment() },
+                        onClick = onSaveMoment,
                         enabled = !uiState.isSaving,
+                        modifier = Modifier.testTag("SAVE_BUTTON"),
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary,
                         ),
@@ -110,7 +164,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         BasicTextField(
                             value = uiState.title,
-                            onValueChange = viewModel::onTitleChange,
+                            onValueChange = onTitleChange,
                             textStyle = MaterialTheme.typography.headlineMedium.copy(
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.Bold,
@@ -123,7 +177,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                                     Text(
                                         text = "Judul Cerita",
                                         style = MaterialTheme.typography.headlineMedium.copy(
-                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                             fontWeight = FontWeight.Bold,
                                         ),
                                     )
@@ -132,7 +186,8 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 12.dp)
+                                .testTag("TITLE_TEXT_FIELD"),
                         )
 
                         // Mood & Tags Display
@@ -145,6 +200,12 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                                     onClick = {},
                                     label = { Text(mood) },
                                     shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.testTag("MOOD_CHIP"),
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        labelColor = MaterialTheme.colorScheme.primary,
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                    ),
+                                    border = null,
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
@@ -161,24 +222,27 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                                         ),
                                         border = null,
                                         shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.testTag("TAG_CHIP_$tag"),
                                     )
                                 }
                             }
                         }
                     }
 
-                    Box(modifier = Modifier.padding(horizontal = 0.dp)) {
+                    Box(modifier = Modifier.padding(horizontal = 0.dp).testTag("HTML_CONTENT_BOX")) {
                         HtmlBlockItem(
                             html = uiState.content,
-                            onHtmlChange = viewModel::onContentChange,
+                            onHtmlChange = onContentChange,
                             activeStyles = activeStyles,
                             onFocusValueChange = { value, styles, update, offset ->
-                                focusedValue = value
+                                onFocusedValueChange(value)
                                 activeStyles = styles
-                                updateFocusedValue = update
+                                onUpdateFocusedValueChange(update)
                                 currentBlockOffset = offset
+                                if (targetOffset != -1) onTargetOffsetReset()
                             },
                             focusRequester = remember { FocusRequester() },
+                            targetOffset = targetOffset,
                         )
                     }
 
@@ -198,7 +262,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                             }
 
                             // Also apply to selection if exists
-                            focusedValue?.let { value ->
+                            focusedValue.let { value ->
                                 if (!value.selection.collapsed) {
                                     val spanStyle = when (style) {
                                         "b" -> SpanStyle(fontWeight = FontWeight.Bold)
@@ -212,14 +276,10 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
                             }
                         },
                         onGalleryClick = {
-                            lastCursorPosition = if (focusedValue != null) {
-                                currentBlockOffset + focusedValue!!.selection.start
-                            } else {
-                                -1
-                            }
+                            lastCursorPosition = currentBlockOffset + focusedValue.selection.start
                             imagePicker.launch()
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),
                     )
                 }
             }
@@ -227,7 +287,7 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp).testTag("SNACKBAR_HOST"),
         )
     }
 }

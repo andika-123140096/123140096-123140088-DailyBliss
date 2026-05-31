@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) : ViewModel() {
@@ -23,12 +22,15 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
     private val _sortBy = MutableStateFlow(MomentSortBy.UPDATED_DESC)
     val sortBy = _sortBy.asStateFlow()
 
+    private val pageSize = MutableStateFlow(10)
+
     val uiState: StateFlow<JournalUiState> =
         combine(
             getAllMomentsUseCase(),
             _query.debounce(300L),
             _sortBy,
-        ) { moments, query, sort ->
+            pageSize,
+        ) { moments, query, sort, size ->
             var filtered = moments
 
             if (query.isNotBlank()) {
@@ -49,10 +51,13 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
                     MomentSortBy.UPDATED_DESC -> filtered.sortedByDescending { it.updatedAt }
                 }
 
+            val isLastPage = filtered.size <= size
+            val paged = filtered.take(size)
+
             if (filtered.isEmpty()) {
                 JournalUiState.Empty(query)
             } else {
-                JournalUiState.Success(filtered, query)
+                JournalUiState.Success(paged, query, isLastPage)
             }
         }.stateIn(
             scope = viewModelScope,
@@ -62,27 +67,23 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
 
     fun onSearchQueryChange(newQuery: String) {
         _query.value = newQuery
-    }
-
-    fun onSortByChanged(sort: MomentSortBy) {
-        _sortBy.value = sort
-    }
-
-    fun togglePin() {
-        viewModelScope.launch {
-            // Logic to toggle pin if needed
-        }
+        pageSize.value = 10
     }
 
     fun clearSearch() {
         _query.value = ""
+        pageSize.value = 10
+    }
+
+    fun loadMore() {
+        pageSize.value += 10
     }
 }
 
 sealed interface JournalUiState {
     data object Loading : JournalUiState
 
-    data class Success(val moments: List<Moment>, val query: String = "") : JournalUiState
+    data class Success(val moments: List<Moment>, val query: String = "", val isLastPage: Boolean = true) : JournalUiState
 
     data class Empty(val query: String = "") : JournalUiState
 

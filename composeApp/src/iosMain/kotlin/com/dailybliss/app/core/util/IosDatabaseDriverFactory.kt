@@ -13,6 +13,6 @@ import com.dailybliss.app.data.local.BlissDatabase
 class IosDatabaseDriverFactory : DatabaseDriverFactory {
     override fun createDriver(): SqlDriver = NativeSqliteDriver(
         schema = BlissDatabase.Schema,
-        name = "bliss.db",
+        name = "bliss_v2.db",
     )
 }

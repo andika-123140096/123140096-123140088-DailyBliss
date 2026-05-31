@@ -27,31 +27,6 @@ class CreateMomentViewModel(
 
     private var currentMomentId: Long? = null
 
-    fun loadMoment(id: Long) {
-        if (currentMomentId == id) return
-        currentMomentId = id
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val moment = getMomentByIdUseCase(id).first()
-
-            moment?.let {
-                _uiState.update { state ->
-                    state.copy(
-                        title = it.title,
-                        content = it.content,
-                        imageUrl = it.imageUrl,
-                        mood = it.mood,
-                        tags = it.tags,
-                        isLoading = false,
-                        isEditMode = true,
-                        createdAt = it.createdAt,
-                    )
-                }
-            }
-        }
-    }
-
     fun onTitleChange(title: String) {
         _uiState.update { it.copy(title = title, titleError = null) }
     }
@@ -77,31 +52,74 @@ class CreateMomentViewModel(
             _uiState.update { state ->
                 val currentContent = state.content
 
-                val newContent = if (insertionIndex == -1 || insertionIndex >= currentContent.length) {
-                    currentContent + imagesHtml
+                var htmlIdx = 0
+                var textCount = 0
+                val targetCount = if (insertionIndex <= 0) {
+                    0
+                } else if (insertionIndex == -1) {
+                    Int.MAX_VALUE
                 } else {
-                    // Find actual HTML index corresponding to text index
-                    var htmlIdx = 0
-                    var textCount = 0
-                    while (htmlIdx < currentContent.length && textCount < insertionIndex) {
-                        if (currentContent[htmlIdx] == '<') {
-                            val end = currentContent.indexOf('>', htmlIdx)
-                            if (end != -1) {
-                                htmlIdx = end + 1
-                                continue
-                            }
-                        }
-                        htmlIdx++
-                        textCount++
-                    }
-                    currentContent.substring(0, htmlIdx) + imagesHtml + currentContent.substring(htmlIdx)
+                    insertionIndex
                 }
+
+                while (htmlIdx < currentContent.length && textCount < targetCount) {
+                    if (currentContent[htmlIdx] == '<') {
+                        val end = currentContent.indexOf('>', htmlIdx)
+                        if (end != -1) {
+                            val tag = currentContent.substring(htmlIdx, end + 1)
+                            if (tag == "<br/>" || tag == "<br>" || tag == "<br />") {
+                                textCount++
+                            }
+                            htmlIdx = end + 1
+                            continue
+                        }
+                    }
+                    htmlIdx++
+                    textCount++
+                }
+
+                val before = currentContent.substring(0, htmlIdx)
+                val after = currentContent.substring(htmlIdx)
+
+                var trimmedBefore = before
+                // Strip trailing newlines from 'before'
+                while (true) {
+                    if (trimmedBefore.endsWith("<br/>")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 5)
+                    } else if (trimmedBefore.endsWith("<br>")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 4)
+                    } else if (trimmedBefore.endsWith("<br />")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 6)
+                    } else {
+                        break
+                    }
+                }
+
+                var trimmedAfter = after
+                // Strip leading newlines from 'after'
+                while (true) {
+                    if (trimmedAfter.startsWith("<br/>")) {
+                        trimmedAfter = trimmedAfter.substring(5)
+                    } else if (trimmedAfter.startsWith("<br>")) {
+                        trimmedAfter = trimmedAfter.substring(4)
+                    } else if (trimmedAfter.startsWith("<br />")) {
+                        trimmedAfter = trimmedAfter.substring(6)
+                    } else {
+                        break
+                    }
+                }
+
+                // If 'before' was not empty, we might want one break, but ImageGroup is a block item
+                // in a Column with padding, so usually we want 0 breaks for "1 line" visual.
+                val newContent = trimmedBefore + imagesHtml + trimmedAfter
 
                 state.copy(
                     content = newContent,
                     imageUrl = extractFirstImage(newContent),
                 )
             }
+            // Emit event with global index for focus management
+            _events.emit(CreateMomentEvent.ImageInserted(insertionIndex))
         }
     }
 
@@ -137,8 +155,6 @@ class CreateMomentViewModel(
                 currentMomentId = newId
             }
 
-            backgroundAIProcessor.processMoment(newId)
-
             _uiState.update { it.copy(isSaving = false) }
             _events.emit(CreateMomentEvent.MomentSaved)
         }
@@ -160,5 +176,6 @@ data class CreateMomentUiState(
 
 sealed interface CreateMomentEvent {
     data object MomentSaved : CreateMomentEvent
+    data class ImageInserted(val index: Int) : CreateMomentEvent
     data class Error(val message: String) : CreateMomentEvent
 }

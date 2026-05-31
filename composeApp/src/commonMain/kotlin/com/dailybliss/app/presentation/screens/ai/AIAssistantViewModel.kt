@@ -50,10 +50,6 @@ class AIAssistantViewModel(
         inputFlow.value = ""
         selectedImageBytesFlow.value = null
     }
-
-    fun clearChat() {
-        aiRepository.clearChat()
-    }
 }
 
 data class AIAssistantUiState(

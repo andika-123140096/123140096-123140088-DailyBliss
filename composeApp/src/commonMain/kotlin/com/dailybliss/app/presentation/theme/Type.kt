@@ -6,47 +6,47 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Using System Sans Serif and Serif for maximum compatibility and performance
+// Using System Sans Serif for maximum compatibility and performance
 val Inter = FontFamily.SansSerif
-val Serif = FontFamily.Serif
 
 val Typography =
     Typography(
         headlineLarge =
         TextStyle(
-            fontFamily = Serif,
-            fontWeight = FontWeight.ExtraBold,
+            fontFamily = Inter,
+            fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
             lineHeight = 40.sp,
-            letterSpacing = (-0.5).sp,
+            letterSpacing = (-1).sp,
         ),
         headlineMedium =
         TextStyle(
-            fontFamily = Serif,
+            fontFamily = Inter,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
             lineHeight = 36.sp,
-            letterSpacing = (-0.2).sp,
+            letterSpacing = (-0.5).sp,
         ),
         headlineSmall =
         TextStyle(
-            fontFamily = Serif,
+            fontFamily = Inter,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
             lineHeight = 32.sp,
+            letterSpacing = (-0.2).sp,
         ),
         titleLarge =
         TextStyle(
-            fontFamily = Serif,
+            fontFamily = Inter,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 22.sp,
+            fontSize = 20.sp,
             lineHeight = 28.sp,
         ),
         titleMedium =
         TextStyle(
-            fontFamily = Serif,
-            fontWeight = FontWeight.Medium,
-            fontSize = 18.sp,
+            fontFamily = Inter,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.1.sp,
         ),
@@ -55,8 +55,8 @@ val Typography =
             fontFamily = Inter,
             fontWeight = FontWeight.Normal,
             fontSize = 16.sp,
-            lineHeight = 26.sp,
-            letterSpacing = 0.2.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.15.sp,
         ),
         bodyMedium =
         TextStyle(
@@ -64,7 +64,7 @@ val Typography =
             fontWeight = FontWeight.Normal,
             fontSize = 14.sp,
             lineHeight = 20.sp,
-            letterSpacing = 0.2.sp,
+            letterSpacing = 0.25.sp,
         ),
         labelMedium =
         TextStyle(
@@ -72,6 +72,6 @@ val Typography =
             fontWeight = FontWeight.Medium,
             fontSize = 12.sp,
             lineHeight = 16.sp,
-            letterSpacing = 0.4.sp,
+            letterSpacing = 0.5.sp,
         ),
     )

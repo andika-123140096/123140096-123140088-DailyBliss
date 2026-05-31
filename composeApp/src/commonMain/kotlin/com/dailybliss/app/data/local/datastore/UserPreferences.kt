@@ -18,185 +18,87 @@ import kotlinx.coroutines.flow.map
  *
  * @param dataStore Instance DataStore dari platform
  */
-class UserPreferences(private val dataStore: DataStore<Preferences>) {
+interface UserPreferences {
+    val nickname: Flow<String>
+    suspend fun setNickname(name: String)
+    val aiLanguageStyle: Flow<String>
+    suspend fun setAiLanguageStyle(style: String)
+    val journalSummary: Flow<String>
+    suspend fun setJournalSummary(summary: String)
+    val dailyInsight: Flow<String>
+    suspend fun setDailyInsight(insight: String)
+    val isDarkMode: Flow<Boolean>
+    suspend fun setDarkMode(isDark: Boolean)
+}
+
+/**
+ * User Preferences implementation using DataStore
+ */
+class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : UserPreferences {
     // ==================== PREFERENCE KEYS ====================
 
     private object Keys {
-        val SORT_BY = stringPreferencesKey("sort_by")
-        val DEFAULT_CATEGORY = stringPreferencesKey("default_category")
-        val SHOW_PREVIEW = booleanPreferencesKey("show_preview")
-        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val NICKNAME = stringPreferencesKey("nickname")
         val AI_LANGUAGE_STYLE = stringPreferencesKey("ai_language_style")
-        val COLOR_THEME = stringPreferencesKey("color_theme")
-        val AI_CACHE_TIMESTAMP = stringPreferencesKey("ai_cache_timestamp")
+        val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
+        val DAILY_INSIGHT = stringPreferencesKey("daily_insight")
     }
 
     // ==================== USER PROFILE ====================
 
-    /**
-     * Observe nickname
-     */
-    val nickname: Flow<String> =
+    override val nickname: Flow<String> =
         dataStore.data.map { prefs ->
             prefs[Keys.NICKNAME] ?: "User"
         }
 
-    /**
-     * Set nickname
-     */
-    suspend fun setNickname(name: String) {
+    override suspend fun setNickname(name: String) {
         dataStore.edit { prefs ->
             prefs[Keys.NICKNAME] = name
-            prefs.remove(Keys.AI_CACHE_TIMESTAMP) // Invalidate cache
         }
     }
 
-    /**
-     * Observe AI language style
-     */
-    val aiLanguageStyle: Flow<String> =
+    override val aiLanguageStyle: Flow<String> =
         dataStore.data.map { prefs ->
             prefs[Keys.AI_LANGUAGE_STYLE] ?: "Santai/Kasual"
         }
 
-    /**
-     * Set AI language style
-     */
-    suspend fun setAiLanguageStyle(style: String) {
+    override suspend fun setAiLanguageStyle(style: String) {
         dataStore.edit { prefs ->
             prefs[Keys.AI_LANGUAGE_STYLE] = style
-            prefs.remove(Keys.AI_CACHE_TIMESTAMP) // Invalidate cache
         }
-    }
-
-    // ==================== AI CACHE ====================
-
-    /**
-     * Observe AI Cache Timestamp
-     */
-    val aiCacheTimestamp: Flow<Long> =
-        dataStore.data.map {
-            it[Keys.AI_CACHE_TIMESTAMP]?.toLongOrNull() ?: 0L
-        }
-
-    /**
-     * Update AI Cache Timestamp
-     */
-    suspend fun updateAiCacheTimestamp(timestamp: Long) {
-        dataStore.edit { it[Keys.AI_CACHE_TIMESTAMP] = timestamp.toString() }
     }
 
     // ==================== JOURNAL SUMMARY ====================
 
-    /**
-     * Observe Global Journal Summary
-     */
-    val journalSummary: Flow<String> =
+    override val journalSummary: Flow<String> =
         dataStore.data.map {
             it[Keys.JOURNAL_SUMMARY] ?: ""
         }
 
-    /**
-     * Update Global Journal Summary
-     */
-    suspend fun setJournalSummary(summary: String) {
+    override suspend fun setJournalSummary(summary: String) {
         dataStore.edit { it[Keys.JOURNAL_SUMMARY] = summary }
+    }
+
+    override val dailyInsight: Flow<String> =
+        dataStore.data.map {
+            it[Keys.DAILY_INSIGHT] ?: ""
+        }
+
+    override suspend fun setDailyInsight(insight: String) {
+        dataStore.edit { it[Keys.DAILY_INSIGHT] = insight }
     }
 
     // ==================== THEME ====================
 
-    /**
-     * Observe color theme
-     */
-    val colorTheme: Flow<String> =
+    override val isDarkMode: Flow<Boolean> =
         dataStore.data.map { prefs ->
-            prefs[Keys.COLOR_THEME] ?: "Sage Green"
+            prefs[Keys.IS_DARK_MODE] ?: false
         }
 
-    /**
-     * Set color theme
-     */
-    suspend fun setColorTheme(themeName: String) {
+    override suspend fun setDarkMode(isDark: Boolean) {
         dataStore.edit { prefs ->
-            prefs[Keys.COLOR_THEME] = themeName
-        }
-    }
-
-    // ==================== SORT BY ====================
-
-    /**
-     * Observe sort preference
-     */
-    val sortBy: Flow<String> =
-        dataStore.data.map { prefs ->
-            prefs[Keys.SORT_BY] ?: "UPDATED_DESC"
-        }
-
-    /**
-     * Set sort preference
-     */
-    suspend fun setSortBy(sortBy: String) {
-        dataStore.edit { prefs ->
-            prefs[Keys.SORT_BY] = sortBy
-        }
-    }
-
-    // ==================== DEFAULT CATEGORY ====================
-
-    /**
-     * Observe default category
-     */
-    val defaultCategory: Flow<String> =
-        dataStore.data.map { prefs ->
-            prefs[Keys.DEFAULT_CATEGORY] ?: "GENERAL"
-        }
-
-    /**
-     * Set default category
-     */
-    suspend fun setDefaultCategory(category: String) {
-        dataStore.edit { prefs ->
-            prefs[Keys.DEFAULT_CATEGORY] = category
-        }
-    }
-
-    // ==================== SHOW PREVIEW ====================
-
-    /**
-     * Observe show preview setting
-     */
-    val showPreview: Flow<Boolean> =
-        dataStore.data.map { prefs ->
-            prefs[Keys.SHOW_PREVIEW] ?: true
-        }
-
-    /**
-     * Set show preview
-     */
-    suspend fun setShowPreview(show: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[Keys.SHOW_PREVIEW] = show
-        }
-    }
-
-    // ==================== ONBOARDING ====================
-
-    /**
-     * Check if onboarding completed
-     */
-    val isOnboardingCompleted: Flow<Boolean> =
-        dataStore.data.map { prefs ->
-            prefs[Keys.ONBOARDING_COMPLETED] ?: false
-        }
-
-    /**
-     * Set onboarding completed
-     */
-    suspend fun setOnboardingCompleted() {
-        dataStore.edit { prefs ->
-            prefs[Keys.ONBOARDING_COMPLETED] = true
+            prefs[Keys.IS_DARK_MODE] = isDark
         }
     }
 }

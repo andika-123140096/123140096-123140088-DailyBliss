@@ -6,21 +6,17 @@ import com.dailybliss.app.domain.repository.MomentRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.toInstant
 
-enum class MomentSortBy(val displayName: String) {
-    TITLE_ASC("Judul (A-Z)"),
-    TITLE_DESC("Judul (Z-A)"),
-    CREATED_ASC("Dibuat (Lama)"),
-    CREATED_DESC("Dibuat (Baru)"),
-    UPDATED_ASC("Diupdate (Lama)"),
-    UPDATED_DESC("Diupdate (Baru)"),
+enum class MomentSortBy {
+    TITLE_ASC,
+    TITLE_DESC,
+    CREATED_ASC,
+    CREATED_DESC,
+    UPDATED_ASC,
+    UPDATED_DESC,
 }
 
 class GetAllMomentsUseCase(private val repository: MomentRepository) {
     operator fun invoke(): Flow<List<Moment>> = repository.getAllMoments()
-}
-
-class SearchMomentsUseCase(private val repository: MomentRepository) {
-    operator fun invoke(query: String): Flow<List<Moment>> = repository.searchMoments(query)
 }
 
 class SaveMomentUseCase(
@@ -34,6 +30,7 @@ class SaveMomentUseCase(
             repository.updateMoment(moment)
             moment.id
         }
+        aiProcessor.processMoment(id)
         aiProcessor.updateGlobalSummary()
         return id
     }
@@ -53,10 +50,6 @@ class GetMomentByIdUseCase(private val repository: MomentRepository) {
     operator fun invoke(id: Long): Flow<Moment?> = repository.getMomentById(id)
 }
 
-class GetMomentsFromSameDayUseCase(private val repository: MomentRepository) {
-    operator fun invoke(dayMonth: String): Flow<List<Moment>> = repository.getMomentsFromSameDay(dayMonth)
-}
-
 class GetMomentsForDateUseCase(private val repository: MomentRepository) {
     operator fun invoke(date: kotlinx.datetime.LocalDate): Flow<List<Moment>> {
         val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
@@ -66,8 +59,4 @@ class GetMomentsForDateUseCase(private val repository: MomentRepository) {
             .toInstant(tz).toEpochMilliseconds()
         return repository.getMomentsByDateRange(startOfDay, endOfDay)
     }
-}
-
-class GetMomentsByDateRangeUseCase(private val repository: MomentRepository) {
-    operator fun invoke(start: Long, end: Long): Flow<List<Moment>> = repository.getMomentsByDateRange(start, end)
 }

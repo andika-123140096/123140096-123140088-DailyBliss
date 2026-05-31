@@ -10,7 +10,7 @@ CREATE TABLE MomentEntity (
     updated_at INTEGER NOT NULL
 );
 
-CREATE TABLE HomeCache (
+CREATE TABLE NewsCache (
     key TEXT PRIMARY KEY,
     data_ TEXT NOT NULL,
     updated_at INTEGER NOT NULL
@@ -71,11 +71,11 @@ SELECT COUNT(*) FROM MomentEntity;
 
 -- Cache Queries --
 getCache:
-SELECT * FROM HomeCache WHERE key = ?;
+SELECT * FROM NewsCache WHERE key = ?;
 
 insertCache:
-INSERT OR REPLACE INTO HomeCache (key, data_, updated_at)
+INSERT OR REPLACE INTO NewsCache (key, data_, updated_at)
 VALUES (?, ?, ?);
 
 deleteCache:
-DELETE FROM HomeCache WHERE key = ?;
+DELETE FROM NewsCache WHERE key = ?;

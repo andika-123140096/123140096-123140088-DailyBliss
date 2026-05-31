@@ -31,6 +31,7 @@ object HttpClientFactory {
             isLenient = true // Lebih toleran terhadap format JSON
             prettyPrint = false // Tidak perlu pretty print untuk production
             encodeDefaults = true // Include default values saat serialize
+            coerceInputValues = true // Handle Int to Double conversion automatically
         }
 
     /**
@@ -64,24 +65,4 @@ object HttpClientFactory {
             socketTimeoutMillis = 30_000 // 30 seconds
         }
     }
-}
-
-/**
- * Sealed class untuk hasil network operation
- */
-sealed class NetworkResult<out T> {
-    data class Success<T>(val data: T) : NetworkResult<T>()
-
-    data class Error(val message: String, val code: Int? = null) : NetworkResult<Nothing>()
-
-    data object Loading : NetworkResult<Nothing>()
-}
-
-/**
- * Extension function untuk safe API call
- */
-suspend fun <T> safeApiCall(block: suspend () -> T): NetworkResult<T> = try {
-    NetworkResult.Success(block())
-} catch (e: Exception) {
-    NetworkResult.Error(e.message ?: "Unknown error")
 }

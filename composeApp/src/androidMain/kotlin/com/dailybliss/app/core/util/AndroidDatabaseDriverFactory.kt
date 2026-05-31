@@ -14,6 +14,6 @@ class AndroidDatabaseDriverFactory(private val context: PlatformContext) : Datab
     override fun createDriver(): SqlDriver = AndroidSqliteDriver(
         schema = BlissDatabase.Schema,
         context = (context as AndroidPlatformContext).androidContext,
-        name = "bliss.db",
+        name = "bliss_v2.db",
     )
 }

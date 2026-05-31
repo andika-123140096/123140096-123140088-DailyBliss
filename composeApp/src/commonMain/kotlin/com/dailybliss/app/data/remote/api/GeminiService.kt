@@ -141,7 +141,11 @@ class GeminiService(
         }
     }
 
-    suspend fun generateChat(contents: List<GeminiContent>, systemPrompt: String? = null): Result<String> = runCatching {
+    suspend fun generateChat(
+        contents: List<GeminiContent>,
+        systemPrompt: String? = null,
+        tools: List<GeminiTool>? = null,
+    ): Result<GeminiResponse> = runCatching {
         retryWithBackoff {
             val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
             val url = "$BASE_URL/models/$modelName:generateContent"
@@ -152,9 +156,10 @@ class GeminiService(
                     GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
                 },
                 generationConfig = GenerationConfig(
-                    temperature = 0.85, // Slightly higher for more natural flow
+                    temperature = 0.85,
                     maxOutputTokens = 2000,
                 ),
+                tools = tools,
             )
 
             val response: HttpResponse = httpClient.post(url) {
@@ -170,7 +175,7 @@ class GeminiService(
 
             val geminiResponse = response.body<GeminiResponse>()
             geminiResponse.getErrorMessage()?.let { throw Exception(it) }
-            geminiResponse.getTextContent() ?: throw Exception("Respons kosong")
+            geminiResponse
         }
     }
 }
