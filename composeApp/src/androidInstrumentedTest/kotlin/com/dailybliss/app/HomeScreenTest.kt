@@ -17,7 +17,7 @@ class HomeScreenTest {
     fun homeScreen_displaysInfo() {
         val uiState = HomeUiState(
             nickname = "Andika",
-            recentMoments = listOf(Moment(id = 1, title = "Momen Home", content = "Konten Home"))
+            recentMoments = listOf(Moment(id = 1, title = "Momen Home", content = "Konten Home")),
         )
 
         composeTestRule.setContent {

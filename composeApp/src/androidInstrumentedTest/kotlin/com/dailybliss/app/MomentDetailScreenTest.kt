@@ -35,7 +35,7 @@ class MomentDetailScreenTest {
                     updateFocusedValue = null,
                     onUpdateFocusedValueChange = {},
                     targetOffset = -1,
-                    onTargetOffsetReset = {}
+                    onTargetOffsetReset = {},
                 )
             }
         }

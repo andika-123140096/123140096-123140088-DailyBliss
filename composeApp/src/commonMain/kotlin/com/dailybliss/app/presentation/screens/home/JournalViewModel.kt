@@ -22,15 +22,15 @@ class JournalViewModel(private val getAllMomentsUseCase: GetAllMomentsUseCase) :
     private val _sortBy = MutableStateFlow(MomentSortBy.UPDATED_DESC)
     val sortBy = _sortBy.asStateFlow()
 
-    private val _pageSize = MutableStateFlow(10)
+    private val pageSize = MutableStateFlow(10)
 
     val uiState: StateFlow<JournalUiState> =
         combine(
             getAllMomentsUseCase(),
             _query.debounce(300L),
             _sortBy,
-            _pageSize,
-        ) { moments, query, sort, pageSize ->
+            pageSize,
+        ) { moments, query, sort, size ->
             var filtered = moments
 
             if (query.isNotBlank()) {

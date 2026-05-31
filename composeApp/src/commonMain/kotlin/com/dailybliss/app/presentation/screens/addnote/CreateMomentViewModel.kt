@@ -54,8 +54,14 @@ class CreateMomentViewModel(
 
                 var htmlIdx = 0
                 var textCount = 0
-                val targetCount = if (insertionIndex <= 0) 0 else if (insertionIndex == -1) Int.MAX_VALUE else insertionIndex
-                
+                val targetCount = if (insertionIndex <= 0) {
+                    0
+                } else if (insertionIndex == -1) {
+                    Int.MAX_VALUE
+                } else {
+                    insertionIndex
+                }
+
                 while (htmlIdx < currentContent.length && textCount < targetCount) {
                     if (currentContent[htmlIdx] == '<') {
                         val end = currentContent.indexOf('>', htmlIdx)
@@ -78,22 +84,32 @@ class CreateMomentViewModel(
                 var trimmedBefore = before
                 // Strip trailing newlines from 'before'
                 while (true) {
-                    if (trimmedBefore.endsWith("<br/>")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 5)
-                    else if (trimmedBefore.endsWith("<br>")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 4)
-                    else if (trimmedBefore.endsWith("<br />")) trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 6)
-                    else break
+                    if (trimmedBefore.endsWith("<br/>")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 5)
+                    } else if (trimmedBefore.endsWith("<br>")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 4)
+                    } else if (trimmedBefore.endsWith("<br />")) {
+                        trimmedBefore = trimmedBefore.substring(0, trimmedBefore.length - 6)
+                    } else {
+                        break
+                    }
                 }
 
                 var trimmedAfter = after
                 // Strip leading newlines from 'after'
                 while (true) {
-                    if (trimmedAfter.startsWith("<br/>")) trimmedAfter = trimmedAfter.substring(5)
-                    else if (trimmedAfter.startsWith("<br>")) trimmedAfter = trimmedAfter.substring(4)
-                    else if (trimmedAfter.startsWith("<br />")) trimmedAfter = trimmedAfter.substring(6)
-                    else break
+                    if (trimmedAfter.startsWith("<br/>")) {
+                        trimmedAfter = trimmedAfter.substring(5)
+                    } else if (trimmedAfter.startsWith("<br>")) {
+                        trimmedAfter = trimmedAfter.substring(4)
+                    } else if (trimmedAfter.startsWith("<br />")) {
+                        trimmedAfter = trimmedAfter.substring(6)
+                    } else {
+                        break
+                    }
                 }
 
-                // If 'before' was not empty, we might want one break, but ImageGroup is a block item 
+                // If 'before' was not empty, we might want one break, but ImageGroup is a block item
                 // in a Column with padding, so usually we want 0 breaks for "1 line" visual.
                 val newContent = trimmedBefore + imagesHtml + trimmedAfter
 

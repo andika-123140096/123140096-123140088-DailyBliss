@@ -22,7 +22,7 @@ class SettingsScreenTest {
                         journalSummary = "Summary text",
                         dailyInsight = "Insight text",
                         isDarkMode = false,
-                        aiLanguageStyle = "Empathetic"
+                        aiLanguageStyle = "Empathetic",
                     ),
                     nickname = "Andika",
                     onNicknameChange = {},

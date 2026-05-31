@@ -121,8 +121,10 @@ fun HtmlBlockItem(
                                         val beforeContent = before.content
                                         val afterContent = after.content
 
-                                        if (beforeContent.isNotEmpty() && afterContent.isNotEmpty() &&
-                                            !beforeContent.endsWith("<br/>") && !afterContent.startsWith("<br/>")
+                                        if (beforeContent.isNotEmpty() &&
+                                            afterContent.isNotEmpty() &&
+                                            !beforeContent.endsWith("<br/>") &&
+                                            !afterContent.startsWith("<br/>")
                                         ) {
                                             newParts[index - 1] = HtmlPart.Text(beforeContent + "<br/>")
                                         }
