@@ -44,6 +44,7 @@ fun SettingsScreen(
         onNicknameChange = { nicknameState = it },
         onDarkModeToggle = viewModel::toggleDarkMode,
         onAiStyleChange = viewModel::updateAiStyle,
+        onTtsVoiceChange = viewModel::updateTtsVoiceName,
         onNavigateBack = onNavigateBack,
     )
 }
@@ -56,6 +57,7 @@ fun SettingsScreenContent(
     onNicknameChange: (String) -> Unit,
     onDarkModeToggle: (Boolean) -> Unit,
     onAiStyleChange: (String) -> Unit,
+    onTtsVoiceChange: (String) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     Scaffold(
@@ -148,10 +150,58 @@ fun SettingsScreenContent(
                                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                                 uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                uncheckedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             ),
                         )
+                    }
+                }
+            }
+
+            // Voice settings
+            item {
+                Text(
+                    "Suara Asisten",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                var voiceExpanded by remember { mutableStateOf(false) }
+                val voices = listOf(
+                    "Zephyr", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Aoede", "Callirrhoe",
+                    "Autonoe", "Enceladus", "Iapetus", "Umbriel", "Algieba", "Despina", "Erinome", "Algenib",
+                    "Rasalgethi", "Laomedeia", "Achernar", "Alnilam", "Schedar", "Gacrux", "Pulcherrima",
+                    "Achird", "Zubenelgenubi", "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat",
+                ).sorted()
+
+                ExposedDropdownMenuBox(
+                    expanded = voiceExpanded,
+                    onExpandedChange = { voiceExpanded = !voiceExpanded },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedTextField(
+                        value = uiState.ttsVoiceName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Pilih Suara (Text-To-Speech)") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = voiceExpanded,
+                        onDismissRequest = { voiceExpanded = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                    ) {
+                        voices.forEach { voice ->
+                            DropdownMenuItem(
+                                text = { Text(voice) },
+                                onClick = {
+                                    onTtsVoiceChange(voice)
+                                    voiceExpanded = false
+                                },
+                            )
+                        }
                     }
                 }
             }

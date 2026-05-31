@@ -1,6 +1,7 @@
 package com.dailybliss.app.data.remote.api
 
 import com.dailybliss.app.core.network.ApiConfig
+import com.dailybliss.app.core.util.decodeBase64
 import com.dailybliss.app.data.remote.dto.*
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -10,11 +11,15 @@ import io.ktor.client.statement.*
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class GeminiService(
     private val httpClient: HttpClient,
@@ -148,6 +153,7 @@ class GeminiService(
     ): Result<GeminiResponse> = runCatching {
         retryWithBackoff {
             val modelName = apiConfig.geminiModelName.ifBlank { "gemini-1.5-flash" }
+
             val url = "$BASE_URL/models/$modelName:generateContent"
 
             val request = GeminiRequest(
@@ -155,10 +161,6 @@ class GeminiService(
                 systemInstruction = systemPrompt?.let {
                     GeminiSystemInstruction(parts = listOf(GeminiPart(text = it)))
                 },
-                generationConfig = GenerationConfig(
-                    temperature = 0.85,
-                    maxOutputTokens = 2000,
-                ),
                 tools = tools,
             )
 
@@ -176,6 +178,78 @@ class GeminiService(
             val geminiResponse = response.body<GeminiResponse>()
             geminiResponse.getErrorMessage()?.let { throw Exception(it) }
             geminiResponse
+        }
+    }
+
+    suspend fun generateTTS(text: String, voiceName: String): Result<ByteArray> = runCatching {
+        suspend fun attemptTTS(model: String): ByteArray {
+            val url = "$BASE_URL/models/$model:generateContent"
+            val request = GeminiRequest(
+                contents = listOf(
+                    GeminiContent(
+                        parts = listOf(GeminiPart(text = text)),
+                        role = "user",
+                    ),
+                ),
+                generationConfig = GenerationConfig(
+                    responseModalities = listOf("AUDIO"),
+                    speechConfig = SpeechConfig(
+                        voiceConfig = VoiceConfig(
+                            prebuiltVoiceConfig = PrebuiltVoiceConfig(
+                                voiceName = voiceName,
+                            ),
+                        ),
+                    ),
+                ),
+            )
+
+            val response: HttpResponse = httpClient.post(url) {
+                header("x-goog-api-key", apiConfig.geminiApiKey)
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            if (!response.status.isSuccess()) {
+                val errorBody = response.bodyAsText()
+                throw Exception("API Error (${response.status.value}): $errorBody")
+            }
+
+            val jsonString = response.bodyAsText()
+            println("TTS Response received, parsing candidates...")
+            
+            val jsonObj = json.parseToJsonElement(jsonString).jsonObject
+            val candidates = jsonObj["candidates"]?.jsonArray
+            val firstCandidate = candidates?.get(0)?.jsonObject
+            val content = firstCandidate?.get("content")?.jsonObject
+            val parts = content?.get("parts")?.jsonArray
+            
+            var dataStr: String? = null
+            parts?.forEach { partElement ->
+                val partObj = partElement.jsonObject
+                val inlineData = partObj["inlineData"]?.jsonObject
+                val data = inlineData?.get("data")?.jsonPrimitive?.content
+                if (!data.isNullOrEmpty()) {
+                    dataStr = data
+                    println("Audio inlineData found")
+                    return@forEach
+                }
+            }
+
+            if (dataStr.isNullOrEmpty()) {
+                println("Failed to get audio inlineData: \n$jsonString")
+                throw Exception("Gagal mengekstrak audio dari response")
+            }
+
+            val decoded = dataStr!!.decodeBase64()
+            println("Audio bytes decoded size: ${decoded.size}")
+            return decoded
+        }
+
+        try {
+            attemptTTS("gemini-3.1-flash-tts-preview")
+        } catch (e: Exception) {
+            println("GeminiService TTS fallback to 2.5 flash: ${e.message}")
+            attemptTTS("gemini-2.5-flash-preview-tts")
         }
     }
 }

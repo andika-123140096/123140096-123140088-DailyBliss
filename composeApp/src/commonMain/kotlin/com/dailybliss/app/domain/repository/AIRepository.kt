@@ -78,6 +78,11 @@ interface AIRepository {
      * Generates a short, punchy insight for the home screen.
      */
     suspend fun generateDailyInsight(momentsText: String): String?
+
+    /**
+     * Generates audio for a moment, explaining images if any, then converting to speech.
+     */
+    suspend fun generateAudioForMoment(text: String, imageBytes: List<ByteArray>, voiceName: String): Result<ByteArray>
 }
 
 data class MoodResult(val mood: String, val emoji: String)

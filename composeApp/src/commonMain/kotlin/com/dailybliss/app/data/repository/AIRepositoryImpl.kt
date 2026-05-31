@@ -300,6 +300,26 @@ class AIRepositoryImpl(
             ).getOrNull()
     }
 
+    override suspend fun generateAudioForMoment(text: String, imageBytes: List<ByteArray>, voiceName: String): Result<ByteArray> {
+        var finalSpeechText = text
+
+        // Jika ada gambar, minta model menjelaskan duluan
+        if (imageBytes.isNotEmpty()) {
+            val parts = mutableListOf<GeminiPart>()
+            imageBytes.forEach {
+                parts.add(GeminiPart(inlineData = GeminiInlineData(mimeType = "image/jpeg", data = it.toBase64())))
+            }
+            parts.add(GeminiPart(text = "Tolong jelaskan secara singkat dan menarik gambar-gambar ini dalam bahasa Indonesia yang sesuai untuk dibacakan secara lisan sebagai pelengkap cerita berikut: \"$text\""))
+
+            val visionResult = geminiService.generateContent(parts = parts).getOrNull()
+            if (visionResult != null) {
+                finalSpeechText = "$text\n\n[Terdapat gambar: $visionResult]"
+            }
+        }
+
+        return geminiService.generateTTS(finalSpeechText, voiceName)
+    }
+
     @Serializable
     private data class MoodResponse(val mood: String, val emoji: String)
 

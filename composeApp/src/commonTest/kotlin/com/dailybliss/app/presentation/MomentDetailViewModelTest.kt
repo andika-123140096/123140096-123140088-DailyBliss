@@ -1,6 +1,8 @@
 package com.dailybliss.app.presentation
 
 import com.dailybliss.app.core.util.FakeBackgroundAIProcessor
+import com.dailybliss.app.data.local.datastore.FakeUserPreferences
+import com.dailybliss.app.data.repository.FakeAIRepository
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
@@ -32,6 +34,8 @@ class MomentDetailViewModelTest {
     private lateinit var getMomentByIdUseCase: GetMomentByIdUseCase
     private lateinit var deleteMomentUseCase: DeleteMomentUseCase
     private lateinit var saveMomentUseCase: SaveMomentUseCase
+    private lateinit var aiRepository: FakeAIRepository
+    private lateinit var userPreferences: FakeUserPreferences
     private lateinit var viewModel: MomentDetailViewModel
 
     private val testMoment = Moment(
@@ -52,6 +56,8 @@ class MomentDetailViewModelTest {
         getMomentByIdUseCase = GetMomentByIdUseCase(momentRepository)
         deleteMomentUseCase = DeleteMomentUseCase(momentRepository, backgroundAIProcessor)
         saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor)
+        aiRepository = FakeAIRepository()
+        userPreferences = FakeUserPreferences()
 
         viewModel = MomentDetailViewModel(
             momentId = 1L,
@@ -60,6 +66,8 @@ class MomentDetailViewModelTest {
             saveMomentUseCase = saveMomentUseCase,
             backgroundAIProcessor = backgroundAIProcessor,
             fileStorage = fileStorage,
+            aiRepository = aiRepository,
+            userPreferences = userPreferences,
         )
         advanceUntilIdle()
     }

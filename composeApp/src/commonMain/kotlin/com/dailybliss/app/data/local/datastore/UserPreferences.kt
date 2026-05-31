@@ -29,6 +29,8 @@ interface UserPreferences {
     suspend fun setDailyInsight(insight: String)
     val isDarkMode: Flow<Boolean>
     suspend fun setDarkMode(isDark: Boolean)
+    val ttsVoiceName: Flow<String>
+    suspend fun setTtsVoiceName(voiceName: String)
 }
 
 /**
@@ -43,6 +45,7 @@ class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : 
         val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
         val DAILY_INSIGHT = stringPreferencesKey("daily_insight")
+        val TTS_VOICE_NAME = stringPreferencesKey("tts_voice_name")
     }
 
     // ==================== USER PROFILE ====================
@@ -99,6 +102,17 @@ class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : 
     override suspend fun setDarkMode(isDark: Boolean) {
         dataStore.edit { prefs ->
             prefs[Keys.IS_DARK_MODE] = isDark
+        }
+    }
+
+    override val ttsVoiceName: Flow<String> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.TTS_VOICE_NAME] ?: "Kore"
+        }
+
+    override suspend fun setTtsVoiceName(voiceName: String) {
+        dataStore.edit { prefs ->
+            prefs[Keys.TTS_VOICE_NAME] = voiceName
         }
     }
 }

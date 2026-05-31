@@ -3,9 +3,12 @@ package com.dailybliss.app.presentation.screens.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.data.local.datastore.UserPreferences
+import com.dailybliss.app.domain.repository.AIRepository
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
+import com.dailybliss.app.presentation.util.AudioPlayer
 import com.dailybliss.app.presentation.util.FileStorage
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,6 +20,8 @@ class MomentDetailViewModel(
     private val saveMomentUseCase: SaveMomentUseCase,
     private val backgroundAIProcessor: BackgroundAIProcessor,
     private val fileStorage: FileStorage,
+    private val aiRepository: AIRepository,
+    private val userPreferences: UserPreferences,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MomentDetailUiState())
@@ -26,6 +31,7 @@ class MomentDetailViewModel(
     val events = _events.asSharedFlow()
 
     private var originalMoment: com.dailybliss.app.domain.model.Moment? = null
+    private val audioPlayer = AudioPlayer()
 
     init {
         loadMoment()
@@ -170,6 +176,61 @@ class MomentDetailViewModel(
             onDeleted()
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        audioPlayer.stop()
+    }
+
+    fun playTTS() {
+        if (audioPlayer.isPlaying()) {
+            audioPlayer.stop()
+            _uiState.update { it.copy(isTTSPlaying = false) }
+            return
+        }
+
+        viewModelScope.launch {
+            val content = _uiState.value.moment?.content ?: return@launch
+            _uiState.update { it.copy(isTTSLoading = true) }
+
+            // Extract plain text and image URLs from HTML content
+            val textRegex = Regex("<[^>]*>")
+            val plainText = content.replace(textRegex, "").replace("&nbsp;", " ").trim()
+            val imageUrls = Regex("<img src=\"(.*?)\" />").findAll(content).map { it.groupValues[1] }.toList()
+
+            // Load images from file storage if any
+            val imageBytes = mutableListOf<ByteArray>()
+            for (url in imageUrls) {
+                fileStorage.loadImage(url)?.let { imageBytes.add(it) }
+            }
+
+            val voiceName = userPreferences.ttsVoiceName.first()
+
+            val audioRes = aiRepository.generateAudioForMoment(plainText, imageBytes, voiceName)
+            _uiState.update { it.copy(isTTSLoading = false) }
+
+            if (audioRes.isSuccess) {
+                audioRes.getOrNull()?.let { bytes ->
+                    audioPlayer.play(bytes)
+                    _uiState.update { it.copy(isTTSPlaying = true) }
+
+                    // Simple poll to reset playing state when done
+                    launch {
+                        while (audioPlayer.isPlaying()) {
+                            kotlinx.coroutines.delay(500)
+                        }
+                        _uiState.update { it.copy(isTTSPlaying = false) }
+                    }
+                }
+            } else {
+                val e = audioRes.exceptionOrNull()
+                println("TTS Error: ${e?.message}")
+                e?.printStackTrace()
+                val error = e?.message ?: "Gagal memutar audio"
+                _events.emit(MomentDetailEvent.Error(error))
+            }
+        }
+    }
 }
 
 data class MomentDetailUiState(
@@ -178,6 +239,8 @@ data class MomentDetailUiState(
     val isSaving: Boolean = false,
     val isDirty: Boolean = false,
     val error: String? = null,
+    val isTTSLoading: Boolean = false,
+    val isTTSPlaying: Boolean = false,
 )
 
 sealed interface MomentDetailEvent {

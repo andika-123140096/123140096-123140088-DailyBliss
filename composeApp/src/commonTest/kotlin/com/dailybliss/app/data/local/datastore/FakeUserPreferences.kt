@@ -27,4 +27,9 @@ class FakeUserPreferences : UserPreferences {
     override suspend fun setDarkMode(isDark: Boolean) {
         isDarkMode.value = isDark
     }
+
+    override val ttsVoiceName = MutableStateFlow("Aoede")
+    override suspend fun setTtsVoiceName(voiceName: String) {
+        ttsVoiceName.value = voiceName
+    }
 }

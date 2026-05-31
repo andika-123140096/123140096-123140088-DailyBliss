@@ -8,6 +8,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -70,6 +72,7 @@ fun MomentDetailScreen(
         onNavigateBack = onNavigateBack,
         showDeleteDialog = showDeleteDialog,
         onDismissDeleteDialog = { showDeleteDialog = false },
+        onPlayTTS = viewModel::playTTS,
         focusedValue = focusedValue,
         onFocusedValueChange = { focusedValue = it },
         updateFocusedValue = updateFocusedValue,
@@ -92,6 +95,7 @@ fun MomentDetailScreenContent(
     onNavigateBack: () -> Unit,
     showDeleteDialog: Boolean,
     onDismissDeleteDialog: () -> Unit,
+    onPlayTTS: () -> Unit,
     focusedValue: TextFieldValue?,
     onFocusedValueChange: (TextFieldValue?) -> Unit,
     updateFocusedValue: ((TextFieldValue) -> Unit)?,
@@ -132,6 +136,17 @@ fun MomentDetailScreenContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onPlayTTS, modifier = Modifier.testTag("TTS_BUTTON")) {
+                        if (uiState.isTTSLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                imageVector = if (uiState.isTTSPlaying) Icons.Default.Close else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Stop TTS",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
                     if (uiState.isDirty) {
                         TextButton(
                             onClick = onSaveChanges,
