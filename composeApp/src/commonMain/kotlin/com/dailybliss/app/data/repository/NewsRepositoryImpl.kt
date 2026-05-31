@@ -198,7 +198,9 @@ class NewsRepositoryImpl(
                             url = item.link,
                             publishedAt = publishedAt,
                         )
-                    } else null
+                    } else {
+                        null
+                    }
                 }
 
             val oldNews = cached?.data_?.let { oldData ->
