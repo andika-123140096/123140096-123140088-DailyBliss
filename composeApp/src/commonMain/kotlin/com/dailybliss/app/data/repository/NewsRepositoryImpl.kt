@@ -176,37 +176,47 @@ class NewsRepositoryImpl(
             val cleanedBody = rawBody.replace("\u00A0", " ")
             val newsData = json.decodeFromString<NewsResponse>(cleanedBody)
 
-            val filteredNews = newsData.data
-                .filter { item ->
+            val newFetchedNews = newsData.data
+                .mapNotNull { item ->
                     val title = item.title.lowercase()
                     val snippet = item.contentSnippet?.lowercase() ?: ""
                     val isPrabowo = title.contains("prabowo") || snippet.contains("prabowo")
 
-                    val date = item.isoDate?.let {
+                    val publishedAt = item.isoDate?.let {
                         try {
-                            Instant.parse(it)
+                            Instant.parse(it).toEpochMilliseconds()
                         } catch (_: Exception) {
                             null
                         }
                     }
-                    val isRecent = if (date != null) {
-                        (now - date.toEpochMilliseconds()) <= 7 * 24 * 60 * 60 * 1000L
-                    } else {
-                        false
-                    }
 
-                    isPrabowo && isRecent
+                    if (isPrabowo && publishedAt != null && (now - publishedAt) <= 7 * 24 * 60 * 60 * 1000L) {
+                        NewsArticle(
+                            title = item.title,
+                            summary = item.contentSnippet ?: "",
+                            imageUrl = item.image?.large ?: item.image?.small ?: "",
+                            url = item.link,
+                            publishedAt = publishedAt,
+                        )
+                    } else null
                 }
-                .map {
-                    NewsArticle(
-                        title = it.title,
-                        summary = it.contentSnippet ?: "",
-                        imageUrl = it.image?.large ?: it.image?.small ?: "",
-                        url = it.link,
-                    )
+
+            val oldNews = cached?.data_?.let { oldData ->
+                try {
+                    json.decodeFromString<List<NewsArticle>>(oldData)
+                } catch (e: Exception) {
+                    emptyList()
                 }
-            momentQueries.insertCache(KEY_NEWS, json.encodeToString(filteredNews), now)
-            return@withContext filteredNews
+            } ?: emptyList()
+
+            // Merge and keep only news from the last 7 days
+            val mergedNews = (newFetchedNews + oldNews)
+                .distinctBy { it.url }
+                .filter { it.publishedAt > 0L && (now - it.publishedAt) <= 7 * 24 * 60 * 60 * 1000L }
+                .sortedByDescending { it.publishedAt }
+
+            momentQueries.insertCache(KEY_NEWS, json.encodeToString(mergedNews), now)
+            return@withContext mergedNews
         } catch (e: Exception) {
             e.printStackTrace()
             cached?.let {
