@@ -88,7 +88,7 @@ fun MomentDetailScreen(
                     onTargetOffsetReset = { targetOffset = -1 },
                 )
             }
-        }
+        },
     )
 }
 

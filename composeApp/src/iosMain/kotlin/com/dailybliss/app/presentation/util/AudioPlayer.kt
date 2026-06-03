@@ -33,16 +33,18 @@ actual class AudioPlayer actual constructor() {
                 while (i < pcmBytes.size - 8) {
                     val chunkId = pcmBytes.decodeToString(i, i + 4)
                     val chunkSize = (pcmBytes[i + 4].toInt() and 0xFF) or
-                            ((pcmBytes[i + 5].toInt() and 0xFF) shl 8) or
-                            ((pcmBytes[i + 6].toInt() and 0xFF) shl 16) or
-                            ((pcmBytes[i + 7].toInt() and 0xFF) shl 24)
+                        ((pcmBytes[i + 5].toInt() and 0xFF) shl 8) or
+                        ((pcmBytes[i + 6].toInt() and 0xFF) shl 16) or
+                        ((pcmBytes[i + 7].toInt() and 0xFF) shl 24)
 
                     if (chunkId == "fmt ") {
                         channels = ((pcmBytes[i + 10].toInt() and 0xFF) or ((pcmBytes[i + 11].toInt() and 0xFF) shl 8)).toUInt()
-                        sampleRate = ((pcmBytes[i + 12].toInt() and 0xFF) or
+                        sampleRate = (
+                            (pcmBytes[i + 12].toInt() and 0xFF) or
                                 ((pcmBytes[i + 13].toInt() and 0xFF) shl 8) or
                                 ((pcmBytes[i + 14].toInt() and 0xFF) shl 16) or
-                                ((pcmBytes[i + 15].toInt() and 0xFF) shl 24)).toDouble()
+                                ((pcmBytes[i + 15].toInt() and 0xFF) shl 24)
+                            ).toDouble()
                     } else if (chunkId == "data") {
                         startIndex = i + 8
                         break
@@ -52,7 +54,8 @@ actual class AudioPlayer actual constructor() {
                 }
             } else if (pcmBytes.size > 44 &&
                 pcmBytes[0] == 'R'.code.toByte() && pcmBytes[1] == 'I'.code.toByte() &&
-                pcmBytes[2] == 'F'.code.toByte() && pcmBytes[3] == 'F'.code.toByte()) {
+                pcmBytes[2] == 'F'.code.toByte() && pcmBytes[3] == 'F'.code.toByte()
+            ) {
                 startIndex = 44
             }
 

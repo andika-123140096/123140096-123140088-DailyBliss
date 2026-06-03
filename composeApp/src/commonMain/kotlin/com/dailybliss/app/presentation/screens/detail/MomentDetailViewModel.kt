@@ -197,8 +197,8 @@ class MomentDetailViewModel(
             val content = _uiState.value.moment?.content ?: return@launch
             val mId = _uiState.value.moment?.id ?: return@launch
             val voiceName = userPreferences.ttsVoiceName.first()
-            val fileName = "tts_${mId}_${voiceName}.mp3"
-            val textFileName = "tts_${mId}_${voiceName}.txt"
+            val fileName = "tts_${mId}_$voiceName.mp3"
+            val textFileName = "tts_${mId}_$voiceName.txt"
 
             // Local Memory Cache Fallback (for unsaved changes if needed)
             if (content == cachedTTSContent && voiceName == cachedTTSVoice && cachedTTSBytes != null) {

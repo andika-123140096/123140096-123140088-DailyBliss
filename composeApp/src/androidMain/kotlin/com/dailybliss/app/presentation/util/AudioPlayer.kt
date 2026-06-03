@@ -6,6 +6,7 @@ import android.media.AudioTrack
 
 actual class AudioPlayer actual constructor() {
     private var audioTrack: AudioTrack? = null
+
     @Volatile
     private var isPlaying = false
 
@@ -23,25 +24,29 @@ actual class AudioPlayer actual constructor() {
 
                 // Robust WAV header parsing
                 if (pcmBytes.size > 12 &&
-                    pcmBytes[0] == 'R'.code.toByte() && pcmBytes[1] == 'I'.code.toByte() &&
-                    pcmBytes[2] == 'F'.code.toByte() && pcmBytes[3] == 'F'.code.toByte() &&
-                    pcmBytes[8] == 'W'.code.toByte() && pcmBytes[9] == 'A'.code.toByte() &&
-                    pcmBytes[10] == 'V'.code.toByte() && pcmBytes[11] == 'E'.code.toByte()
+                    pcmBytes[0] == 'R'.code.toByte() &&
+                    pcmBytes[1] == 'I'.code.toByte() &&
+                    pcmBytes[2] == 'F'.code.toByte() &&
+                    pcmBytes[3] == 'F'.code.toByte() &&
+                    pcmBytes[8] == 'W'.code.toByte() &&
+                    pcmBytes[9] == 'A'.code.toByte() &&
+                    pcmBytes[10] == 'V'.code.toByte() &&
+                    pcmBytes[11] == 'E'.code.toByte()
                 ) {
                     var i = 12
                     while (i < pcmBytes.size - 8) {
                         val chunkId = pcmBytes.decodeToString(i, i + 4)
                         val chunkSize = (pcmBytes[i + 4].toInt() and 0xFF) or
-                                ((pcmBytes[i + 5].toInt() and 0xFF) shl 8) or
-                                ((pcmBytes[i + 6].toInt() and 0xFF) shl 16) or
-                                ((pcmBytes[i + 7].toInt() and 0xFF) shl 24)
+                            ((pcmBytes[i + 5].toInt() and 0xFF) shl 8) or
+                            ((pcmBytes[i + 6].toInt() and 0xFF) shl 16) or
+                            ((pcmBytes[i + 7].toInt() and 0xFF) shl 24)
 
                         if (chunkId == "fmt ") {
                             val channels = (pcmBytes[i + 10].toInt() and 0xFF) or ((pcmBytes[i + 11].toInt() and 0xFF) shl 8)
                             sampleRate = (pcmBytes[i + 12].toInt() and 0xFF) or
-                                    ((pcmBytes[i + 13].toInt() and 0xFF) shl 8) or
-                                    ((pcmBytes[i + 14].toInt() and 0xFF) shl 16) or
-                                    ((pcmBytes[i + 15].toInt() and 0xFF) shl 24)
+                                ((pcmBytes[i + 13].toInt() and 0xFF) shl 8) or
+                                ((pcmBytes[i + 14].toInt() and 0xFF) shl 16) or
+                                ((pcmBytes[i + 15].toInt() and 0xFF) shl 24)
                             channelConfig = if (channels == 2) AudioFormat.CHANNEL_OUT_STEREO else AudioFormat.CHANNEL_OUT_MONO
 
                             val bitsPerSample = (pcmBytes[i + 22].toInt() and 0xFF) or ((pcmBytes[i + 23].toInt() and 0xFF) shl 8)

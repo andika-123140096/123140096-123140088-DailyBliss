@@ -309,14 +309,18 @@ class AIRepositoryImpl(
             imageBytes.forEach {
                 parts.add(GeminiPart(inlineData = GeminiInlineData(mimeType = "image/jpeg", data = it.toBase64())))
             }
-            parts.add(GeminiPart(text = """
+            parts.add(
+                GeminiPart(
+                    text = """
                 Berdasarkan gambar-gambar ini, berikan deskripsi singkat (MAKSIMAL 2 kalimat) dalam bahasa Indonesia yang natural untuk melengkapi catatan jurnal berikut: "$text"
                 
                 Instruksi:
                 - Langsung deskripsikan suasananya, jangan pakai kata pembuka seperti "Gambar ini...".
                 - Harus singkat dan padat agar tidak mendominasi isi jurnal utamanya.
                 - Fokus pada emosi atau detail kunci dari gambar.
-            """.trimIndent()))
+                    """.trimIndent(),
+                ),
+            )
 
             val visionResult = geminiService.generateContent(parts = parts).getOrNull()
             if (!visionResult.isNullOrBlank()) {

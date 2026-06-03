@@ -216,13 +216,13 @@ class GeminiService(
 
             val jsonString = response.bodyAsText()
             println("TTS Response received, parsing candidates...")
-            
+
             val jsonObj = json.parseToJsonElement(jsonString).jsonObject
             val candidates = jsonObj["candidates"]?.jsonArray
             val firstCandidate = candidates?.get(0)?.jsonObject
             val content = firstCandidate?.get("content")?.jsonObject
             val parts = content?.get("parts")?.jsonArray
-            
+
             var dataStr: String? = null
             parts?.forEach { partElement ->
                 val partObj = partElement.jsonObject

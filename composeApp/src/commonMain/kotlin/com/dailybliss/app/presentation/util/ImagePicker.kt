@@ -27,7 +27,7 @@ interface ImagePickerLauncher {
 interface FileStorage {
     suspend fun saveImage(bytes: ByteArray): String?
     suspend fun loadImage(path: String): ByteArray?
-    
+
     suspend fun saveFile(bytes: ByteArray, fileName: String): String?
     suspend fun loadFile(path: String): ByteArray?
 }
