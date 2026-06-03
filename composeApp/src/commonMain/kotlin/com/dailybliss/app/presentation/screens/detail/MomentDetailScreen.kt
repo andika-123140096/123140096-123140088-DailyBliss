@@ -43,6 +43,7 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
@@ -54,31 +55,40 @@ fun MomentDetailScreen(
                 is MomentDetailEvent.ImageInserted -> {
                     targetOffset = event.index
                 }
-                is MomentDetailEvent.Error -> { /* Handle error */ }
+                is MomentDetailEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
             }
         }
     }
 
-    MomentDetailScreenContent(
-        uiState = uiState,
-        onTitleChange = viewModel::updateTitle,
-        onContentChange = viewModel::updateContent,
-        onAddImage = viewModel::addImage,
-        onSaveChanges = viewModel::saveChanges,
-        onDeleteMoment = { showDeleteDialog = true },
-        onConfirmDelete = {
-            viewModel.deleteMoment { onNavigateBack() }
-        },
-        onNavigateBack = onNavigateBack,
-        showDeleteDialog = showDeleteDialog,
-        onDismissDeleteDialog = { showDeleteDialog = false },
-        onPlayTTS = viewModel::playTTS,
-        focusedValue = focusedValue,
-        onFocusedValueChange = { focusedValue = it },
-        updateFocusedValue = updateFocusedValue,
-        onUpdateFocusedValueChange = { updateFocusedValue = it },
-        targetOffset = targetOffset,
-        onTargetOffsetReset = { targetOffset = -1 },
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        content = { innerPadding ->
+            Box(Modifier.padding(innerPadding)) {
+                MomentDetailScreenContent(
+                    uiState = uiState,
+                    onTitleChange = viewModel::updateTitle,
+                    onContentChange = viewModel::updateContent,
+                    onAddImage = viewModel::addImage,
+                    onSaveChanges = viewModel::saveChanges,
+                    onDeleteMoment = { showDeleteDialog = true },
+                    onConfirmDelete = {
+                        viewModel.deleteMoment { onNavigateBack() }
+                    },
+                    onNavigateBack = onNavigateBack,
+                    showDeleteDialog = showDeleteDialog,
+                    onDismissDeleteDialog = { showDeleteDialog = false },
+                    onPlayTTS = viewModel::playTTS,
+                    focusedValue = focusedValue,
+                    onFocusedValueChange = { focusedValue = it },
+                    updateFocusedValue = updateFocusedValue,
+                    onUpdateFocusedValueChange = { updateFocusedValue = it },
+                    targetOffset = targetOffset,
+                    onTargetOffsetReset = { targetOffset = -1 },
+                )
+            }
+        }
     )
 }
 

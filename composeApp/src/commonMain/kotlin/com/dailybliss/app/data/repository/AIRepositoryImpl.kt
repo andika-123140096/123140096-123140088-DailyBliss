@@ -303,20 +303,29 @@ class AIRepositoryImpl(
     override suspend fun generateAudioForMoment(text: String, imageBytes: List<ByteArray>, voiceName: String): Result<ByteArray> {
         var finalSpeechText = text
 
-        // Jika ada gambar, minta model menjelaskan duluan
+        // Jika ada gambar, minta model menjelaskan secara singkat
         if (imageBytes.isNotEmpty()) {
             val parts = mutableListOf<GeminiPart>()
             imageBytes.forEach {
                 parts.add(GeminiPart(inlineData = GeminiInlineData(mimeType = "image/jpeg", data = it.toBase64())))
             }
-            parts.add(GeminiPart(text = "Tolong jelaskan secara singkat dan menarik gambar-gambar ini dalam bahasa Indonesia yang sesuai untuk dibacakan secara lisan sebagai pelengkap cerita berikut: \"$text\""))
+            parts.add(GeminiPart(text = """
+                Berdasarkan gambar-gambar ini, berikan deskripsi singkat (MAKSIMAL 2 kalimat) dalam bahasa Indonesia yang natural untuk melengkapi catatan jurnal berikut: "$text"
+                
+                Instruksi:
+                - Langsung deskripsikan suasananya, jangan pakai kata pembuka seperti "Gambar ini...".
+                - Harus singkat dan padat agar tidak mendominasi isi jurnal utamanya.
+                - Fokus pada emosi atau detail kunci dari gambar.
+            """.trimIndent()))
 
             val visionResult = geminiService.generateContent(parts = parts).getOrNull()
-            if (visionResult != null) {
-                finalSpeechText = "$text\n\n[Terdapat gambar: $visionResult]"
+            if (!visionResult.isNullOrBlank()) {
+                // Pastikan teks utama jurnal tetap ada di paling atas
+                finalSpeechText = "$text\n\n$visionResult"
             }
         }
 
+        println("Final Speech Text for TTS (Length: ${finalSpeechText.length}):\n$finalSpeechText")
         return geminiService.generateTTS(finalSpeechText, voiceName)
     }
 

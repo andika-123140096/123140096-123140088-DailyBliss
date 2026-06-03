@@ -36,7 +36,15 @@ class IosFileStorage : FileStorage {
 
     override suspend fun loadImage(path: String): ByteArray? {
         return try {
-            val data = NSData.dataWithContentsOfFile(path) ?: return null
+            val fileManager = NSFileManager.defaultManager
+            val actualPath = if (path.startsWith("/")) {
+                path
+            } else {
+                val documentsUrl = fileManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask).first() as NSURL
+                documentsUrl.URLByAppendingPathComponent(path)?.path ?: path
+            }
+
+            val data = NSData.dataWithContentsOfFile(actualPath) ?: return null
             ByteArray(data.length.toInt()).apply {
                 usePinned {
                     platform.Foundation.memcpy(it.addressOf(0), data.bytes, data.length)
@@ -46,4 +54,25 @@ class IosFileStorage : FileStorage {
             null
         }
     }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun saveFile(bytes: ByteArray, fileName: String): String? = try {
+        val fileManager = NSFileManager.defaultManager
+        val documentsUrl = fileManager.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask).first() as NSURL
+        val fileUrl = documentsUrl.URLByAppendingPathComponent(fileName)!!
+
+        val data = bytes.usePinned {
+            NSData.dataWithBytes(it.addressOf(0), bytes.size.toULong())
+        }
+
+        if (data.writeToURL(fileUrl, true)) {
+            fileUrl.path
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    override suspend fun loadFile(path: String): ByteArray? = loadImage(path)
 }

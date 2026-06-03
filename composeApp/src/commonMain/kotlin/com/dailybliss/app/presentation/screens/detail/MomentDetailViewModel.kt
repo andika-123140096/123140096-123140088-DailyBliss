@@ -33,6 +33,10 @@ class MomentDetailViewModel(
     private var originalMoment: com.dailybliss.app.domain.model.Moment? = null
     private val audioPlayer = AudioPlayer()
 
+    private var cachedTTSContent: String? = null
+    private var cachedTTSVoice: String? = null
+    private var cachedTTSBytes: ByteArray? = null
+
     init {
         loadMoment()
     }
@@ -191,6 +195,30 @@ class MomentDetailViewModel(
 
         viewModelScope.launch {
             val content = _uiState.value.moment?.content ?: return@launch
+            val mId = _uiState.value.moment?.id ?: return@launch
+            val voiceName = userPreferences.ttsVoiceName.first()
+            val fileName = "tts_${mId}_${voiceName}.mp3"
+            val textFileName = "tts_${mId}_${voiceName}.txt"
+
+            // Local Memory Cache Fallback (for unsaved changes if needed)
+            if (content == cachedTTSContent && voiceName == cachedTTSVoice && cachedTTSBytes != null) {
+                cachedTTSBytes?.let { bytes ->
+                    playAudioBytes(bytes)
+                }
+                return@launch
+            }
+
+            // Check Persistent Storage Cache first
+            val cachedFileBytes = fileStorage.loadFile(fileName)
+            val cachedTextBytes = fileStorage.loadFile(textFileName)
+            if (cachedFileBytes != null && cachedTextBytes != null && cachedTextBytes.decodeToString() == content) {
+                cachedTTSBytes = cachedFileBytes
+                cachedTTSContent = content
+                cachedTTSVoice = voiceName
+                playAudioBytes(cachedFileBytes)
+                return@launch
+            }
+
             _uiState.update { it.copy(isTTSLoading = true) }
 
             // Extract plain text and image URLs from HTML content
@@ -204,23 +232,19 @@ class MomentDetailViewModel(
                 fileStorage.loadImage(url)?.let { imageBytes.add(it) }
             }
 
-            val voiceName = userPreferences.ttsVoiceName.first()
-
             val audioRes = aiRepository.generateAudioForMoment(plainText, imageBytes, voiceName)
             _uiState.update { it.copy(isTTSLoading = false) }
 
             if (audioRes.isSuccess) {
                 audioRes.getOrNull()?.let { bytes ->
-                    audioPlayer.play(bytes)
-                    _uiState.update { it.copy(isTTSPlaying = true) }
+                    cachedTTSContent = content
+                    cachedTTSVoice = voiceName
+                    cachedTTSBytes = bytes
 
-                    // Simple poll to reset playing state when done
-                    launch {
-                        while (audioPlayer.isPlaying()) {
-                            kotlinx.coroutines.delay(500)
-                        }
-                        _uiState.update { it.copy(isTTSPlaying = false) }
-                    }
+                    fileStorage.saveFile(bytes, fileName)
+                    fileStorage.saveFile(content.encodeToByteArray(), textFileName)
+
+                    playAudioBytes(bytes)
                 }
             } else {
                 val e = audioRes.exceptionOrNull()
@@ -229,6 +253,17 @@ class MomentDetailViewModel(
                 val error = e?.message ?: "Gagal memutar audio"
                 _events.emit(MomentDetailEvent.Error(error))
             }
+        }
+    }
+
+    private fun playAudioBytes(bytes: ByteArray) {
+        audioPlayer.play(bytes)
+        _uiState.update { it.copy(isTTSPlaying = true) }
+        viewModelScope.launch {
+            while (audioPlayer.isPlaying()) {
+                kotlinx.coroutines.delay(500)
+            }
+            _uiState.update { it.copy(isTTSPlaying = false) }
         }
     }
 }

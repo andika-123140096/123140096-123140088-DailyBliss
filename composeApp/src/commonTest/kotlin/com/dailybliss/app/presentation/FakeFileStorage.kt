@@ -15,4 +15,11 @@ class FakeFileStorage : FileStorage {
     }
 
     override suspend fun loadImage(path: String): ByteArray? = storage[path]
+
+    override suspend fun saveFile(bytes: ByteArray, fileName: String): String? {
+        storage[fileName] = bytes
+        return fileName
+    }
+
+    override suspend fun loadFile(path: String): ByteArray? = storage[path]
 }
