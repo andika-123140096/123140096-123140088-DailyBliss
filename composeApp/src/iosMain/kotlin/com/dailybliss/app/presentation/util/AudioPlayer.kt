@@ -24,10 +24,14 @@ actual class AudioPlayer actual constructor() {
 
             // Robust WAV header parsing
             if (pcmBytes.size > 12 &&
-                pcmBytes[0] == 'R'.code.toByte() && pcmBytes[1] == 'I'.code.toByte() &&
-                pcmBytes[2] == 'F'.code.toByte() && pcmBytes[3] == 'F'.code.toByte() &&
-                pcmBytes[8] == 'W'.code.toByte() && pcmBytes[9] == 'A'.code.toByte() &&
-                pcmBytes[10] == 'V'.code.toByte() && pcmBytes[11] == 'E'.code.toByte()
+                pcmBytes[0] == 'R'.code.toByte() &&
+                pcmBytes[1] == 'I'.code.toByte() &&
+                pcmBytes[2] == 'F'.code.toByte() &&
+                pcmBytes[3] == 'F'.code.toByte() &&
+                pcmBytes[8] == 'W'.code.toByte() &&
+                pcmBytes[9] == 'A'.code.toByte() &&
+                pcmBytes[10] == 'V'.code.toByte() &&
+                pcmBytes[11] == 'E'.code.toByte()
             ) {
                 var i = 12
                 while (i < pcmBytes.size - 8) {
@@ -53,8 +57,10 @@ actual class AudioPlayer actual constructor() {
                     if (i < 0) break
                 }
             } else if (pcmBytes.size > 44 &&
-                pcmBytes[0] == 'R'.code.toByte() && pcmBytes[1] == 'I'.code.toByte() &&
-                pcmBytes[2] == 'F'.code.toByte() && pcmBytes[3] == 'F'.code.toByte()
+                pcmBytes[0] == 'R'.code.toByte() &&
+                pcmBytes[1] == 'I'.code.toByte() &&
+                pcmBytes[2] == 'F'.code.toByte() &&
+                pcmBytes[3] == 'F'.code.toByte()
             ) {
                 startIndex = 44
             }
