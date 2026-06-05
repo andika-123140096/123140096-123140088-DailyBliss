@@ -42,6 +42,12 @@ class NavigationActionsTest {
     }
 
     @Test
+    fun `navigateToStatistics should navigate to Statistics route`() {
+        actions.navigateToStatistics()
+        verify { navController.navigate(Route.Statistics, any<androidx.navigation.NavOptionsBuilder.() -> Unit>()) }
+    }
+
+    @Test
     fun `navigateToDailyMoments should navigate with dateStr`() {
         actions.navigateToDailyMoments("2024-01-01")
         verify { navController.navigate(Route.DailyMoments("2024-01-01")) }

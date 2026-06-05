@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToMomentDetail: (Long) -> Unit,
+    onNavigateToStatistics: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -35,6 +38,7 @@ fun HomeScreen(
         uiState = uiState,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToMomentDetail = onNavigateToMomentDetail,
+        onNavigateToStatistics = onNavigateToStatistics,
     )
 }
 
@@ -44,6 +48,7 @@ fun HomeScreenContent(
     uiState: HomeUiState,
     onNavigateToSettings: () -> Unit,
     onNavigateToMomentDetail: (Long) -> Unit,
+    onNavigateToStatistics: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.testTag("HOME_SCREEN"),
@@ -102,6 +107,11 @@ fun HomeScreenContent(
                 // AI Daily Insight Card (Refined & Modern)
                 item {
                     ModernInsightSection(insight = uiState.dailyInsight)
+                }
+
+                // Mood Analytics Entry Point
+                item {
+                    MoodAnalyticsCard(onClick = onNavigateToStatistics)
                 }
 
                 // AI Processing Indicator
@@ -214,6 +224,58 @@ private fun ModernInsightSection(insight: String) {
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 ),
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MoodAnalyticsCard(onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.BarChart,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Analitik Mood",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    text = "Lihat tren suasana hatimu",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                )
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
             )
         }
     }

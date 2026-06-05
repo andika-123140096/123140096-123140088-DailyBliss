@@ -3,7 +3,11 @@ package com.dailybliss.app.core.di
 import com.dailybliss.app.core.network.HttpClientFactory
 import com.dailybliss.app.core.util.BackgroundAIProcessor
 import com.dailybliss.app.core.util.BackgroundAIProcessorImpl
+import com.dailybliss.app.core.util.DailyBlissNotifier
+import com.dailybliss.app.core.util.DailyBlissSpeechToTextManager
 import com.dailybliss.app.core.util.DatabaseDriverFactory
+import com.dailybliss.app.core.util.Notifier
+import com.dailybliss.app.core.util.SpeechToTextManager
 import com.dailybliss.app.data.local.BlissDatabase
 import com.dailybliss.app.data.local.datastore.DataStoreFactory
 import com.dailybliss.app.data.local.datastore.UserPreferences
@@ -24,6 +28,7 @@ import com.dailybliss.app.presentation.screens.home.HomeViewModel
 import com.dailybliss.app.presentation.screens.home.JournalViewModel
 import com.dailybliss.app.presentation.screens.news.NewsViewModel
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
+import com.dailybliss.app.presentation.screens.statistics.StatisticsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,6 +46,8 @@ import org.koin.dsl.module
 val coreModule = module {
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     single<BackgroundAIProcessor> { BackgroundAIProcessorImpl(get(), get(), get(), get(), get()) }
+    single<Notifier> { DailyBlissNotifier(get()) }
+    single<SpeechToTextManager> { DailyBlissSpeechToTextManager(get()) }
 }
 
 // ==================== NETWORK MODULE ====================
@@ -86,6 +93,7 @@ val useCaseModule = module {
     singleOf(::DeleteMomentUseCase)
     singleOf(::GetMomentByIdUseCase)
     singleOf(::GetMomentsForDateUseCase)
+    singleOf(::CalculateStatisticsUseCase)
 }
 
 // ==================== VIEWMODEL MODULE ====================
@@ -101,6 +109,7 @@ val viewModelModule = module {
     viewModelOf(::AIAssistantViewModel)
     viewModelOf(::ChatHistoryViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::StatisticsViewModel)
 }
 
 // ==================== SHARED MODULES ====================

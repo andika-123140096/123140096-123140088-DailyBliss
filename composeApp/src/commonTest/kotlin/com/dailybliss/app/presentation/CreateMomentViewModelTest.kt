@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation
 
 import app.cash.turbine.test
 import com.dailybliss.app.core.util.FakeBackgroundAIProcessor
+import com.dailybliss.app.core.util.FakeSpeechToTextManager
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
@@ -28,6 +29,7 @@ class CreateMomentViewModelTest {
     private lateinit var momentRepository: FakeMomentRepository
     private lateinit var backgroundAIProcessor: FakeBackgroundAIProcessor
     private lateinit var fileStorage: FakeFileStorage
+    private lateinit var speechToTextManager: FakeSpeechToTextManager
     private lateinit var saveMomentUseCase: SaveMomentUseCase
     private lateinit var getMomentByIdUseCase: GetMomentByIdUseCase
     private lateinit var viewModel: CreateMomentViewModel
@@ -38,6 +40,7 @@ class CreateMomentViewModelTest {
         momentRepository = FakeMomentRepository()
         backgroundAIProcessor = FakeBackgroundAIProcessor()
         fileStorage = FakeFileStorage()
+        speechToTextManager = FakeSpeechToTextManager()
 
         saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor)
         getMomentByIdUseCase = GetMomentByIdUseCase(momentRepository)
@@ -47,6 +50,7 @@ class CreateMomentViewModelTest {
             getMomentByIdUseCase = getMomentByIdUseCase,
             backgroundAIProcessor = backgroundAIProcessor,
             fileStorage = fileStorage,
+            speechToTextManager = speechToTextManager,
         )
     }
 

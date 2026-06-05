@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dailybliss.app.presentation.util.NotificationPermissionEffect
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,6 +28,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var nicknameState by remember(uiState.nickname) { mutableStateOf(uiState.nickname) }
 
@@ -38,15 +40,42 @@ fun SettingsScreen(
         }
     }
 
-    SettingsScreenContent(
-        uiState = uiState,
-        nickname = nicknameState,
-        onNicknameChange = { nicknameState = it },
-        onDarkModeToggle = viewModel::toggleDarkMode,
-        onAiStyleChange = viewModel::updateAiStyle,
-        onTtsVoiceChange = viewModel::updateTtsVoiceName,
-        onNavigateBack = onNavigateBack,
-    )
+    var requestNotificationPermission by remember { mutableStateOf(false) }
+    if (requestNotificationPermission) {
+        NotificationPermissionEffect { granted ->
+            requestNotificationPermission = false
+            if (granted) {
+                viewModel.toggleReminders(true)
+            } else {
+                viewModel.toggleReminders(false)
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            SettingsScreenContent(
+                uiState = uiState,
+                nickname = nicknameState,
+                onNicknameChange = { nicknameState = it },
+                onDarkModeToggle = viewModel::toggleDarkMode,
+                onAiStyleChange = viewModel::updateAiStyle,
+                onTtsVoiceChange = viewModel::updateTtsVoiceName,
+                onReminderToggle = { enabled ->
+                    if (enabled) {
+                        requestNotificationPermission = true
+                    } else {
+                        viewModel.toggleReminders(false)
+                    }
+                },
+                onReminderTimeChange = viewModel::updateReminderTime,
+                onNavigateBack = onNavigateBack,
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +87,8 @@ fun SettingsScreenContent(
     onDarkModeToggle: (Boolean) -> Unit,
     onAiStyleChange: (String) -> Unit,
     onTtsVoiceChange: (String) -> Unit,
+    onReminderToggle: (Boolean) -> Unit,
+    onReminderTimeChange: (String) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     Scaffold(
@@ -152,6 +183,84 @@ fun SettingsScreenContent(
                                 uncheckedThumbColor = MaterialTheme.colorScheme.outline,
                             ),
                         )
+                    }
+                }
+            }
+
+            // Reminder Section
+            item {
+                Text(
+                    "Pengingat",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                "Aktifkan Pengingat Harian",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+
+                            Switch(
+                                checked = uiState.isReminderEnabled,
+                                onCheckedChange = onReminderToggle,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                ),
+                            )
+                        }
+
+                        if (uiState.isReminderEnabled) {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    "Waktu Pengingat",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+
+                                var timeText by remember(uiState.reminderTime) { mutableStateOf(uiState.reminderTime) }
+
+                                OutlinedTextField(
+                                    value = timeText,
+                                    onValueChange = {
+                                        timeText = it
+                                        if (it.matches(Regex("^([01]?[0-9]|2[0-3]):[0-5][0-9]$"))) {
+                                            onReminderTimeChange(it)
+                                        }
+                                    },
+                                    modifier = Modifier.width(100.dp),
+                                    placeholder = { Text("20:00") },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(8.dp),
+                                    textStyle = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                        }
                     }
                 }
             }

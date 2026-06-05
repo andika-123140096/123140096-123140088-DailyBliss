@@ -31,6 +31,11 @@ interface UserPreferences {
     suspend fun setDarkMode(isDark: Boolean)
     val ttsVoiceName: Flow<String>
     suspend fun setTtsVoiceName(voiceName: String)
+
+    val isReminderEnabled: Flow<Boolean>
+    suspend fun setReminderEnabled(enabled: Boolean)
+    val reminderTime: Flow<String> // Format "HH:mm"
+    suspend fun setReminderTime(time: String)
 }
 
 /**
@@ -46,6 +51,8 @@ class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : 
         val JOURNAL_SUMMARY = stringPreferencesKey("journal_summary")
         val DAILY_INSIGHT = stringPreferencesKey("daily_insight")
         val TTS_VOICE_NAME = stringPreferencesKey("tts_voice_name")
+        val IS_REMINDER_ENABLED = booleanPreferencesKey("is_reminder_enabled")
+        val REMINDER_TIME = stringPreferencesKey("reminder_time")
     }
 
     // ==================== USER PROFILE ====================
@@ -113,6 +120,30 @@ class DataStoreUserPreferences(private val dataStore: DataStore<Preferences>) : 
     override suspend fun setTtsVoiceName(voiceName: String) {
         dataStore.edit { prefs ->
             prefs[Keys.TTS_VOICE_NAME] = voiceName
+        }
+    }
+
+    // ==================== REMINDERS ====================
+
+    override val isReminderEnabled: Flow<Boolean> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.IS_REMINDER_ENABLED] ?: false
+        }
+
+    override suspend fun setReminderEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[Keys.IS_REMINDER_ENABLED] = enabled
+        }
+    }
+
+    override val reminderTime: Flow<String> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.REMINDER_TIME] ?: "20:00"
+        }
+
+    override suspend fun setReminderTime(time: String) {
+        dataStore.edit { prefs ->
+            prefs[Keys.REMINDER_TIME] = time
         }
     }
 }

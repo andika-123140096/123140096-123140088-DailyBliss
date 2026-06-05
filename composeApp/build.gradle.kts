@@ -110,6 +110,8 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
+            implementation(libs.androidx.work.runtime)
+            implementation(libs.androidx.core.ktx)
         }
 
         val androidUnitTest by getting {

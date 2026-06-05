@@ -32,4 +32,14 @@ class FakeUserPreferences : UserPreferences {
     override suspend fun setTtsVoiceName(voiceName: String) {
         ttsVoiceName.value = voiceName
     }
+
+    override val isReminderEnabled = MutableStateFlow(false)
+    override suspend fun setReminderEnabled(enabled: Boolean) {
+        isReminderEnabled.value = enabled
+    }
+
+    override val reminderTime = MutableStateFlow("20:00")
+    override suspend fun setReminderTime(time: String) {
+        reminderTime.value = time
+    }
 }

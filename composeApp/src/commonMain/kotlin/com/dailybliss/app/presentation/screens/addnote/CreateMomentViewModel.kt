@@ -3,6 +3,7 @@ package com.dailybliss.app.presentation.screens.addnote
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailybliss.app.core.util.BackgroundAIProcessor
+import com.dailybliss.app.core.util.SpeechToTextManager
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.GetMomentByIdUseCase
 import com.dailybliss.app.domain.usecase.SaveMomentUseCase
@@ -17,6 +18,7 @@ class CreateMomentViewModel(
     private val getMomentByIdUseCase: GetMomentByIdUseCase,
     private val backgroundAIProcessor: BackgroundAIProcessor,
     private val fileStorage: FileStorage,
+    private val speechToTextManager: SpeechToTextManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateMomentUiState())
@@ -26,6 +28,38 @@ class CreateMomentViewModel(
     val events = _events.asSharedFlow()
 
     private var currentMomentId: Long? = null
+
+    init {
+        // Collect recognized text and update content
+        speechToTextManager.recognizedText
+            .onEach { text ->
+                if (text.isNotEmpty()) {
+                    onVoiceTextRecognized(text)
+                }
+            }
+            .launchIn(viewModelScope)
+
+        speechToTextManager.isListening
+            .onEach { listening ->
+                _uiState.update { it.copy(isListening = listening) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun startVoiceInput() {
+        speechToTextManager.startListening()
+    }
+
+    fun stopVoiceInput() {
+        speechToTextManager.stopListening()
+    }
+
+    private fun onVoiceTextRecognized(text: String) {
+        _uiState.update { state ->
+            val newContent = if (state.content.isEmpty()) text else "${state.content} $text"
+            state.copy(content = newContent)
+        }
+    }
 
     fun onTitleChange(title: String) {
         _uiState.update { it.copy(title = title, titleError = null) }
@@ -172,6 +206,7 @@ data class CreateMomentUiState(
     val isEditMode: Boolean = false,
     val titleError: String? = null,
     val createdAt: Instant = Clock.System.now(),
+    val isListening: Boolean = false,
 )
 
 sealed interface CreateMomentEvent {

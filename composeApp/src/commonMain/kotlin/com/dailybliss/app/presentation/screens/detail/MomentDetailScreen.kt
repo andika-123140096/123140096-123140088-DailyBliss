@@ -353,6 +353,8 @@ fun MomentDetailScreenContent(
                                 lastCursorPosition = currentBlockOffset + focusedValue.selection.start
                                 imagePicker.launch()
                             },
+                            onMicClick = {},
+                            isListening = false,
                             modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),
                         )
                     }

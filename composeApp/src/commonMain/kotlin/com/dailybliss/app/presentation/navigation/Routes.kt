@@ -25,6 +25,9 @@ sealed interface Route {
     data object Calendar : Route
 
     @Serializable
+    data object Statistics : Route
+
+    @Serializable
     data object Settings : Route
 
     @Serializable
@@ -42,6 +45,8 @@ interface NavigationActions {
     fun navigateToJournal()
 
     fun navigateToCalendar()
+
+    fun navigateToStatistics()
 
     fun navigateToDailyMoments(dateStr: String)
 
