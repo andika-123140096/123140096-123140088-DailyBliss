@@ -8,6 +8,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +43,7 @@ fun MomentDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
@@ -52,30 +55,40 @@ fun MomentDetailScreen(
                 is MomentDetailEvent.ImageInserted -> {
                     targetOffset = event.index
                 }
-                is MomentDetailEvent.Error -> { /* Handle error */ }
+                is MomentDetailEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
             }
         }
     }
 
-    MomentDetailScreenContent(
-        uiState = uiState,
-        onTitleChange = viewModel::updateTitle,
-        onContentChange = viewModel::updateContent,
-        onAddImage = viewModel::addImage,
-        onSaveChanges = viewModel::saveChanges,
-        onDeleteMoment = { showDeleteDialog = true },
-        onConfirmDelete = {
-            viewModel.deleteMoment { onNavigateBack() }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        content = { innerPadding ->
+            Box(Modifier.padding(innerPadding)) {
+                MomentDetailScreenContent(
+                    uiState = uiState,
+                    onTitleChange = viewModel::updateTitle,
+                    onContentChange = viewModel::updateContent,
+                    onAddImage = viewModel::addImage,
+                    onSaveChanges = viewModel::saveChanges,
+                    onDeleteMoment = { showDeleteDialog = true },
+                    onConfirmDelete = {
+                        viewModel.deleteMoment { onNavigateBack() }
+                    },
+                    onNavigateBack = onNavigateBack,
+                    showDeleteDialog = showDeleteDialog,
+                    onDismissDeleteDialog = { showDeleteDialog = false },
+                    onPlayTTS = viewModel::playTTS,
+                    focusedValue = focusedValue,
+                    onFocusedValueChange = { focusedValue = it },
+                    updateFocusedValue = updateFocusedValue,
+                    onUpdateFocusedValueChange = { updateFocusedValue = it },
+                    targetOffset = targetOffset,
+                    onTargetOffsetReset = { targetOffset = -1 },
+                )
+            }
         },
-        onNavigateBack = onNavigateBack,
-        showDeleteDialog = showDeleteDialog,
-        onDismissDeleteDialog = { showDeleteDialog = false },
-        focusedValue = focusedValue,
-        onFocusedValueChange = { focusedValue = it },
-        updateFocusedValue = updateFocusedValue,
-        onUpdateFocusedValueChange = { updateFocusedValue = it },
-        targetOffset = targetOffset,
-        onTargetOffsetReset = { targetOffset = -1 },
     )
 }
 
@@ -92,6 +105,7 @@ fun MomentDetailScreenContent(
     onNavigateBack: () -> Unit,
     showDeleteDialog: Boolean,
     onDismissDeleteDialog: () -> Unit,
+    onPlayTTS: () -> Unit,
     focusedValue: TextFieldValue?,
     onFocusedValueChange: (TextFieldValue?) -> Unit,
     updateFocusedValue: ((TextFieldValue) -> Unit)?,
@@ -132,6 +146,17 @@ fun MomentDetailScreenContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onPlayTTS, modifier = Modifier.testTag("TTS_BUTTON")) {
+                        if (uiState.isTTSLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                imageVector = if (uiState.isTTSPlaying) Icons.Default.Close else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Stop TTS",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
                     if (uiState.isDirty) {
                         TextButton(
                             onClick = onSaveChanges,
@@ -328,6 +353,8 @@ fun MomentDetailScreenContent(
                                 lastCursorPosition = currentBlockOffset + focusedValue.selection.start
                                 imagePicker.launch()
                             },
+                            onMicClick = {},
+                            isListening = false,
                             modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),
                         )
                     }

@@ -38,7 +38,6 @@ class MomentRepositoryImpl(database: BlissDatabase) : MomentRepository {
             media_url = values.mediaUrl,
             mood = values.mood,
             tags = values.tags,
-            is_pinned = values.isPinned,
             created_at = values.createdAt,
             updated_at = values.updatedAt,
         )
@@ -53,7 +52,6 @@ class MomentRepositoryImpl(database: BlissDatabase) : MomentRepository {
             media_url = values.mediaUrl,
             mood = values.mood,
             tags = values.tags,
-            is_pinned = values.isPinned,
             updated_at = Clock.System.now().toEpochMilliseconds(),
             id = moment.id,
         )

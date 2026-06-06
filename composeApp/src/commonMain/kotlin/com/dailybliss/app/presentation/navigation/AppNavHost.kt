@@ -7,14 +7,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -37,6 +31,8 @@ import com.dailybliss.app.presentation.screens.home.HomeScreen
 import com.dailybliss.app.presentation.screens.home.JournalScreen
 import com.dailybliss.app.presentation.screens.news.NewsScreen
 import com.dailybliss.app.presentation.screens.settings.SettingsScreen
+import com.dailybliss.app.presentation.screens.statistics.StatisticsScreen
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController(), modifier: Modifier = Modifier) {
@@ -69,13 +65,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                         onClick = { actions.navigateToHome() },
                         icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Home::class) } ==
-                                    true
-                                ) {
-                                    Icons.Filled.Home
-                                } else {
-                                    Icons.Outlined.Home
-                                },
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Home::class) } == true) Icons.Filled.Home else Icons.Outlined.Home,
                                 contentDescription = "Home",
                             )
                         },
@@ -94,13 +84,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                         onClick = { actions.navigateToJournal() },
                         icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Journal::class) } ==
-                                    true
-                                ) {
-                                    Icons.AutoMirrored.Filled.MenuBook
-                                } else {
-                                    Icons.AutoMirrored.Outlined.MenuBook
-                                },
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Journal::class) } == true) Icons.AutoMirrored.Filled.MenuBook else Icons.AutoMirrored.Outlined.MenuBook,
                                 contentDescription = "Journal",
                             )
                         },
@@ -119,13 +103,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                         onClick = { actions.navigateToNews() },
                         icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.News::class) } ==
-                                    true
-                                ) {
-                                    Icons.Filled.Public
-                                } else {
-                                    Icons.Outlined.Public
-                                },
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.News::class) } == true) Icons.Filled.Public else Icons.Outlined.Public,
                                 contentDescription = "News",
                             )
                         },
@@ -144,13 +122,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                         onClick = { actions.navigateToCalendar() },
                         icon = {
                             Icon(
-                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } ==
-                                    true
-                                ) {
-                                    Icons.Default.DateRange
-                                } else {
-                                    Icons.Outlined.DateRange
-                                },
+                                if (currentDestination?.hierarchy?.any { it.hasRoute(Route.Calendar::class) } == true) Icons.Default.DateRange else Icons.Outlined.DateRange,
                                 contentDescription = "Calendar",
                             )
                         },
@@ -221,6 +193,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                     HomeScreen(
                         onNavigateToSettings = { actions.navigateToSettings() },
                         onNavigateToMomentDetail = { id -> actions.navigateToMomentDetail(id) },
+                        onNavigateToStatistics = { actions.navigateToStatistics() },
                     )
                 }
 
@@ -283,6 +256,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController(), modif
                         onNavigateBack = { actions.navigateBack() },
                     )
                 }
+
+                composable<Route.Statistics> {
+                    StatisticsScreen(
+                        viewModel = koinViewModel(),
+                        onBack = { actions.navigateBack() },
+                    )
+                }
             }
         },
     )
@@ -321,6 +301,16 @@ internal class NavigationActionsImpl(private val navController: NavHostControlle
 
     override fun navigateToCalendar() {
         navController.navigate(Route.Calendar) {
+            popUpTo(Route.Home) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    override fun navigateToStatistics() {
+        navController.navigate(Route.Statistics) {
             popUpTo(Route.Home) {
                 saveState = true
             }

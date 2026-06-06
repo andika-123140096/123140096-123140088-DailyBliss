@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailybliss.app.presentation.components.*
 import com.dailybliss.app.presentation.util.HtmlConverter
+import com.dailybliss.app.presentation.util.MicrophonePermissionEffect
 import com.dailybliss.app.presentation.util.rememberImagePickerLauncher
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -37,6 +38,16 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
     var focusedValue by remember { mutableStateOf<TextFieldValue?>(null) }
     var updateFocusedValue by remember { mutableStateOf<((TextFieldValue) -> Unit)?>(null) }
     var targetOffset by remember { mutableStateOf(-1) }
+
+    var requestMicPermission by remember { mutableStateOf(false) }
+    if (requestMicPermission) {
+        MicrophonePermissionEffect { granted ->
+            requestMicPermission = false
+            if (granted) {
+                viewModel.startVoiceInput()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -64,6 +75,13 @@ fun CreateMomentScreen(onNavigateBack: () -> Unit, viewModel: CreateMomentViewMo
         onUpdateFocusedValueChange = { updateFocusedValue = it },
         targetOffset = targetOffset,
         onTargetOffsetReset = { targetOffset = -1 },
+        onMicClick = {
+            if (uiState.isListening) {
+                viewModel.stopVoiceInput()
+            } else {
+                requestMicPermission = true
+            }
+        },
     )
 }
 
@@ -83,6 +101,7 @@ fun CreateMomentScreenContent(
     onUpdateFocusedValueChange: (((TextFieldValue) -> Unit)?) -> Unit,
     targetOffset: Int,
     onTargetOffsetReset: () -> Unit,
+    onMicClick: () -> Unit,
 ) {
     var activeStyles by remember { mutableStateOf(setOf<String>()) }
     var currentBlockOffset by remember { mutableStateOf(0) }
@@ -279,6 +298,8 @@ fun CreateMomentScreenContent(
                             lastCursorPosition = currentBlockOffset + focusedValue.selection.start
                             imagePicker.launch()
                         },
+                        onMicClick = onMicClick,
+                        isListening = uiState.isListening,
                         modifier = Modifier.fillMaxWidth().testTag("FORMATTING_TOOLBAR"),
                     )
                 }

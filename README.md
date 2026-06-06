@@ -2,208 +2,147 @@
 
 [![CI](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml/badge.svg)](https://github.com/andika-123140096/123140096-123140088-DailyBliss/actions/workflows/ci.yml)
 
-Aplikasi jurnal harian cerdas yang membantu pengguna mencatat momen berharga dengan dukungan asisten AI empatik (Blissie), analisis suasana hati otomatis, dan integrasi data real-time. Dibangun menggunakan Kotlin Multiplatform untuk pengalaman cross-platform yang konsisten.
+**DailyBliss** adalah aplikasi jurnal cerdas lintas platform yang dirancang untuk membantu pengguna mengabadikan setiap momen berharga. Dengan dukungan asisten AI empatik (Blissie), analisis suasana hati otomatis, dan integrasi data real-time, DailyBliss mengubah aktivitas mencatat menjadi pengalaman yang reflektif dan bermakna.
 
-## 👥 Kelompok DailyBliss
-
-| Nama | NIM |
-|------|-----|
-| Andika Dinata | 123140096 |
-| Satria Lemana Putra | 123140088 |
-
-## 📱 Daftar Layar (Screens)
-
-| Layar | Deskripsi | Route Name |
-|-------|-----------|------------|
-| **Dashboard** | Layar utama dengan sapaan personal dan *AI Insight* harian. | `Home` |
-| **Journal Feed** | Daftar kronologis memori dengan fitur pencarian dan filter pin. | `Journal` |
-| **News & Info** | Pusat informasi real-time: Cuaca, Kurs Mata Uang, dan Berita terkini. | `News` |
-| **Editor Momen** | Form input dengan *Rich Text Editor* dan dukungan banyak foto. | `CreateMoment` |
-| **Detail Momen** | Review lengkap memori dengan visual yang bersih dan modern. | `MomentDetail` |
-| **Blissie AI** | Chat interface empatik dengan dukungan analisis gambar (Vision). | `AIAssistant` |
-| **Kalender** | Visualisasi histori penulisan dalam format kalender bulanan. | `Calendar` |
-| **Momen Harian** | Daftar memori pada tanggal spesifik yang dipilih dari kalender. | `DailyMoments` |
-| **Pengaturan** | Kustomisasi profil, tema, dan gaya bahasa asisten AI. | `Settings` |
-
-## ✨ Fitur Unggulan (Data-Driven)
-
-| Fitur | Implementasi Teknis |
-|-------|---------------------|
-| **Rich Journaling** | Mendukung `title`, `content` (HTML/Annotated), dan multiple images via `HorizontalPager`. |
-| **AI Insights** | Analisis `mood` otomatis dan `smart tagging` via Gemini AI. |
-| **Long-term Memory** | Blissie memiliki memori naratif dari histori jurnal pengguna untuk respon yang lebih personal. |
-| **Vision Support** | Asisten AI (Blissie) dapat menganalisis gambar yang dikirim pengguna dalam sesi chat. |
-| **Kustomisasi AI** | Pengguna dapat mengatur gaya bahasa Blissie (Santai, Formal, atau Puitis). |
-| **Flashback** | Fitur "On This Day" untuk melihat memori di tanggal yang sama di tahun lalu. |
-| **Daily Insight** | Kalimat refleksi harian yang dipersonalisasi berdasarkan histori jurnal. |
-| **Organisasi** | Sistem `pinning` (is_pinned) untuk menandai momen penting. |
-| **Real-time Data** | Integrasi Weather, News, Geolocation, dan Currency exchange. |
-
-## 🛠️ Tech Stack & Versi
-
-| Komponen | Teknologi | Versi |
-|----------|-----------|-------|
-| **Language** | Kotlin | `2.0.21` |
-| **UI Framework** | Compose Multiplatform | `1.7.0` |
-| **Navigation** | Navigation Compose | `2.8.0-alpha10` |
-| **Dependency Injection** | Koin | `4.0.0` |
-| **Networking** | Ktor Client | `3.0.1` |
-| **Local Database** | SQLDelight | `2.0.2` |
-| **Storage** | DataStore Preferences | `1.1.1` |
-| **Image Loading** | Coil | `3.0.4` |
-| **Concurrency** | Kotlinx Coroutines | `1.9.0` |
-
-## 🌐 Integrasi API
-
-Aplikasi ini menggunakan beberapa endpoint eksternal untuk memperkaya informasi:
-
-| Layanan | Endpoint Utama | Fungsi |
-|---------|----------------|--------|
-| **Gemini AI** | `generativelanguage.googleapis.com` | AI Chat, Mood & Tag analysis. |
-| **Open-Meteo** | `api.open-meteo.com` | Data cuaca (suhu & angin) real-time. |
-| **IPAPI** | `ipapi.co` | Deteksi lokasi otomatis via IP. |
-| **Berita Indo** | `berita-indo-api-next.vercel.app` | Feed berita terkini (CNN Indonesia). |
-| **Frankfurter** | `api.frankfurter.dev` | Kurs mata uang USD/SGD ke IDR. |
+Dibangun dengan **Kotlin Multiplatform (KMP)**, aplikasi ini menawarkan performa native yang konsisten baik di Android maupun iOS dengan satu basis kode (Single Codebase).
 
 ---
 
-### 🔍 Contoh Data API (JSON)
+## 👥 Tim Pengembang
+
+| Nama | NIM | Peran |
+|------|-----|-------|
+| **Andika Dinata** | 123140096 | Lead Developer / Architect |
+| **Satria Lemana Putra** | 123140088 | UI/UX Designer / Developer |
+
+---
+
+## ✨ Fitur Utama
+
+### ✍️ Rich Journaling Experience
+*   **Multi-Media Support:** Tambahkan foto ke dalam jurnal dengan antarmuka yang modern.
+*   **Rich Text Editor:** Simpan memori dengan detail narasi yang mendalam.
+
+### 🤖 Intelligent AI Assistant (Blissie)
+*   **Empathetic Chat:** Berinteraksi dengan Blissie yang memberikan respon tulus dan menenangkan.
+*   **Mood Analysis:** Deteksi otomatis suasana hati (Bahagia, Sedih, Tenang, dll.) dari teks jurnal.
+*   **Smart Tagging:** Klasifikasi otomatis kategori jurnal (Kerja, Hobi, Keluarga) berbasis AI.
+*   **Long-term Memory:** Blissie mengingat narasi hidup Anda untuk memberikan respon yang lebih personal.
+
+### 📊 Insights & Analytics
+*   **Visual Statistics:** Pantau tren suasana hati Anda melalui grafik distribusi mood yang intuitif.
+*   **Daily Bliss Insight:** Dapatkan kalimat afirmasi harian yang dipersonalisasi khusus untuk Anda.
+*   **Flashback (On This Day):** Temukan kembali memori di tanggal yang sama pada tahun-tahun sebelumnya.
+
+### 🌐 Smart Integrations
+*   **Real-time Weather:** Pantau cuaca saat ini berdasarkan lokasi Anda.
+*   **Global News:** Feed berita terkini untuk tetap terinformasi.
+*   **Currency Tracker:** Pantau nilai tukar mata uang (USD/SGD ke IDR) secara instan.
+*   **Offline First:** Akses data jurnal dan cache informasi kapan saja tanpa ketergantungan internet.
+
+---
+
+## 📱 Arsitektur Layar (Screens)
+
+| Layar | Deskripsi | Route |
+|-------|-----------|-------|
+| **Dashboard** | Pusat kendali dengan *Quick Insight*, cuaca, dan ringkasan harian. | `Home` |
+| **Journal Feed** | Daftar kronologis memori dengan fitur pencarian dan filter. | `Journal` |
+| **Editor Momen** | Antarmuka input jurnal dengan dukungan unggah foto. | `CreateMoment` |
+| **Detail Momen** | Layar review memori dengan visual bersih dan navigasi media. | `MomentDetail` |
+| **Statistics** | Visualisasi data dan statistik distribusi suasana hati pengguna. | `Statistics` |
+| **Blissie AI** | Chat interface interaktif dengan asisten AI empatik. | `AIAssistant` |
+| **Kalender** | Histori penulisan dalam format kalender interaktif. | `Calendar` |
+| **News & Info** | Agregator berita, cuaca, dan kurs mata uang real-time. | `News` |
+| **Settings** | Kustomisasi profil, tema (Dark/Light), dan gaya bicara AI. | `Settings` |
+
+---
+
+## 🛠️ Arsitektur & Teknologi
+
+DailyBliss mengimplementasikan **Clean Architecture** dengan pemisahan *layer* yang tegas (`domain`, `data`, `presentation`) untuk memastikan kode yang *scalable* dan mudah diuji.
+
+### Tech Stack
+| Komponen | Teknologi | Versi |
+|----------|-----------|-------|
+| **Framework** | Compose Multiplatform | `1.7.0` |
+| **Navigation** | Navigation Compose | `2.8.0-alpha10` |
+| **DI** | Koin | `4.0.0` |
+| **Networking** | Ktor Client | `3.0.1` |
+| **Database** | SQLDelight | `2.0.2` |
+| **Storage** | DataStore Preferences | `1.1.1` |
+| **Image Loading** | Coil | `3.0.4` |
+| **Testing** | MockK, Turbine, Kover | - |
+
+---
+
+## 🌐 Integrasi API & Caching
+
+### API Endpoints
+*   **Gemini AI:** `generativelanguage.googleapis.com` (AI Core).
+*   **Open-Meteo:** `api.open-meteo.com` (Weather data).
+*   **IPAPI:** `ipapi.co` (Auto-location detection).
+*   **Berita Indo:** `berita-indo-api-next.vercel.app` (News aggregator).
+*   **Frankfurter:** `api.frankfurter.dev` (Currency rates).
+
+### Caching Strategy
+Aplikasi menggunakan sistem **Offline-First**:
+1.  **SQLDelight (`NewsCache`):** Menyimpan data berita dan cuaca untuk akses luring.
+2.  **SQLDelight (`MomentEntity`):** Basis data utama untuk seluruh momen jurnal.
+3.  **DataStore:** Menyimpan preferensi pengguna dan metadata asisten AI.
+4.  **Coil Cache:** Mengoptimalkan pemuatan gambar dengan *disk caching*.
+
+---
+
+## 🚀 Cara Menjalankan Proyek
+
+### 1. Prasyarat
+*   Android Studio Ladybug atau versi terbaru.
+*   JDK 17.
+*   Xcode (untuk menjalankan target iOS).
+
+### 2. Konfigurasi API Key
+Buat file `local.properties` di root project dan tambahkan API Key dari [Google AI Studio](https://aistudio.google.com/):
+```properties
+GEMINI_API_KEY=YOUR_API_KEY_HERE
+GEMINI_MODEL_NAME=gemini-1.5-flash
+```
+
+### 3. iOS Setup
+Di `iosApp/iosApp/Info.plist`, pastikan permission berikut sudah dikonfigurasi:
+*   `NSCameraUsageDescription` (Akses Kamera)
+*   `NSPhotoLibraryUsageDescription` (Akses Galeri)
+*   `NSLocationWhenInUseUsageDescription` (Akses Lokasi)
+
+---
+
+## 🧠 AI System Documentation
+
+DailyBliss menggunakan instruksi sistem (System Prompts) yang dirancang khusus untuk menciptakan kepribadian Blissie yang unik.
 
 <details>
-<summary><b>1. Gemini AI Response</b></summary>
+<summary><b>Lihat Detail System Prompts</b></summary>
 
-```json
-{
-  "candidates": [{
-    "content": {
-      "parts": [{"text": "Halo! Saya Blissie..."}],
-      "role": "model"
-    }
-  }]
-}
-```
+#### Blissie Personality
+> Kamu adalah "Blissie", pendamping setia di aplikasi jurnal DailyBliss. Tugasmu adalah menjadi pendengar yang baik dan teman yang memberikan respon bermakna. Gunakan bahasa yang hangat, empatik, dan personal.
+
+#### Mood & Tag Analysis
+> Menganalisis teks jurnal untuk mengekstrak suasana hati (mood) dalam format JSON dan memberikan tag kategori yang relevan (maksimal 3).
+
+#### Narrative Memory
+> Membuat ringkasan naratif dari histori jurnal pengguna untuk digunakan sebagai memori jangka panjang Blissie, memastikan respon yang diberikan selalu kontekstual.
 </details>
 
-<details>
-<summary><b>2. SQLDelight Schema (MomentEntity)</b></summary>
-
-```sql
-CREATE TABLE MomentEntity (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    media_url TEXT,
-    mood TEXT,
-    tags TEXT,
-    is_pinned INTEGER NOT NULL DEFAULT 0,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-);
-```
-</details>
-
-## 💾 Sistem Caching
-
-DailyBliss menggunakan sistem caching berlapis untuk performa optimal dan penghematan data:
-
-| Tipe Cache | Teknologi | Kegunaan |
-|------------|-----------|----------|
-| **Local Cache** | SQLDelight (NewsCache) | Menyimpan respon API (Cuaca, Berita, Kurs) agar dashboard bisa dibuka instan tanpa koneksi internet. |
-| **Preference Cache** | DataStore | Menyimpan preferensi tema, nickname, dan metadata AI agar tidak hilang saat aplikasi ditutup. |
-| **Media Cache** | Coil | Melakukan caching gambar otomatis untuk foto-foto jurnal yang diunggah. |
-
-## 🍎 iOS Setup (Penting)
-
-Untuk menjalankan aplikasi di iOS, beberapa konfigurasi berikut wajib dilakukan di file `iosApp/iosApp/Info.plist`:
-
-| Key | Value / Deskripsi |
-|-----|-------------------|
-| `GEMINI_API_KEY` | API Key dari Google AI Studio. |
-| `GEMINI_MODEL_NAME` | (Opsional) Nama model (default: `gemini-1.5-flash`). |
-| `NSCameraUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses kamera (untuk foto jurnal). |
-| `NSPhotoLibraryUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses galeri (untuk memilih foto). |
-| `NSLocationWhenInUseUsageDescription` | Penjelasan mengapa aplikasi membutuhkan akses lokasi (untuk fitur cuaca & tagging lokasi). |
-
-## 🤖 AI System Prompts
-
-Aplikasi ini menggunakan instruksi khusus (System Prompts) untuk mengatur perilaku AI (Blissie):
-
-<details>
-<summary><b>1. Blissie Personality (Chat)</b></summary>
-
-```text
-Kamu adalah "Blissie", pendamping setia di aplikasi jurnal DailyBliss. 
-Tugasmu adalah menjadi pendengar yang baik dan teman yang memberikan respon bermakna.
-
-ATURAN DASAR:
-1. Gunakan kata ganti "Aku" dan "Kamu". Hindari "Anda" atau "Saya" kecuali diminta gaya sangat formal.
-2. TULIS LANGSUNG respon seolah-olah sedang berbincang tulus. Jangan gunakan label teknis.
-3. Berikan empati yang tulus sesuai perasaan pengguna.
-4. Tetap singkat, padat, dan tidak bertele-tele.
-5. Gunakan emoji secukupnya agar terasa ramah namun tidak berlebihan.
-
-Tujuan: Menciptakan suasana yang tenang, nyaman, dan reflektif.
-```
-</details>
-
-<details>
-<summary><b>2. Mood Analysis</b></summary>
-
-```text
-Analisis suasana hati dari teks jurnal berikut. 
-Berikan jawaban dalam format JSON sederhana: {"mood": "NamaMood", "emoji": "😊"}.
-Pilihan mood: Bahagia, Sedih, Marah, Cemas, Tenang, Bersemangat, Lelah.
-Sesuaikan emoji dengan mood.
-```
-</details>
-
-<details>
-<summary><b>3. Smart Tagging</b></summary>
-
-```text
-Berikan maksimal 3 tag yang relevan untuk teks jurnal berikut.
-Berikan jawaban dalam format JSON: {"tags": ["tag1", "tag2", "tag3"]}.
-Tag harus singkat, satu kata, dan mencerminkan topik utama (misal: Kerja, Keluarga, Hobi, Kesehatan).
-```
-</details>
-
-<details>
-<summary><b>4. Global Journal Summary (Long-term Memory)</b></summary>
-
-```text
-Buatlah ringkasan singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
-Fokus pada:
-1. Topik atau kejadian utama yang sering muncul.
-2. Perkembangan emosi atau suasana hati secara umum.
-3. Hal-hal penting yang perlu ingat tentang kehidupan pengguna.
-
-Tujuan ringkasan ini adalah sebagai 'memori jangka panjang' bagi asisten AI agar bisa memberikan respon yang lebih personal.
-Jangan gunakan format poin-poin yang kaku. Tulis dalam 2-3 paragraf singkat yang naratif.
-Maksimal 300 kata.
-```
-</details>
-
-<details>
-<summary><b>5. Daily Insight</b></summary>
-
-```text
-Buatlah satu kalimat refleksi atau afirmasi yang sangat singkat, padat, dan Insightful dari kumpulan teks jurnal pengguna berikut.
-Tujuan: Menjadi "Bliss Insight" di layar utama yang memberikan semangat dan refleksi instan.
-PANDUAN:
-- Maksimal 20 kata.
-- Harus terasa personal dan hangat.
-- Hindari kata-kata klise yang terlalu umum.
-- Jangan gunakan format poin-poin.
-```
-</details>
-
-## 📄 License
-
-MIT License
+---
 
 ## 👨‍🏫 Dosen Pengampu
-### Pak Habib
-[GitHub: mh4Scripts](https://github.com/mh4Scripts)
+### **Pak Habib (mh4Scripts)**
+[GitHub Profile](https://github.com/mh4Scripts)
 
 **Program Studi Teknik Informatika**  
 Institut Teknologi Sumatera (ITERA)
+
+---
+
+## 📄 Lisensi
+Proyek ini dilisensikan di bawah **MIT License**.

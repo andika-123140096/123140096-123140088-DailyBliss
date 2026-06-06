@@ -78,6 +78,23 @@ data class GenerationConfig(
     val maxOutputTokens: Int = 2000,
     val topP: Double = 0.95,
     val topK: Int = 40,
+    val responseModalities: List<String>? = null,
+    val speechConfig: SpeechConfig? = null,
+)
+
+@Serializable
+data class SpeechConfig(
+    val voiceConfig: VoiceConfig? = null,
+)
+
+@Serializable
+data class VoiceConfig(
+    val prebuiltVoiceConfig: PrebuiltVoiceConfig? = null,
+)
+
+@Serializable
+data class PrebuiltVoiceConfig(
+    val voiceName: String? = null,
 )
 
 @Serializable

@@ -490,6 +490,8 @@ fun FormattingToolbar(
     activeStyles: Set<String>,
     onStyleClick: (String) -> Unit,
     onGalleryClick: () -> Unit,
+    onMicClick: () -> Unit,
+    isListening: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -509,6 +511,27 @@ fun FormattingToolbar(
             StyleToggleButton(activeStyles.contains("b"), Icons.Default.FormatBold, "Bold") { onStyleClick("b") }
             StyleToggleButton(activeStyles.contains("i"), Icons.Default.FormatItalic, "Italic") { onStyleClick("i") }
             StyleToggleButton(activeStyles.contains("u"), Icons.Default.FormatUnderlined, "Underline") { onStyleClick("u") }
+
+            IconButton(
+                onClick = onMicClick,
+                modifier = Modifier.size(36.dp),
+                colors = if (isListening) {
+                    IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error,
+                    )
+                } else {
+                    IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            ) {
+                Icon(
+                    if (isListening) Icons.Default.MicOff else Icons.Default.Mic,
+                    "Mic",
+                    modifier = Modifier.size(20.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 

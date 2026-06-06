@@ -2,6 +2,7 @@ package com.dailybliss.app.presentation
 
 import app.cash.turbine.test
 import com.dailybliss.app.core.util.FakeBackgroundAIProcessor
+import com.dailybliss.app.core.util.FakeNotifier
 import com.dailybliss.app.data.local.datastore.FakeUserPreferences
 import com.dailybliss.app.presentation.screens.settings.SettingsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class SettingsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userPreferences: FakeUserPreferences
     private lateinit var backgroundAIProcessor: FakeBackgroundAIProcessor
+    private lateinit var notifier: FakeNotifier
     private lateinit var viewModel: SettingsViewModel
 
     @BeforeTest
@@ -25,7 +27,8 @@ class SettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         userPreferences = FakeUserPreferences()
         backgroundAIProcessor = FakeBackgroundAIProcessor()
-        viewModel = SettingsViewModel(userPreferences, backgroundAIProcessor)
+        notifier = FakeNotifier()
+        viewModel = SettingsViewModel(userPreferences, backgroundAIProcessor, notifier)
     }
 
     @AfterTest

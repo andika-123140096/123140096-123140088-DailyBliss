@@ -1,6 +1,8 @@
 package com.dailybliss.app.presentation
 
 import com.dailybliss.app.core.util.FakeBackgroundAIProcessor
+import com.dailybliss.app.data.local.datastore.FakeUserPreferences
+import com.dailybliss.app.data.repository.FakeAIRepository
 import com.dailybliss.app.data.repository.FakeMomentRepository
 import com.dailybliss.app.domain.model.Moment
 import com.dailybliss.app.domain.usecase.DeleteMomentUseCase
@@ -23,6 +25,8 @@ class MomentDetailViewModelDeepTest {
     private lateinit var momentRepository: FakeMomentRepository
     private lateinit var backgroundAIProcessor: FakeBackgroundAIProcessor
     private lateinit var fileStorage: FakeFileStorage
+    private lateinit var aiRepository: FakeAIRepository
+    private lateinit var userPreferences: FakeUserPreferences
     private lateinit var viewModel: MomentDetailViewModel
 
     private val initialMoment = Moment(id = 1, title = "Original", content = "Content")
@@ -35,6 +39,8 @@ class MomentDetailViewModelDeepTest {
 
         backgroundAIProcessor = FakeBackgroundAIProcessor()
         fileStorage = FakeFileStorage()
+        aiRepository = FakeAIRepository()
+        userPreferences = FakeUserPreferences()
 
         viewModel = MomentDetailViewModel(
             momentId = 1,
@@ -43,6 +49,8 @@ class MomentDetailViewModelDeepTest {
             saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor),
             backgroundAIProcessor = backgroundAIProcessor,
             fileStorage = fileStorage,
+            aiRepository = aiRepository,
+            userPreferences = userPreferences,
         )
         advanceUntilIdle()
     }
@@ -99,6 +107,8 @@ class MomentDetailViewModelDeepTest {
             saveMomentUseCase = SaveMomentUseCase(momentRepository, backgroundAIProcessor),
             backgroundAIProcessor = backgroundAIProcessor,
             fileStorage = fileStorage,
+            aiRepository = aiRepository,
+            userPreferences = userPreferences,
         )
         advanceUntilIdle()
         assertEquals("Momen tidak ditemukan", missingVm.uiState.value.error)

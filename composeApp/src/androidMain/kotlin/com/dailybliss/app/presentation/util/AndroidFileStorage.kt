@@ -23,9 +23,22 @@ class AndroidFileStorage(private val context: PlatformContext) : FileStorage {
 
     override suspend fun loadImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
         try {
-            File(path).readBytes()
+            val file = if (path.startsWith("/")) File(path) else File(androidContext.filesDir, path)
+            if (file.exists()) file.readBytes() else null
         } catch (ignore: Exception) {
             null
         }
     }
+
+    override suspend fun saveFile(bytes: ByteArray, fileName: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val file = File(androidContext.filesDir, fileName)
+            file.writeBytes(bytes)
+            file.absolutePath
+        } catch (ignore: Exception) {
+            null
+        }
+    }
+
+    override suspend fun loadFile(path: String): ByteArray? = loadImage(path)
 }
