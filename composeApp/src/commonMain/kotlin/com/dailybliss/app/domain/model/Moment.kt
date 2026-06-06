@@ -10,7 +10,6 @@ data class Moment(
     val imageUrl: String? = null,
     val mood: String? = null,
     val tags: List<String> = emptyList(),
-    val isPinned: Boolean = false,
     val createdAt: Instant = Clock.System.now(),
     val updatedAt: Instant = Clock.System.now(),
 ) {

@@ -16,7 +16,6 @@ class MomentMapperTest {
             media_url = "url",
             mood = "M",
             tags = "T1,T2",
-            is_pinned = 1L,
             created_at = 1000L,
             updated_at = 2000L,
         )
@@ -26,7 +25,6 @@ class MomentMapperTest {
         assertEquals(1L, domain.id)
         assertEquals("T", domain.title)
         assertEquals(listOf("T1", "T2"), domain.tags)
-        assertEquals(true, domain.isPinned)
         assertEquals(Instant.fromEpochMilliseconds(1000L), domain.createdAt)
         assertEquals("url", domain.imageUrl)
     }
@@ -40,7 +38,6 @@ class MomentMapperTest {
             media_url = null,
             mood = null,
             tags = "",
-            is_pinned = 0L,
             created_at = 1000L,
             updated_at = 2000L,
         )
@@ -55,7 +52,6 @@ class MomentMapperTest {
             title = "T2",
             content = "C2",
             tags = listOf("A", "B"),
-            isPinned = false,
             createdAt = Instant.fromEpochMilliseconds(3000L),
             updatedAt = Instant.fromEpochMilliseconds(4000L),
         )
@@ -64,15 +60,14 @@ class MomentMapperTest {
 
         assertEquals("T2", values.title)
         assertEquals("A,B", values.tags)
-        assertEquals(0L, values.isPinned)
         assertEquals(3000L, values.createdAt)
     }
 
     @Test
     fun `List toDomainList should map all items`() {
         val entities = listOf(
-            MomentEntity(1L, "T1", "C1", null, null, "", 0L, 0L, 0L),
-            MomentEntity(2L, "T2", "C2", null, null, "", 0L, 0L, 0L),
+            MomentEntity(1L, "T1", "C1", null, null, "", 0L, 0L),
+            MomentEntity(2L, "T2", "C2", null, null, "", 0L, 0L),
         )
         val domains = entities.toDomainList()
         assertEquals(2, domains.size)
