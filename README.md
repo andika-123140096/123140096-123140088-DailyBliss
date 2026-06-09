@@ -11,7 +11,7 @@ Dibangun menggunakan **Kotlin Multiplatform (KMP)**, aplikasi ini menawarkan per
 ## 🎥 Video Demonstrasi
 Tonton bagaimana DailyBliss membantu Anda mengelola jurnal dengan lebih cerdas:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/6-4i7E7agaQ?si=MI6Sb3_fUgq96FDl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![DailyBliss Demo](https://img.youtube.com/vi/6-4i7E7agaQ/maxresdefault.jpg)](https://youtu.be/6-4i7E7agaQ)
 
 ---
 
@@ -58,35 +58,35 @@ Pusat kendali harian Anda dengan ringkasan cuaca, kutipan bijak, dan daftar mome
 
 | Dashboard Utama | Daftar Momen |
 | :---: | :---: |
-| <img src="docs/images/home.png" height="400"> | <img src="docs/images/jurnal.png" height="400"> |
+| <img src="docs/images/home.png" height="600"> | <img src="docs/images/jurnal.png" height="600"> |
 
 ### ✍️ Manajemen Jurnal & Kalender
 Antarmuka input yang bersih dan navigasi kalender untuk melihat histori jurnal dengan mudah.
 
 | Tambah Jurnal | Lihat Detail Jurnal |
 | :---: | :---: |
-| <img src="docs/images/tambah_jurnal.png" height="400"> | <img src="docs/images/lihat_jurnal.png" height="400"> |
+| <img src="docs/images/tambah_jurnal.png" height="600"> | <img src="docs/images/lihat_jurnal.png" height="600"> |
 
 ### 🤖 Blissie AI & Analisis
 Interaksi dengan asisten AI dan visualisasi data suasana hati Anda.
 
 | Chat AI (Blissie) | Analisis Suasana Hati (Mood) |
 | :---: | :---: |
-| <img src="docs/images/chat_ai.png" height="400"> | <img src="docs/images/analisis_mood.png" height="400"> |
+| <img src="docs/images/chat_ai.png" height="600"> | <img src="docs/images/analisis_mood.png" height="600"> |
 
 ### 📅 Kalender & Informasi Eksternal
 Akses histori melalui kalender dan integrasi berita terkini.
 
 | Kalender | Berita Terkini |
 | :---: | :---: |
-| <img src="docs/images/kalender.png" height="400"> | <img src="docs/images/berita.png" height="400"> |
+| <img src="docs/images/kalender.png" height="600"> | <img src="docs/images/berita.png" height="600"> |
 
 ### ⚙️ Pengaturan
 Kustomisasi profil, tema, dan preferensi aplikasi.
 
 | Pengaturan |
 | :---: |
-| <img src="docs/images/pengaturan.png" height="400"> |
+| <img src="docs/images/pengaturan.png" height="600"> |
 
 ---
 
