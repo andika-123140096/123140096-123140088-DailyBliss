@@ -186,56 +186,6 @@ Mendeteksi lokasi pengguna berdasarkan alamat IP sebagai fallback GPS.
     }
     ```
 
----
-
-## 💾 Strategi Caching & Persistensi Data
-
-DailyBliss mengusung prinsip **Offline-First** untuk memastikan pengguna tetap dapat mengakses memori mereka kapan saja tanpa ketergantungan penuh pada internet.
-
-### 1. SQLDelight (Local Database)
-Digunakan sebagai penyimpanan utama data terstruktur:
-*   **MomentEntity:** Menyimpan seluruh data jurnal secara permanen, termasuk path gambar lokal, kategori, dan metadata mood hasil analisis AI.
-*   **NewsCache:** Mekanisme caching untuk data berita dan cuaca dengan masa berlaku (TTL) tertentu untuk mengurangi beban request API.
-
-### 2. DataStore Preferences
-Digunakan untuk menyimpan preferensi pengguna yang bersifat ringan:
-*   Profil pengguna (Nama Panggilan).
-*   Pengaturan Tema (Dark/Light mode).
-*   Gaya Bahasa AI (Casual, Formal, Poetic).
-*   Metadata Memori Jangka Panjang (Ringkasan Jurnal) untuk Blissie.
-
-### 3. Coil Image Caching
-Optimalisasi pemuatan gambar melalui dua lapis cache:
-*   **Memory Cache:** Akses instan untuk gambar yang baru saja dilihat.
-*   **Disk Cache:** Menyimpan gambar secara fisik di penyimpanan perangkat agar tidak perlu diunduh ulang.
-
-### 4. Background AI Processing
-Sistem melakukan sinkronisasi dan pembaruan "Memori Jangka Panjang" secara berkala di *background thread* untuk memastikan asisten AI selalu memiliki konteks terbaru tanpa mengganggu performa UI.
-
----
-
-## 🚀 Cara Menjalankan Proyek
-
-### 1. Prasyarat
-*   Android Studio Ladybug atau versi terbaru.
-*   JDK 17.
-*   Xcode (untuk menjalankan target iOS).
-
-### 2. Konfigurasi API Key
-Buat file `local.properties` di root project dan tambahkan API Key dari [Google AI Studio](https://aistudio.google.com/):
-```properties
-GEMINI_API_KEY=YOUR_API_KEY_HERE
-GEMINI_MODEL_NAME=gemini-1.5-flash
-```
-
-### 3. iOS Setup
-Pastikan permission berikut dikonfigurasi di `Info.plist`:
-*   `NSCameraUsageDescription` (Akses Kamera)
-*   `NSPhotoLibraryUsageDescription` (Akses Galeri)
-*   `NSLocationWhenInUseUsageDescription` (Akses Lokasi)
-
----
-
 ## 🧠 Dokumentasi Sistem AI (Blissie)
 
 DailyBliss ditenagai oleh **Blissie**, asisten AI yang dirancang bukan hanya untuk memproses data, tetapi untuk menjadi pendengar yang empatik. Blissie menggunakan model yang dikonfigurasi melalui `GEMINI_MODEL_NAME` (seperti **Gemini 1.5 Flash**) untuk memberikan respon yang cepat dan cerdas.
@@ -311,7 +261,51 @@ Fokus pada:
 Tujuan ringkasan ini adalah sebagai 'memori jangka panjang' bagi asisten AI agar bisa memberikan respon yang lebih personal.
 ```
 
+## 💾 Strategi Caching & Persistensi Data
+
+DailyBliss mengusung prinsip **Offline-First** untuk memastikan pengguna tetap dapat mengakses memori mereka kapan saja tanpa ketergantungan penuh pada internet.
+
+### 1. SQLDelight (Local Database)
+Digunakan sebagai penyimpanan utama data terstruktur:
+*   **MomentEntity:** Menyimpan seluruh data jurnal secara permanen, termasuk path gambar lokal, kategori, dan metadata mood hasil analisis AI.
+*   **NewsCache:** Mekanisme caching untuk data berita dan cuaca dengan masa berlaku (TTL) tertentu untuk mengurangi beban request API.
+
+### 2. DataStore Preferences
+Digunakan untuk menyimpan preferensi pengguna yang bersifat ringan:
+*   Profil pengguna (Nama Panggilan).
+*   Pengaturan Tema (Dark/Light mode).
+*   Gaya Bahasa AI (Casual, Formal, Poetic).
+*   Metadata Memori Jangka Panjang (Ringkasan Jurnal) untuk Blissie.
+
+### 3. Coil Image Caching
+Optimalisasi pemuatan gambar melalui dua lapis cache:
+*   **Memory Cache:** Akses instan untuk gambar yang baru saja dilihat.
+*   **Disk Cache:** Menyimpan gambar secara fisik di penyimpanan perangkat agar tidak perlu diunduh ulang.
+
+### 4. Background AI Processing
+Sistem melakukan sinkronisasi dan pembaruan "Memori Jangka Panjang" secara berkala di *background thread* untuk memastikan asisten AI selalu memiliki konteks terbaru tanpa mengganggu performa UI.
+
 ---
+
+## 🚀 Cara Menjalankan Proyek
+
+### 1. Prasyarat
+*   Android Studio Ladybug atau versi terbaru.
+*   JDK 17.
+*   Xcode (untuk menjalankan target iOS).
+
+### 2. Konfigurasi API Key
+Buat file `local.properties` di root project dan tambahkan API Key dari [Google AI Studio](https://aistudio.google.com/):
+```properties
+GEMINI_API_KEY=YOUR_API_KEY_HERE
+GEMINI_MODEL_NAME=gemini-1.5-flash
+```
+
+### 3. iOS Setup
+Pastikan permission berikut dikonfigurasi di `Info.plist`:
+*   `NSCameraUsageDescription` (Akses Kamera)
+*   `NSPhotoLibraryUsageDescription` (Akses Galeri)
+*   `NSLocationWhenInUseUsageDescription` (Akses Lokasi)
 
 ## 📄 Lisensi
 Proyek ini dilisensikan di bawah **MIT License**.
