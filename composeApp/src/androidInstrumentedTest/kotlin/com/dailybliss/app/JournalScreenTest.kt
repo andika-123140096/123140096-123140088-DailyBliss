@@ -14,16 +14,16 @@ class JournalScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun journalScreen_displaysList() {
+    fun journalScreen_displaysMoments() {
         val moments = listOf(
-            Moment(id = 1, title = "Momen 1", content = "Konten 1"),
-            Moment(id = 2, title = "Momen 2", content = "Konten 2"),
+            Moment(id = 1, title = "Momen Liburan", content = "Senang sekali di Bali"),
+            Moment(id = 2, title = "Momen Kerja", content = "Deadline proyek selesai"),
         )
 
         composeTestRule.setContent {
             DailyBlissTheme {
                 JournalScreenContent(
-                    uiState = JournalUiState.Success(moments),
+                    uiState = JournalUiState.Success(moments = moments, isLastPage = true),
                     query = "",
                     onSearchQueryChange = {},
                     onClearSearch = {},
@@ -35,8 +35,8 @@ class JournalScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Momen 1").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Momen 2").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Momen Liburan").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Momen Kerja").assertIsDisplayed()
     }
 
     @Test
@@ -44,7 +44,7 @@ class JournalScreenTest {
         composeTestRule.setContent {
             DailyBlissTheme {
                 JournalScreenContent(
-                    uiState = JournalUiState.Empty("cari apa"),
+                    uiState = JournalUiState.Empty,
                     query = "",
                     onSearchQueryChange = {},
                     onClearSearch = {},
@@ -56,6 +56,28 @@ class JournalScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Tidak Ada Momen").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("EMPTY_STATE").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Mulai Menulis").assertIsDisplayed()
+    }
+
+    @Test
+    fun journalScreen_searchBarExists() {
+        composeTestRule.setContent {
+            DailyBlissTheme {
+                JournalScreenContent(
+                    uiState = JournalUiState.Empty,
+                    query = "Test",
+                    onSearchQueryChange = {},
+                    onClearSearch = {},
+                    onLoadMore = {},
+                    onNavigateToCreateMoment = {},
+                    onNavigateToMomentDetail = {},
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("SEARCH_TEXT_FIELD").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("CLEAR_SEARCH_BUTTON").assertIsDisplayed()
     }
 }
