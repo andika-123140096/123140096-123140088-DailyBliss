@@ -186,6 +186,30 @@ Mendeteksi lokasi pengguna berdasarkan alamat IP sebagai fallback GPS.
     }
     ```
 
+### 6. Google Gemini TTS (Text-to-Speech)
+Mengubah teks menjadi suara menggunakan model preview terbaru dari Gemini.
+*   **Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+*   **Models:** `gemini-3.1-flash-tts-preview` (Utama), `gemini-2.5-flash-preview-tts` (Fallback)
+*   **Voice Options:** `Kore`, `Aoede`, `Charon`, `Fenrir`, `Puck`
+*   **Request Sample:**
+    ```json
+    {
+      "contents": [{
+        "parts": [{"text": "Halo, namaku Blissie. Senang bertemu denganmu!"}],
+        "role": "user"
+      }],
+      "generationConfig": {
+        "responseModalities": ["AUDIO"],
+        "speechConfig": {
+          "voiceConfig": {
+            "prebuiltVoiceConfig": { "voiceName": "Kore" }
+          }
+        }
+      }
+    }
+    ```
+*   **Response:** Mengembalikan data audio dalam format base64 di dalam field `inlineData`.
+
 ## 🧠 Dokumentasi Sistem AI (Blissie)
 
 DailyBliss ditenagai oleh **Blissie**, asisten AI yang dirancang bukan hanya untuk memproses data, tetapi untuk menjadi pendengar yang empatik. Blissie menggunakan model yang dikonfigurasi melalui `GEMINI_MODEL_NAME` (seperti **Gemini 1.5 Flash**) untuk memberikan respon yang cepat dan cerdas.
