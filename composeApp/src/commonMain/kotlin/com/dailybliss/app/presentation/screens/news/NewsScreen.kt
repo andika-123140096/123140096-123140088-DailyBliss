@@ -109,8 +109,15 @@ fun NewsScreenContent(
                         modifier = Modifier.testTag("ERROR_MESSAGE"),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onRefresh,
+                        modifier = Modifier.testTag("RETRY_BUTTON"),
+                    ) {
+                        Text("Coba Lagi")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Tarik ke bawah untuk mencoba lagi",
+                        text = "Atau tarik ke bawah untuk memuat ulang",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

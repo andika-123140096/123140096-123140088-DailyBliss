@@ -225,12 +225,10 @@ kover {
                     "com.dailybliss.app.core.di.*",
                     "com.dailybliss.app.core.network.*",
                     "*ComposableSingletons*",
-                    "com.dailybliss.app.data.repository.*",
                     "com.dailybliss.app.data.remote.*",
                     "com.dailybliss.app.data.local.*",
                     "com.dailybliss.app.core.util.*",
                     "dailybliss.composeapp.generated.*",
-                    "com.dailybliss.app.domain.repository.AIRepository${'$'}DefaultImpls",
                 )
             }
         }
